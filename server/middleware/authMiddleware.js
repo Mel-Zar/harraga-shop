@@ -10,15 +10,23 @@ const protect = async (req, res, next) => {
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            req.user = await User.findById(decoded.id).select("-password");
+            console.log("DECODED TOKEN:", decoded); // 🔥 DEBUG
 
-            next();
-        } catch {
-            res.status(401).json({ message: "Not authorized" });
+            const userId = decoded.id || decoded.userId || decoded._id;
+
+            req.user = await User.findById(userId).select("-password");
+
+            if (!req.user) {
+                return res.status(401).json({ message: "User not found" });
+            }
+
+            return next();
+        } catch (error) {
+            return res.status(401).json({ message: "Not authorized, token failed" });
         }
-    } else {
-        res.status(401).json({ message: "No token" });
     }
+
+    return res.status(401).json({ message: "No token" });
 };
 
 module.exports = protect;
