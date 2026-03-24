@@ -183,33 +183,58 @@ exports.register = async (req, res) => {
 // LOGIN
 exports.login = async (req, res) => {
     try {
+        console.log("🔥 LOGIN ROUTE HIT");
+        console.log("BODY:", req.body);
+
         const { identifier, password } = req.body;
 
-        // 1. Check fields
+        // =========================
+        // 1. CHECK REQUIRED FIELDS
+        // =========================
         if (!identifier || !password) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({
+                message: "All fields are required"
+            });
         }
 
-        // 2. Find user by email OR username
+        // =========================
+        // 2. CLEAN INPUT
+        // =========================
+        const cleanIdentifier = identifier.trim().toLowerCase();
+
+        // =========================
+        // 3. FIND USER (EMAIL OR USERNAME)
+        // =========================
         const user = await User.findOne({
             $or: [
-                { email: identifier },
-                { username: identifier }
+                { email: cleanIdentifier },
+                { username: cleanIdentifier }
             ]
         });
 
+        // =========================
+        // 4. GENERIC ERROR (SECURITY)
+        // =========================
         if (!user) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({
+                message: "Invalid credentials"
+            });
         }
 
-        // 3. Check password
+        // =========================
+        // 5. CHECK PASSWORD
+        // =========================
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({
+                message: "Invalid credentials"
+            });
         }
 
-        // 4. Success response
+        // =========================
+        // 6. SUCCESS RESPONSE
+        // =========================
         res.json({
             _id: user._id,
             username: user.username,
@@ -221,7 +246,11 @@ exports.login = async (req, res) => {
 
     } catch (error) {
         console.log("🔥 LOGIN ERROR:", error);
-        res.status(500).json({ message: "Server error" });
+
+        res.status(500).json({
+            message: "Server error"
+        });
     }
 };
+
 
