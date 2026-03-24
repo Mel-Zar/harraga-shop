@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
+import countries from "../../data/countries";
 
 export default function Register() {
     const [form, setForm] = useState({
@@ -18,111 +19,70 @@ export default function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // =========================
-    // 📝 HANDLE INPUT CHANGE
-    // =========================
     const handleChange = (e) => {
-        setForm({
-            ...form,
+        setForm((prev) => ({
+            ...prev,
             [e.target.name]: e.target.value,
-        });
+        }));
     };
 
-    // =========================
-    // 🚀 HANDLE REGISTER
-    // =========================
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         setError("");
         setLoading(true);
 
-        // =========================
-        // ⚠️ FRONTEND VALIDATION (PRO)
-        // =========================
-        if (
-            !form.username ||
-            !form.firstName ||
-            !form.lastName ||
-            !form.email ||
-            !form.password ||
-            !form.confirmPassword ||
-            !form.address ||
-            !form.postalCode ||
-            !form.city
-        ) {
-            setError("All fields are required");
-            setLoading(false);
-            return;
-        }
-
-        if (form.password !== form.confirmPassword) {
-            setError("Passwords do not match");
-            setLoading(false);
-            return;
-        }
-
         try {
-            // =========================
-            // 🔥 REMOVE confirmPassword (NOT IN DB)
-            // =========================
-            const { confirmPassword: _, ...sendData } = form;
+            const data = await registerUser(form);
+            console.log("SUCCESS:", data);
 
-            const data = await registerUser(sendData);
+            setForm({
+                username: "",
+                firstName: "",
+                lastName: "",
+                email: "",
+                password: "",
+                confirmPassword: "",
+                address: "",
+                postalCode: "",
+                city: "",
+                country: ""
+            });
 
-            console.log("REGISTER SUCCESS:", data);
-
-        } catch (error) {
-            setError(error.message);
+        } catch (err) {
+            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="register">
-            <form onSubmit={handleSubmit}>
-                <h2>Register</h2>
+        <form onSubmit={handleSubmit}>
+            <h2>Register</h2>
 
-                <input name="username" placeholder="Username" onChange={handleChange} />
-                <input name="firstName" placeholder="First Name" onChange={handleChange} />
-                <input name="lastName" placeholder="Last Name" onChange={handleChange} />
-                <input name="email" placeholder="Email" onChange={handleChange} />
+            <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
+            <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
+            <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
+            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
 
-                <input
-                    name="password"
-                    type="password"
-                    placeholder="Password"
-                    onChange={handleChange}
-                />
+            <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
+            <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
 
-                <input
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm Password"
-                    onChange={handleChange}
-                />
+            <input name="address" value={form.address} onChange={handleChange} placeholder="Address" />
+            <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
+            <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
 
-                <input name="address" placeholder="Address" onChange={handleChange} />
-                <input name="postalCode" placeholder="Postal Code" onChange={handleChange} />
-                <input name="city" placeholder="City" onChange={handleChange} />
+            <select name="country" value={form.country} onChange={handleChange}>
+                <option value="">Select country</option>
+                {countries.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                ))}
+            </select>
 
-                <input
-                    name="country"
-                    placeholder="Country"
-                    onChange={handleChange}
-                    defaultValue=""
-                />
+            <button disabled={loading}>
+                {loading ? "Creating..." : "Register"}
+            </button>
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Creating account..." : "Register"}
-                </button>
-
-                {/* =========================
-                   ❌ ERROR UI (PRO)
-                ========================= */}
-                {error && <p className="error">{error}</p>}
-            </form>
-        </div>
+            {error && <p style={{ color: "red" }}>{error}</p>}
+        </form>
     );
 }

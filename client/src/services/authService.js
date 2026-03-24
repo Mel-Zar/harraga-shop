@@ -1,44 +1,36 @@
-const API_URL = "http://localhost:5050/api/auth";
+const API_URL = `${import.meta.env.VITE_API_URL}/api/auth`;
 
-// =========================
-// 🔐 REGISTER USER
-// =========================
 export const registerUser = async (userData) => {
     const res = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        credentials: "include", // 🔥 IMPORTANT (for cookies later)
         body: JSON.stringify(userData),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-        throw new Error(data.message);
+        throw new Error(data.message || "Register failed");
     }
 
     return data;
 };
 
-// =========================
-// 🔐 LOGIN USER
-// =========================
 export const loginUser = async (userData) => {
     const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        credentials: "include", // 🔥 IMPORTANT
         body: JSON.stringify(userData),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-        throw new Error(data.message);
+        throw new Error(data.message || "Login failed");
     }
 
     return data;
