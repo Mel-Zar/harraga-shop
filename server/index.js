@@ -71,7 +71,7 @@ app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
 // =========================
 
 // Import authentication middleware
-const protect = require("./middleware/authMiddleware");
+const { protect } = require("./middleware/authMiddleware");
 
 // Example protected route (requires valid JWT token to access)
 app.get("/api/protected", protect, (req, res) => {
