@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
         },
         country: {
             type: String,
-            default: "Sweden",
+            default: "",
         },
         isAdmin: {
             type: Boolean,

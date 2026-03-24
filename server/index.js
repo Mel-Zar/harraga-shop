@@ -63,28 +63,33 @@ connectDB();
 // 🔥 ROUTES
 // =========================
 
-// Apply rate limiter ONLY to authentication routes (register/login)
+// 🔐 AUTH ROUTES (REGISTER / LOGIN)
 app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
 
 // =========================
-// 🔐 PROTECTED ROUTE
+// 👤 USER ROUTES (PROTECTED + ADMIN)
+// =========================
+// 🔥 THIS IS THE IMPORTANT PART YOU WERE MISSING
+app.use("/api", require("./routes/userRoutes"));
+
+// =========================
+// 🔐 PROTECTED ROUTE (KEEP - DUPLICATE FOR TESTING)
 // =========================
 
 // Import authentication middleware
-const { protect } = require("./middleware/authMiddleware");
+const { protect, admin } = require("./middleware/authMiddleware");
 
 // Example protected route (requires valid JWT token to access)
 app.get("/api/protected", protect, (req, res) => {
     res.json({
         message: "You are authenticated 🔐",
-        user: req.user, // user is attached by middleware
+        user: req.user,
     });
 });
 
 // =========================
 // 🚫 404 HANDLER (PRO)
 // =========================
-// Handles unknown routes
 app.use((req, res) => {
     res.status(404).json({
         message: "Route not found",
@@ -94,7 +99,6 @@ app.use((req, res) => {
 // =========================
 // ❌ GLOBAL ERROR HANDLER (PRO)
 // =========================
-// Prevents server crash and returns clean error response
 app.use((err, req, res, next) => {
     console.error("🔥 GLOBAL ERROR:", err.stack);
 
@@ -110,7 +114,7 @@ app.use((err, req, res, next) => {
 // Define port (use .env or fallback to 5000)
 const PORT = process.env.PORT || 5000;
 
-// Start server and listen for requests
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log("🔥 SERVER IS RUNNING");
