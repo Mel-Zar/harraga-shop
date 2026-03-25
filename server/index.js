@@ -3,83 +3,72 @@ const cors = require("cors");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
-const rateLimit = require("express-rate-limit"); // 🔐 Import rate limiting for security
-const cookieParser = require("cookie-parser"); // 🔐 Import cookie parser (for httpOnly cookies)
-const helmet = require("helmet"); // 🛡️ Security headers
+const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
 
 const app = express();
 
 // =========================
-// 🌍 TRUST PROXY (IMPORTANT FOR DEPLOY)
+// 🌍 TRUST PROXY
 // =========================
-// Ensures correct client IP (needed for rate limiting in production)
 app.set("trust proxy", 1);
-
-// =========================
-// 🔥 GLOBAL MIDDLEWARE
-// =========================
 
 // =========================
 // 🛡️ SECURITY HEADERS
 // =========================
-// Adds protection against common web vulnerabilities
 app.use(helmet());
 
 // =========================
-// 🌐 CORS CONFIG (IMPORTANT 🔥)
+// 🌐 CORS CONFIG
 // =========================
-// Allow frontend (React app) to communicate with backend
-// credentials: true → allows cookies + auth headers
 app.use(cors({
-    origin: "http://localhost:5173", // frontend URL (Vite default)
-    credentials: true, // 🔐 allow cookies / auth headers
+    origin: "http://localhost:5173",
+    credentials: true,
 }));
 
-// Parse incoming JSON requests (req.body)
+// =========================
+// BODY PARSER
+// =========================
 app.use(express.json());
-
-// Parse cookies from incoming requests (req.cookies)
 app.use(cookieParser());
 
 // =========================
-// 🔐 RATE LIMITER (SECURITY)
+// 🔐 RATE LIMITER (AUTH)
 // =========================
-
-// Limit number of requests to auth routes (protect against brute force & spam attacks)
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes window
-    max: 100, // max 100 requests per IP within this time
-    message: "Too many requests, try again later", // response when limit exceeded
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests, try again later",
 });
 
 // =========================
-// 🔥 DATABASE CONNECTION
+// 🔥 DATABASE
 // =========================
-
-// Connect to MongoDB database
 connectDB();
 
 // =========================
 // 🔥 ROUTES
 // =========================
 
-// 🔐 AUTH ROUTES (REGISTER / LOGIN)
+// AUTH ROUTES
 app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
 
-// =========================
-// 👤 USER ROUTES (PROTECTED + ADMIN)
-// =========================
-// 🔥 THIS IS THE IMPORTANT PART YOU WERE MISSING
+// USER ROUTES
 app.use("/api", require("./routes/userRoutes"));
 
-// =========================
-// 🔐 PROTECTED ROUTE (KEEP - DUPLICATE FOR TESTING)
-// =========================
 
-// Import authentication middleware
+// =========================
+// 📍 ADDRESS ROUTES (NEW - PRO ADDITION)
+// =========================
+app.use("/api/address", require("./routes/addressRoutes"));
+
+
+// =========================
+// 🔐 PROTECTED ROUTE
+// =========================
 const { protect, admin } = require("./middleware/authMiddleware");
 
-// Example protected route (requires valid JWT token to access)
 app.get("/api/protected", protect, (req, res) => {
     res.json({
         message: "You are authenticated 🔐",
@@ -88,7 +77,7 @@ app.get("/api/protected", protect, (req, res) => {
 });
 
 // =========================
-// 🚫 404 HANDLER (PRO)
+// 🚫 404 HANDLER
 // =========================
 app.use((req, res) => {
     res.status(404).json({
@@ -97,7 +86,7 @@ app.use((req, res) => {
 });
 
 // =========================
-// ❌ GLOBAL ERROR HANDLER (PRO)
+// ❌ ERROR HANDLER
 // =========================
 app.use((err, req, res, next) => {
     console.error("🔥 GLOBAL ERROR:", err.stack);
@@ -110,11 +99,8 @@ app.use((err, req, res, next) => {
 // =========================
 // 🚀 START SERVER
 // =========================
-
-// Define port (use .env or fallback to 5000)
 const PORT = process.env.PORT || 5000;
 
-// Start server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log("🔥 SERVER IS RUNNING");

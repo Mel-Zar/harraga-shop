@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
-
-// ✅ IMPORT FROM SHARED JSON (FIXED)
 import countries from "../../../../shared/countries.json";
+
+import AddressInput from "../../components/address/AddressInput.jsx";
 
 export default function Register() {
     const [form, setForm] = useState({
@@ -21,13 +21,27 @@ export default function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // =========================
+    // 🔄 HANDLE INPUT CHANGE
+    // =========================
     const handleChange = (e) => {
+        const { name, value } = e.target;
+
         setForm((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value,
+            [name]: value,
+
+            // 🚨 Reset dependent fields when user changes address manually
+            ...(name === "address" && {
+                city: "",
+                postalCode: "",
+            })
         }));
     };
 
+    // =========================
+    // 🚀 SUBMIT
+    // =========================
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -62,24 +76,30 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
+            {/* USER INFO */}
             <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
             <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
             <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
             <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
 
+            {/* PASSWORD */}
             <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
             <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
 
-            <input name="address" value={form.address} onChange={handleChange} placeholder="Address" />
-            <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
-            <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
-
+            {/* COUNTRY */}
             <select name="country" value={form.country} onChange={handleChange}>
                 <option value="">Select country</option>
                 {countries.map((c) => (
                     <option key={c} value={c}>{c}</option>
                 ))}
             </select>
+
+            {/* ADDRESS COMPONENT */}
+            <AddressInput form={form} setForm={setForm} />
+
+            {/* CITY + POSTAL */}
+            <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
+            <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
 
             <button disabled={loading}>
                 {loading ? "Creating..." : "Register"}
