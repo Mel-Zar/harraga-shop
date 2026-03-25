@@ -2,28 +2,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// =========================
-// 🌍 COUNTRIES (NO IMPORT BUG ANYMORE)
-// =========================
-const countries = [
-    "Sweden",
-    "Norway",
-    "Denmark",
-    "Finland",
-    "Germany",
-    "France",
-    "Netherlands",
-    "Belgium",
-    "Spain",
-    "Italy",
-    "Portugal",
-    "Austria",
-    "Switzerland",
-    "United Kingdom",
-    "USA",
-    "Canada",
-    "Australia"
-];
+// ✅ IMPORT FROM SHARED JSON (FIXED)
+const countries = require("../../shared/countries.json");
 
 // =========================
 // 🔐 TOKEN
@@ -73,9 +53,10 @@ exports.register = async (req, res) => {
 
         const cleanUsername = username.trim().toLowerCase();
         const cleanEmail = email.trim().toLowerCase();
+        const cleanCountry = country.trim();
 
-        // 🔥 SAFE COUNTRY CHECK
-        if (!countries.includes(country)) {
+        // ✅ VALIDATE COUNTRY FROM JSON
+        if (!countries.includes(cleanCountry)) {
             return res.status(400).json({ message: "Invalid country selected" });
         }
 
@@ -100,7 +81,7 @@ exports.register = async (req, res) => {
             address,
             postalCode,
             city,
-            country
+            country: cleanCountry
         });
 
         res.status(201).json({
@@ -111,7 +92,7 @@ exports.register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("REGISTER ERROR:", error);
+        console.error("🔥 REGISTER ERROR:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
@@ -123,10 +104,12 @@ exports.login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
+        const cleanIdentifier = identifier.trim().toLowerCase();
+
         const user = await User.findOne({
             $or: [
-                { email: identifier },
-                { username: identifier }
+                { email: cleanIdentifier },
+                { username: cleanIdentifier }
             ]
         });
 
@@ -148,7 +131,7 @@ exports.login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("🔥 LOGIN ERROR:", error);
         res.status(500).json({ message: "Server error" });
     }
 };

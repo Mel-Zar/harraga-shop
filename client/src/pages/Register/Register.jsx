@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
-import countries from "../../data/countries";
+
+// ✅ IMPORT FROM SHARED JSON (FIXED)
+import countries from "../../../../shared/countries.json";
 
 export default function Register() {
     const [form, setForm] = useState({
@@ -49,6 +51,7 @@ export default function Register() {
             });
 
         } catch (err) {
+            console.log("❌ REGISTER ERROR:", err.message);
             setError(err.message);
         } finally {
             setLoading(false);

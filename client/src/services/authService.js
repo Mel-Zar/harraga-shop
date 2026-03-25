@@ -6,6 +6,7 @@ export const registerUser = async (userData) => {
         headers: {
             "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(userData),
     });
 
@@ -24,6 +25,7 @@ export const loginUser = async (userData) => {
         headers: {
             "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(userData),
     });
 
