@@ -31,7 +31,7 @@ export default function Register() {
             ...prev,
             [name]: value,
 
-            // 🚨 Reset dependent fields when user changes address manually
+            // 🚨 Reset dependent fields when user edits address manually
             ...(name === "address" && {
                 city: "",
                 postalCode: "",
@@ -45,6 +45,28 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+
+        // ✅ PRO VALIDATION (IMPORTANT)
+        if (!form.country) {
+            setError("Please select a country");
+            return;
+        }
+
+        if (!form.address) {
+            setError("Please enter your street address");
+            return;
+        }
+
+        if (!form.city) {
+            setError("Please enter/select a city");
+            return;
+        }
+
+        if (!form.postalCode) {
+            setError("Please enter/select a postal code");
+            return;
+        }
+
         setLoading(true);
 
         try {

@@ -38,31 +38,69 @@ const countryMap = {
     Australia: "au"
 };
 
-
 exports.searchAddress = async (req, res) => {
     try {
         const { q, country } = req.query;
 
         if (!q || !country) {
-            return res.status(400).json({ message: "Missing query" });
+            return res.json([]);
         }
 
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(q)}&countrycodes=${country}`;
+        if (!allowedCountries.includes(country)) {
+            return res.json([]);
+        }
+
+        const countryCode = countryMap[country];
+
+        if (!countryCode) {
+            return res.json([]);
+        }
+
+        // 🔥 SMART QUERY BOOST (IMPORTANT)
+        const smartQuery = `${q}, ${country}`;
+
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&dedupe=1&q=${encodeURIComponent(
+            smartQuery
+        )}&countrycodes=${countryCode}`;
 
         const response = await fetch(url, {
             headers: {
-                "User-Agent": "workhub-app",
+                "User-Agent": "workhub-app/1.0 (contact: dev)",
+                "Accept": "application/json",
                 "Accept-Language": "en"
             }
         });
 
-        const data = await response.json();
+        if (!response.ok) {
+            return res.json([]);
+        }
 
-        res.json(data);
+        const text = await response.text();
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            console.log("❌ Nominatim returned invalid JSON:", text.slice(0, 200));
+            return res.json([]);
+        }
+
+        if (!Array.isArray(data)) {
+            return res.json([]);
+        }
+
+        // 🔥 FILTER + CLEAN RESPONSE
+        const cleaned = data
+            .filter((item) => item?.address)
+            .map((item) => ({
+                display_name: item.display_name,
+                address: item.address
+            }));
+
+        return res.json(cleaned);
 
     } catch (err) {
         console.error("Address API error:", err);
-        res.status(500).json({ message: "Server error" });
+        return res.json([]);
     }
 };
-
