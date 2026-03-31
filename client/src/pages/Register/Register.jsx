@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
-import countries from "../../../../shared/countries.json";
+import countryMap from "../../../../shared/countries.json";
 
 import AddressInput from "../../components/address/AddressInput.jsx";
 
@@ -20,6 +20,9 @@ export default function Register() {
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // ✅ list of country names for dropdown
+    const countries = Object.keys(countryMap);
 
     // =========================
     // 🔄 HANDLE INPUT CHANGE

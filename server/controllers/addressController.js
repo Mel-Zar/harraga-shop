@@ -1,42 +1,4 @@
-const allowedCountries = [
-    "Sweden",
-    "Norway",
-    "Denmark",
-    "Finland",
-    "Germany",
-    "France",
-    "Netherlands",
-    "Belgium",
-    "Spain",
-    "Italy",
-    "Portugal",
-    "Austria",
-    "Switzerland",
-    "United Kingdom",
-    "USA",
-    "Canada",
-    "Australia"
-];
-
-const countryMap = {
-    Sweden: "se",
-    Norway: "no",
-    Denmark: "dk",
-    Finland: "fi",
-    Germany: "de",
-    France: "fr",
-    Netherlands: "nl",
-    Belgium: "be",
-    Spain: "es",
-    Italy: "it",
-    Portugal: "pt",
-    Austria: "at",
-    Switzerland: "ch",
-    "United Kingdom": "gb",
-    USA: "us",
-    Canada: "ca",
-    Australia: "au"
-};
+const countryMap = require("../../shared/countries.json");
 
 exports.searchAddress = async (req, res) => {
     try {
@@ -46,10 +8,7 @@ exports.searchAddress = async (req, res) => {
             return res.json([]);
         }
 
-        if (!allowedCountries.includes(country)) {
-            return res.json([]);
-        }
-
+        // ✅ country validation via shared file
         const countryCode = countryMap[country];
 
         if (!countryCode) {

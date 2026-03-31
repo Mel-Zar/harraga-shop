@@ -1,19 +1,19 @@
-[
-  "Sweden",
-  "Norway",
-  "Denmark",
-  "Finland",
-  "Germany",
-  "France",
-  "Netherlands",
-  "Belgium",
-  "Spain",
-  "Italy",
-  "Portugal",
-  "Austria",
-  "Switzerland",
-  "United Kingdom",
-  "USA",
-  "Canada",
-  "Australia"
-]
+{
+  "Sweden": "se",
+  "Norway": "no",
+  "Denmark": "dk",
+  "Finland": "fi",
+  "Germany": "de",
+  "France": "fr",
+  "Netherlands": "nl",
+  "Belgium": "be",
+  "Spain": "es",
+  "Italy": "it",
+  "Portugal": "pt",
+  "Austria": "at",
+  "Switzerland": "ch",
+  "United Kingdom": "gb",
+  "USA": "us",
+  "Canada": "ca",
+  "Australia": "au"
+}
