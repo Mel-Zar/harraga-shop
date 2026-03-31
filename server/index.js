@@ -57,24 +57,11 @@ app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
 // USER ROUTES
 app.use("/api", require("./routes/userRoutes"));
 
-
-// =========================
-// 📍 ADDRESS ROUTES (NEW - PRO ADDITION)
-// =========================
+// ADDRESS ROUTES
 app.use("/api/address", require("./routes/addressRoutes"));
 
-
-// =========================
-// 🔐 PROTECTED ROUTE
-// =========================
-const { protect, admin } = require("./middleware/authMiddleware");
-
-app.get("/api/protected", protect, (req, res) => {
-    res.json({
-        message: "You are authenticated 🔐",
-        user: req.user,
-    });
-});
+// 🔐 PROTECTED ROUTES (PRO)
+app.use("/api", require("./routes/protectedRoutes"));
 
 // =========================
 // 🚫 404 HANDLER

@@ -13,11 +13,19 @@ export const getUser = () => {
 };
 
 // =========================
-// 🔐 GET TOKEN (IMPORTANT)
+// 🔐 GET TOKEN
 // =========================
 export const getToken = () => {
     const user = getUser();
     return user?.token;
+};
+
+// =========================
+// ✅ IS LOGGED IN
+// =========================
+export const isLoggedIn = () => {
+    const token = getToken();
+    return !!token;
 };
 
 // =========================

@@ -1,55 +1,37 @@
-import { getToken } from "../utils/auth";
+import { getToken, logout } from "../utils/auth";
 
 // =========================
 // 🌐 BASE API URL (FROM ENV)
 // =========================
-// Use environment variable instead of hardcoded URL
 const API_URL = import.meta.env.VITE_API_URL;
 
 // =========================
 // 🔐 FETCH PROTECTED DATA
 // =========================
-// This function calls a protected backend route that requires authentication
 export const getProtectedData = async () => {
-
-    // =========================
-    // 🎟️ GET JWT TOKEN
-    // =========================
-    // Retrieve token from localStorage (saved during login)
     const token = getToken();
 
-    // =========================
-    // 🌐 SEND REQUEST TO BACKEND
-    // =========================
-    // Call protected API endpoint using env URL
+    if (!token) {
+        throw new Error("No token found. Please login again.");
+    }
+
     const res = await fetch(`${API_URL}/api/protected`, {
         headers: {
-            // =========================
-            // 🔑 AUTHORIZATION HEADER
-            // =========================
-            // Send token in "Bearer TOKEN" format (required by backend middleware)
-            Authorization: `Bearer ${token}`, // 🔥 MATCH BACKEND
+            Authorization: `Bearer ${token}`,
         },
-        credentials: "include", // 🔥 allow cookies if used
+        credentials: "include",
     });
 
-    // =========================
-    // 📦 PARSE RESPONSE
-    // =========================
-    // Convert response to JSON
     const data = await res.json();
 
-    // =========================
-    // ⚠️ ERROR HANDLING (IMPORTANT)
-    // =========================
-    // If request fails (401, 403, etc), throw error
+    // 🔥 if token expired -> auto logout
+    if (res.status === 401 || res.status === 403) {
+        logout();
+    }
+
     if (!res.ok) {
         throw new Error(data.message || "Failed to fetch protected data");
     }
 
-    // =========================
-    // ✅ SUCCESS
-    // =========================
-    // Return protected data (user info, message, etc)
     return data;
 };

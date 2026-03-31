@@ -1,9 +1,10 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
-// ✅ IMPORT FROM SHARED JSON (FIXED)
-const countries = require("../../shared/countries.json");
+// ✅ IMPORT SHARED JSON (OBJECT)
+const countryMap = require("../../shared/countries.json");
 
 // =========================
 // 🔐 TOKEN
@@ -55,8 +56,10 @@ exports.register = async (req, res) => {
         const cleanEmail = email.trim().toLowerCase();
         const cleanCountry = country.trim();
 
-        // ✅ VALIDATE COUNTRY FROM JSON
-        if (!countries.includes(cleanCountry)) {
+        // ✅ FIX: validate country properly
+        const allowedCountries = Object.keys(countryMap);
+
+        if (!allowedCountries.includes(cleanCountry)) {
             return res.status(400).json({ message: "Invalid country selected" });
         }
 
@@ -104,6 +107,10 @@ exports.login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
+        if (!identifier || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         const cleanIdentifier = identifier.trim().toLowerCase();
 
         const user = await User.findOne({
@@ -132,6 +139,94 @@ exports.login = async (req, res) => {
 
     } catch (error) {
         console.error("🔥 LOGIN ERROR:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =========================
+// 🟠 FORGOT PASSWORD
+// =========================
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        const cleanEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: cleanEmail });
+
+        // 🔥 security: always return success even if user not found
+        if (!user) {
+            return res.json({ message: "If email exists, reset link will be sent" });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+
+        user.resetPasswordToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
+
+        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 min
+
+        await user.save();
+
+        // ⚠️ här ska du egentligen maila resetToken-länk
+        // men vi returnerar token i response så du kan testa lokalt
+        return res.json({
+            message: "Reset link generated (DEV MODE)",
+            resetToken
+        });
+
+    } catch (error) {
+        console.error("🔥 FORGOT PASSWORD ERROR:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =========================
+// 🔴 RESET PASSWORD
+// =========================
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, confirmPassword } = req.body;
+
+        if (!password || !confirmPassword) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        user.password = await bcrypt.hash(password, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        return res.json({ message: "Password reset successful" });
+
+    } catch (error) {
+        console.error("🔥 RESET PASSWORD ERROR:", error);
         res.status(500).json({ message: "Server error" });
     }
 };

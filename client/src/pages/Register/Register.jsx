@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
 import countryMap from "../../../../shared/countries.json";
-
 import AddressInput from "../../components/address/AddressInput.jsx";
 
 export default function Register() {
@@ -19,14 +18,11 @@ export default function Register() {
     });
 
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // ✅ list of country names for dropdown
     const countries = Object.keys(countryMap);
 
-    // =========================
-    // 🔄 HANDLE INPUT CHANGE
-    // =========================
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -34,7 +30,6 @@ export default function Register() {
             ...prev,
             [name]: value,
 
-            // 🚨 Reset dependent fields when user edits address manually
             ...(name === "address" && {
                 city: "",
                 postalCode: "",
@@ -42,39 +37,37 @@ export default function Register() {
         }));
     };
 
-    // =========================
-    // 🚀 SUBMIT
-    // =========================
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setSuccess("");
 
-        // ✅ PRO VALIDATION (IMPORTANT)
-        if (!form.country) {
-            setError("Please select a country");
-            return;
+        if (!form.username.trim()) return setError("Username is required");
+        if (!form.firstName.trim()) return setError("First name is required");
+        if (!form.lastName.trim()) return setError("Last name is required");
+        if (!form.email.trim()) return setError("Email is required");
+        if (!form.password) return setError("Password is required");
+        if (!form.confirmPassword) return setError("Confirm password is required");
+
+        if (form.password.length < 6) {
+            return setError("Password must be at least 6 characters");
         }
 
-        if (!form.address) {
-            setError("Please enter your street address");
-            return;
+        if (form.password !== form.confirmPassword) {
+            return setError("Passwords do not match");
         }
 
-        if (!form.city) {
-            setError("Please enter/select a city");
-            return;
-        }
-
-        if (!form.postalCode) {
-            setError("Please enter/select a postal code");
-            return;
-        }
+        if (!form.country) return setError("Please select a country");
+        if (!form.address.trim()) return setError("Please enter your street address");
+        if (!form.city.trim()) return setError("Please enter/select a city");
+        if (!form.postalCode.trim()) return setError("Please enter/select a postal code");
 
         setLoading(true);
 
         try {
-            const data = await registerUser(form);
-            console.log("SUCCESS:", data);
+            await registerUser(form);
+
+            setSuccess("Account created successfully! You can now login.");
 
             setForm({
                 username: "",
@@ -90,7 +83,6 @@ export default function Register() {
             });
 
         } catch (err) {
-            console.log("❌ REGISTER ERROR:", err.message);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -101,17 +93,14 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
-            {/* USER INFO */}
             <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
             <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
             <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
             <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
 
-            {/* PASSWORD */}
             <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
             <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
 
-            {/* COUNTRY */}
             <select name="country" value={form.country} onChange={handleChange}>
                 <option value="">Select country</option>
                 {countries.map((c) => (
@@ -119,10 +108,8 @@ export default function Register() {
                 ))}
             </select>
 
-            {/* ADDRESS COMPONENT */}
             <AddressInput form={form} setForm={setForm} />
 
-            {/* CITY + POSTAL */}
             <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
             <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
 
@@ -131,6 +118,7 @@ export default function Register() {
             </button>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
+            {success && <p style={{ color: "green" }}>{success}</p>}
         </form>
     );
 }

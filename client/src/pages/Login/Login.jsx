@@ -7,22 +7,16 @@ export default function Login() {
     const [password, setPassword] = useState("");
 
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // =========================
-    // 🔐 HANDLE LOGIN
-    // =========================
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // reset states
         setError("");
+        setSuccess("");
         setLoading(true);
 
-        // =========================
-        // ⚠️ BASIC VALIDATION
-        // =========================
-        if (!identifier || !password) {
+        if (!identifier.trim() || !password) {
             setError("All fields are required");
             setLoading(false);
             return;
@@ -31,16 +25,15 @@ export default function Login() {
         try {
             const data = await loginUser({ identifier, password });
 
-            console.log("LOGIN SUCCESS:", data);
-
-            // 🔥 save token + user
             saveUser(data);
 
-            // optional redirect later
-            // navigate("/dashboard");
+            setSuccess("Login successful!");
 
-        } catch (error) {
-            setError(error.message);
+            // senare kan du navigera här
+            // navigate("/");
+
+        } catch (err) {
+            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -69,10 +62,8 @@ export default function Login() {
                     {loading ? "Logging in..." : "Login"}
                 </button>
 
-                {/* =========================
-                   ❌ ERROR UI (PRO)
-                ========================= */}
-                {error && <p className="error">{error}</p>}
+                {error && <p className="error" style={{ color: "red" }}>{error}</p>}
+                {success && <p style={{ color: "green" }}>{success}</p>}
             </form>
         </div>
     );
