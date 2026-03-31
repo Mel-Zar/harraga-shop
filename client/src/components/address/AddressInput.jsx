@@ -5,17 +5,23 @@ export default function AddressInput({ form, setForm }) {
     const [loading, setLoading] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
 
-    // ✅ NEW: track if user selected from dropdown
+    // ✅ track if address was selected from dropdown
     const [selected, setSelected] = useState(false);
+
+    // ✅ lock search after selecting address
+    const [locked, setLocked] = useState(false);
+
+    // ✅ NEW: only show "No address found" AFTER a real finished search
+    const [searchDone, setSearchDone] = useState(false);
 
     const abortRef = useRef(null);
     const timeoutRef = useRef(null);
     const wrapperRef = useRef(null);
 
-    // 🧠 CACHE (PRO: prevent spam + faster UX)
+    // 🧠 CACHE
     const cacheRef = useRef({});
 
-    // ✅ NEW: store last selected address so it doesn't reset selected=false
+    // 🧠 store last selected value
     const lastSelectedRef = useRef("");
 
     // 🧠 CLOSE DROPDOWN ON OUTSIDE CLICK
@@ -39,27 +45,32 @@ export default function AddressInput({ form, setForm }) {
             if (!form.address || form.address.length < 3 || !form.country) {
                 setResults([]);
                 setActiveIndex(-1);
+                setLoading(false);
+                setSearchDone(false);
                 return;
             }
 
-            // ✅ IMPORTANT: if user already selected, don't show fallback search spam
-            if (selected && form.address === lastSelectedRef.current) {
+            // ✅ if locked, do NOT search again
+            if (locked) {
                 return;
             }
 
             const cacheKey = `${form.country}_${form.address.toLowerCase()}`;
 
+            // 🔥 reset "done" when new search begins
+            setSearchDone(false);
+
             // ✅ CACHE HIT
             if (cacheRef.current[cacheKey]) {
                 setResults(cacheRef.current[cacheKey]);
                 setActiveIndex(-1);
+                setSearchDone(true);
                 return;
             }
 
             try {
                 setLoading(true);
 
-                // abort previous request
                 if (abortRef.current) abortRef.current.abort();
                 abortRef.current = new AbortController();
 
@@ -73,33 +84,35 @@ export default function AddressInput({ form, setForm }) {
                 if (!res.ok) {
                     setResults([]);
                     setActiveIndex(-1);
+                    setSearchDone(true);
                     return;
                 }
 
                 const data = await res.json();
                 const safeData = Array.isArray(data) ? data : [];
 
-                // save to cache
                 cacheRef.current[cacheKey] = safeData;
 
                 setResults(safeData);
                 setActiveIndex(-1);
+                setSearchDone(true);
 
             } catch (err) {
                 if (err.name !== "AbortError") {
                     console.log("Address error:", err);
+                    setResults([]);
+                    setActiveIndex(-1);
+                    setSearchDone(true);
                 }
-                setResults([]);
-                setActiveIndex(-1);
             } finally {
                 setLoading(false);
             }
         }, 350);
 
         return () => clearTimeout(timeoutRef.current);
-    }, [form.address, form.country, selected]);
+    }, [form.address, form.country, locked]);
 
-    // 🧠 CLEAN DISPLAY LABEL (PRO UX)
+    // 🧠 CLEAN DISPLAY LABEL
     const getLabel = (place) => {
         const addr = place.address || {};
 
@@ -117,7 +130,7 @@ export default function AddressInput({ form, setForm }) {
         return `${street}${postcode ? `, ${postcode}` : ""}${city ? ` ${city}` : ""}`.trim();
     };
 
-    // 🧠 SELECT ADDRESS (SYNC FIELDS)
+    // 🧠 SELECT ADDRESS (LOCK SEARCH AFTER SELECT)
     const selectAddress = (place) => {
         const addr = place.address || {};
 
@@ -137,21 +150,22 @@ export default function AddressInput({ form, setForm }) {
 
             postalCode: addr.postcode || "",
 
-            // keep selected country stable
             country: prev.country
         }));
 
-        // ✅ IMPORTANT FIX
-        setSelected(true);
-
-        // ✅ save selected address so it doesn't reset
         lastSelectedRef.current = cleanStreet;
+
+        setSelected(true);
+        setLocked(true);
+
+        // ✅ IMPORTANT: selection = valid, so no fallback
+        setSearchDone(false);
 
         setResults([]);
         setActiveIndex(-1);
     };
 
-    // ⌨️ KEYBOARD NAVIGATION (PRO)
+    // ⌨️ KEYBOARD NAVIGATION
     const handleKeyDown = (e) => {
         if (!results.length) return;
 
@@ -176,12 +190,16 @@ export default function AddressInput({ form, setForm }) {
         }
     };
 
-    // 🧠 MANUAL INPUT HANDLING (RESET DEPENDENT FIELDS)
+    // 🧠 MANUAL INPUT HANDLING
     const handleChange = (value) => {
-        // ✅ only reset selected if user is actually changing away from selected value
+        // ✅ unlock search when user types new input
         if (value !== lastSelectedRef.current) {
             setSelected(false);
+            setLocked(false);
         }
+
+        // ✅ reset fallback until search is done again
+        setSearchDone(false);
 
         setForm((prev) => ({
             ...prev,
@@ -244,9 +262,11 @@ export default function AddressInput({ form, setForm }) {
                 </ul>
             )}
 
-            {/* ✅ FALLBACK (ONLY SHOW IF USER HAS NOT SELECTED) */}
+            {/* ✅ FALLBACK (PRO: only after a REAL finished search) */}
             {!loading &&
+                searchDone &&
                 !selected &&
+                !locked &&
                 form.address.length >= 3 &&
                 results.length === 0 && (
                     <div style={{ fontSize: 12, opacity: 0.6, marginTop: 5 }}>
