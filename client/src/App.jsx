@@ -7,6 +7,7 @@ import Register from "./pages/Register/Register";
 
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
+import Navbar from "./components/Navbar/Navbar";
 
 function App() {
 
@@ -25,12 +26,7 @@ function App() {
         {/* =========================
            🔥 NAVBAR
         ========================= */}
-        <nav style={{ display: "flex", gap: "20px", padding: "20px" }}>
-          <h1>Harraga</h1>
-
-          <Link to="/login">Login</Link>
-          <Link to="/register">Register</Link>
-        </nav>
+        <Navbar />
 
         {/* =========================
            📍 ROUTES
