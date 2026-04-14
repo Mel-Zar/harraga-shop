@@ -49,6 +49,26 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
+        // =========================
+        // 🔥 PASSWORD SECURITY CHECK (PRO)
+        // =========================
+        if (password.length < 8) {
+            return res.status(400).json({
+                message: "Password must be at least 8 characters"
+            });
+        }
+
+        const hasNumber = /\d/.test(password);
+
+        // ✅ FIX: allow ALL common special characters (including -)
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
+
+        if (!hasNumber || !hasSpecial) {
+            return res.status(400).json({
+                message: "Password must contain at least 1 number and 1 special character"
+            });
+        }
+
         const cleanUsername = username.trim().toLowerCase();
         const cleanEmail = email.trim().toLowerCase();
         const cleanCountry = country.trim();
@@ -297,6 +317,26 @@ exports.resetPassword = async (req, res) => {
 
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        // =========================
+        // 🔥 PASSWORD SECURITY CHECK (RESET TOO)
+        // =========================
+        if (password.length < 8) {
+            return res.status(400).json({
+                message: "Password must be at least 8 characters"
+            });
+        }
+
+        const hasNumber = /\d/.test(password);
+
+        // ✅ already correct (kept same)
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
+
+        if (!hasNumber || !hasSpecial) {
+            return res.status(400).json({
+                message: "Password must contain at least 1 number and 1 special character"
+            });
         }
 
         const hashedToken = crypto
