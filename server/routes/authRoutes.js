@@ -6,7 +6,8 @@ const {
     login,
     forgotPassword,
     resetPassword,
-    verifyEmail
+    verifyEmail,
+    resendVerifyEmail
 } = require("../controllers/authController");
 
 // ✅ RATE LIMITERS
@@ -27,5 +28,8 @@ router.post("/reset-password/:token", resetPassword);
 
 // EMAIL VERIFY
 router.get("/verify-email/:userId/:token", verifyEmailLimiter, verifyEmail);
+
+// 🔁 RESEND VERIFY EMAIL
+router.post("/resend-verify-email", loginLimiter, resendVerifyEmail);
 
 module.exports = router;

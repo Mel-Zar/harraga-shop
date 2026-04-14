@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export default function AddressInput({ form, setForm }) {
+export default function AddressInput({ form, setForm, loading: formLoading }) {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -42,6 +42,16 @@ export default function AddressInput({ form, setForm }) {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         timeoutRef.current = setTimeout(async () => {
+
+            // 🔥 if form is submitting, stop search
+            if (formLoading) {
+                setResults([]);
+                setActiveIndex(-1);
+                setLoading(false);
+                setSearchDone(false);
+                return;
+            }
+
             if (!form.address || form.address.length < 3 || !form.country) {
                 setResults([]);
                 setActiveIndex(-1);
@@ -110,7 +120,7 @@ export default function AddressInput({ form, setForm }) {
         }, 350);
 
         return () => clearTimeout(timeoutRef.current);
-    }, [form.address, form.country, locked]);
+    }, [form.address, form.country, locked, formLoading]);
 
     // 🧠 CLEAN DISPLAY LABEL
     const getLabel = (place) => {
@@ -221,6 +231,7 @@ export default function AddressInput({ form, setForm }) {
                 onKeyDown={handleKeyDown}
                 placeholder="Street address"
                 autoComplete="off"
+                disabled={formLoading}
             />
 
             {loading && (

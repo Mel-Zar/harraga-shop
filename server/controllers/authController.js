@@ -218,6 +218,76 @@ exports.verifyEmail = async (req, res) => {
 };
 
 // =========================
+// 🔁 RESEND VERIFY EMAIL
+// =========================
+exports.resendVerifyEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        const cleanEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: cleanEmail });
+
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        // already verified
+        if (user.isVerified) {
+            return res.status(200).json({ message: "Email already verified" });
+        }
+
+        // create new token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        user.emailVerificationToken = crypto
+            .createHash("sha256")
+            .update(verificationToken)
+            .digest("hex");
+
+        user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+        await user.save();
+
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
+
+        await sendEmail({
+            to: user.email,
+            subject: "Verify your email - Harraga Shop",
+            html: `
+                <div style="font-family:Arial, sans-serif; padding:20px; background:#f9f9f9;">
+                    <div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
+                        <h2 style="color:#111;">Verify your account</h2>
+                        <p>Click the button below to verify your email:</p>
+
+                        <a href="${verifyUrl}"
+                           style="display:inline-block;padding:10px 15px;background:#000;color:#fff;text-decoration:none;border-radius:5px;">
+                           Verify Email
+                        </a>
+
+                        <p style="margin-top:20px;font-size:12px;color:gray;">
+                            This link expires in 24 hours.
+                        </p>
+                    </div>
+                </div>
+            `
+        });
+
+        return res.status(200).json({
+            message: "Verification email sent again"
+        });
+
+    } catch (error) {
+        console.error("🔥 RESEND VERIFY ERROR:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =========================
 // LOGIN
 // =========================
 exports.login = async (req, res) => {

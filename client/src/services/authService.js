@@ -87,3 +87,25 @@ export const resetPassword = async (token, password, confirmPassword) => {
 
     return data;
 };
+
+// =========================
+// 📩 RESEND VERIFY EMAIL
+// =========================
+export const resendVerifyEmail = async (email) => {
+    const res = await fetch(`${API_URL}/resend-verification`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data.message || "Failed to resend verification email");
+    }
+
+    return data;
+};

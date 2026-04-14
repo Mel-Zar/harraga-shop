@@ -39,6 +39,9 @@ export default function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (loading) return;
+
         setError("");
         setSuccess("");
 
@@ -49,8 +52,9 @@ export default function Register() {
         if (!form.password) return setError("Password is required");
         if (!form.confirmPassword) return setError("Confirm password is required");
 
-        if (form.password.length < 6) {
-            return setError("Password must be at least 6 characters");
+        // ✅ match backend rule (8 chars minimum)
+        if (form.password.length < 8) {
+            return setError("Password must be at least 8 characters");
         }
 
         if (form.password !== form.confirmPassword) {
@@ -67,7 +71,8 @@ export default function Register() {
         try {
             await registerUser(form);
 
-            setSuccess("Account created successfully! You can now login.");
+            // ✅ correct message (must verify before login)
+            setSuccess("✅ Account created! Please check your email and verify before logging in.");
 
             setForm({
                 username: "",
@@ -93,28 +98,89 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
-            <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
-            <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
-            <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
-            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+            <input
+                name="username"
+                value={form.username}
+                onChange={handleChange}
+                placeholder="Username"
+                disabled={loading}
+            />
 
-            <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
-            <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
+            <input
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                placeholder="First Name"
+                disabled={loading}
+            />
 
-            <select name="country" value={form.country} onChange={handleChange}>
+            <input
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                placeholder="Last Name"
+                disabled={loading}
+            />
+
+            <input
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Email"
+                disabled={loading}
+            />
+
+            <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Password"
+                disabled={loading}
+            />
+
+            <input
+                name="confirmPassword"
+                type="password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm Password"
+                disabled={loading}
+            />
+
+            <select
+                name="country"
+                value={form.country}
+                onChange={handleChange}
+                disabled={loading}
+            >
                 <option value="">Select country</option>
                 {countries.map((c) => (
                     <option key={c} value={c}>{c}</option>
                 ))}
             </select>
 
-            <AddressInput form={form} setForm={setForm} />
+            {/* ✅ pass loading to AddressInput so it can disable inside too */}
+            <AddressInput form={form} setForm={setForm} loading={loading} />
 
-            <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
-            <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
+            <input
+                name="postalCode"
+                value={form.postalCode}
+                onChange={handleChange}
+                placeholder="Postal Code"
+                disabled={loading}
+            />
+
+            <input
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                placeholder="City"
+                disabled={loading}
+            />
 
             <button disabled={loading}>
-                {loading ? "Creating..." : "Register"}
+                {loading ? "Creating account..." : "Register"}
             </button>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
