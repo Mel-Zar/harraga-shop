@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
     rateLimit: true,
 });
 
-// verify connection
+// verify SMTP connection
 transporter.verify((err) => {
     if (err) {
         console.log("❌ SMTP ERROR:", err);
@@ -33,37 +33,41 @@ const sendEmail = async ({ to, subject, html }) => {
         to,
         subject,
         html,
-
         replyTo: process.env.EMAIL_USER,
-
-        headers: {
-            "X-Priority": "3",
-            "X-MSMail-Priority": "Normal",
-            "Importance": "Normal"
-        }
     });
 };
 
 // =========================
-// WELCOME EMAIL (CLEAN HTML)
+// WELCOME EMAIL
 // =========================
 const sendWelcomeEmail = async (to, firstName) => {
     return sendEmail({
         to,
         subject: "Welcome to Harraga Shop 🎉",
         html: `
-        <div style="font-family:Arial, sans-serif; padding:20px; background:#f9f9f9;">
-            <div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
-                <h2 style="color:#111;">Welcome ${firstName} 👋</h2>
-                <p>Your account has been successfully created.</p>
-                <p>Welcome to Harraga Shop.</p>
-                <hr />
-                <p style="font-size:12px; color:gray;">
-                    If this wasn't you, you can ignore this email.
-                </p>
+            <div style="font-family:Arial;padding:20px">
+                <h2>Welcome ${firstName} 👋</h2>
+                <p>Your account is now active.</p>
             </div>
-        </div>
-        `,
+        `
+    });
+};
+
+// =========================
+// VERIFICATION EMAIL (NY)
+// =========================
+const sendVerificationEmail = async (to, verifyUrl) => {
+    return sendEmail({
+        to,
+        subject: "Verify your email - Harraga Shop",
+        html: `
+            <div style="font-family:Arial;padding:20px">
+                <h2>Verify your email</h2>
+                <p>Click below to activate your account:</p>
+                <a href="${verifyUrl}">Verify Email</a>
+                <p>This link expires in 24h.</p>
+            </div>
+        `
     });
 };
 
@@ -73,27 +77,19 @@ const sendWelcomeEmail = async (to, firstName) => {
 const sendResetPasswordEmail = async (to, resetUrl) => {
     return sendEmail({
         to,
-        subject: "Reset your Harraga Shop password",
+        subject: "Reset your password",
         html: `
-        <div style="font-family:Arial, sans-serif; padding:20px;">
-            <h2>Password Reset</h2>
-            <p>You requested a password reset.</p>
-
-            <a href="${resetUrl}"
-               style="display:inline-block;padding:10px 15px;background:#000;color:#fff;text-decoration:none;border-radius:5px;">
-               Reset Password
-            </a>
-
-            <p style="margin-top:20px; font-size:12px; color:gray;">
-                This link expires in 15 minutes.
-            </p>
-        </div>
-        `,
+            <div style="font-family:Arial;padding:20px">
+                <h2>Password Reset</h2>
+                <a href="${resetUrl}">Reset Password</a>
+            </div>
+        `
     });
 };
 
 module.exports = {
     sendEmail,
     sendWelcomeEmail,
+    sendVerificationEmail,
     sendResetPasswordEmail,
 };

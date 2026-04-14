@@ -48,7 +48,23 @@ const userSchema = new mongoose.Schema(
             default: false,
         },
 
-        // 🔥 RESET PASSWORD FIELDS (PRO)
+        // =========================
+        // 📧 EMAIL VERIFICATION (FIXED STEP 4)
+        // =========================
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
+        emailVerificationToken: {
+            type: String,
+        },
+        emailVerificationExpire: {
+            type: Date,
+        },
+
+        // =========================
+        // 🔐 RESET PASSWORD
+        // =========================
         resetPasswordToken: {
             type: String,
         },

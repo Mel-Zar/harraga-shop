@@ -8,6 +8,7 @@ import Register from "./pages/Register/Register";
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
+import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 
 function App() {
 
@@ -32,9 +33,10 @@ function App() {
            📍 ROUTES
         ========================= */}
         <Routes>
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Login />} />
+          <Route path="/verify-email/:userId/:token" element={<VerifyEmail />} />
         </Routes>
       </div>
     </Router>
