@@ -9,15 +9,23 @@ const {
     verifyEmail
 } = require("../controllers/authController");
 
+// ✅ RATE LIMITERS
+const {
+    registerLimiter,
+    loginLimiter,
+    forgotPasswordLimiter,
+    verifyEmailLimiter
+} = require("../middleware/rateLimiter");
+
 // AUTH
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerLimiter, register);
+router.post("/login", loginLimiter, login);
 
 // PASSWORD RESET
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 
 // EMAIL VERIFY
-router.get("/verify-email/:userId/:token", verifyEmail);
+router.get("/verify-email/:userId/:token", verifyEmailLimiter, verifyEmail);
 
 module.exports = router;
