@@ -20,10 +20,14 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 // =========================
-// 🌐 CORS CONFIG
+// 🌐 CORS CONFIG (FROM ENV)
 // =========================
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:5173"];
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
 }));
 
@@ -46,6 +50,13 @@ const authLimiter = rateLimit({
 // 🔥 DATABASE
 // =========================
 connectDB();
+
+// =========================
+// 📧 EMAIL ENV CHECK
+// =========================
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("⚠️ EMAIL_USER or EMAIL_PASS is missing in .env");
+}
 
 // =========================
 // 🔥 ROUTES

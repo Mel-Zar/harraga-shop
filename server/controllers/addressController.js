@@ -2,64 +2,110 @@ const countryMap = require("../../shared/countries.json");
 
 exports.searchAddress = async (req, res) => {
     try {
-        const { q, country } = req.query;
+        const qRaw = req.query?.q;
+        const countryRaw = req.query?.country;
+
+        // ✅ Validate required params
+        if (typeof qRaw !== "string" || typeof countryRaw !== "string") {
+            return res.status(200).json([]);
+        }
+
+        const q = qRaw.trim();
+        const country = countryRaw.trim();
 
         if (!q || !country) {
-            return res.json([]);
+            return res.status(200).json([]);
         }
+
+        // ✅ Avoid abuse / extremely long queries
+        if (q.length > 150 || country.length > 80) {
+            return res.status(200).json([]);
+        }
+
+        // ✅ Normalize country input for lookup
+        const normalizedCountry = country.toLowerCase();
 
         // ✅ country validation via shared file
-        const countryCode = countryMap[country];
+        const countryCodeRaw = countryMap[normalizedCountry] || countryMap[country];
 
-        if (!countryCode) {
-            return res.json([]);
+        if (!countryCodeRaw || typeof countryCodeRaw !== "string") {
+            return res.status(200).json([]);
         }
+
+        const countryCode = countryCodeRaw.toLowerCase().trim();
 
         // 🔥 SMART QUERY BOOST (IMPORTANT)
+        // Ex: "Street 5, Sweden"
         const smartQuery = `${q}, ${country}`;
 
-        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&dedupe=1&q=${encodeURIComponent(
-            smartQuery
-        )}&countrycodes=${countryCode}`;
+        // ✅ Build URL safely
+        const url = new URL("https://nominatim.openstreetmap.org/search");
+        url.searchParams.set("format", "jsonv2");
+        url.searchParams.set("addressdetails", "1");
+        url.searchParams.set("limit", "10");
+        url.searchParams.set("dedupe", "1");
+        url.searchParams.set("q", smartQuery);
+        url.searchParams.set("countrycodes", countryCode);
 
-        const response = await fetch(url, {
-            headers: {
-                "User-Agent": "workhub-app/1.0 (contact: dev)",
-                "Accept": "application/json",
-                "Accept-Language": "en"
-            }
-        });
+        // ✅ Timeout (best practice, prevents hanging requests)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
 
-        if (!response.ok) {
-            return res.json([]);
+        let response;
+        try {
+            response = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                    // Nominatim kräver tydlig User-Agent / contact
+                    "User-Agent": "workhub-app/1.0 (contact: dev)",
+                    "Accept": "application/json",
+                    "Accept-Language": "en"
+                },
+                signal: controller.signal
+            });
+        } catch (fetchErr) {
+            clearTimeout(timeout);
+            console.error("❌ Fetch error (Nominatim):", fetchErr);
+            return res.status(200).json([]);
         }
 
-        const text = await response.text();
+        clearTimeout(timeout);
 
+        // ✅ Handle non-200
+        if (!response.ok) {
+            // Nominatim kan rate-limita (429) osv.
+            console.warn("⚠️ Nominatim response not OK:", response.status);
+            return res.status(200).json([]);
+        }
+
+        // ✅ Safely parse JSON
         let data;
         try {
-            data = JSON.parse(text);
+            data = await response.json();
         } catch (err) {
-            console.log("❌ Nominatim returned invalid JSON:", text.slice(0, 200));
-            return res.json([]);
+            console.log("❌ Nominatim returned invalid JSON");
+            return res.status(200).json([]);
         }
 
         if (!Array.isArray(data)) {
-            return res.json([]);
+            return res.status(200).json([]);
         }
 
         // 🔥 FILTER + CLEAN RESPONSE
         const cleaned = data
-            .filter((item) => item?.address)
+            .filter((item) => item && typeof item === "object" && item.address)
             .map((item) => ({
-                display_name: item.display_name,
-                address: item.address
+                display_name: item.display_name || "",
+                address: item.address || {}
             }));
 
-        return res.json(cleaned);
+        // ✅ Cache headers (reduces load & improves speed)
+        res.set("Cache-Control", "public, max-age=60");
+
+        return res.status(200).json(cleaned);
 
     } catch (err) {
-        console.error("Address API error:", err);
-        return res.json([]);
+        console.error("❌ Address API error:", err);
+        return res.status(200).json([]);
     }
 };

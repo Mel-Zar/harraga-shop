@@ -6,6 +6,9 @@ const crypto = require("crypto");
 // ✅ IMPORT SHARED JSON (OBJECT)
 const countryMap = require("../../shared/countries.json");
 
+// ✅ EMAIL UTILS
+const { sendWelcomeEmail, sendResetPasswordEmail } = require("../utils/mailer");
+
 // =========================
 // 🔐 TOKEN
 // =========================
@@ -86,6 +89,19 @@ exports.register = async (req, res) => {
             city,
             country: cleanCountry
         });
+
+        console.log("✅ User registered:", user.email);
+
+        // =========================
+        // 📧 SEND WELCOME EMAIL
+        // =========================
+        try {
+            await sendWelcomeEmail(user.email, user.firstName);
+            console.log("✅ Welcome email sent to:", user.email);
+        } catch (mailErr) {
+            console.error("❌ Welcome email failed:", mailErr.message || mailErr);
+            // best practice: do NOT block registration if email fails
+        }
 
         res.status(201).json({
             _id: user._id,
@@ -174,11 +190,21 @@ exports.forgotPassword = async (req, res) => {
 
         await user.save();
 
-        // ⚠️ här ska du egentligen maila resetToken-länk
-        // men vi returnerar token i response så du kan testa lokalt
+        // =========================
+        // 📧 SEND RESET EMAIL
+        // =========================
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+        try {
+            await sendResetPasswordEmail(user.email, resetUrl);
+            console.log("✅ Reset password email sent to:", user.email);
+        } catch (mailErr) {
+            console.error("❌ Reset password email failed:", mailErr.message || mailErr);
+            // best practice: still return success response for security
+        }
+
         return res.json({
-            message: "Reset link generated (DEV MODE)",
-            resetToken
+            message: "If email exists, reset link will be sent"
         });
 
     } catch (error) {
