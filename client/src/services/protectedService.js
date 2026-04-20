@@ -1,13 +1,7 @@
 import { getToken, logout } from "../utils/auth";
 
-// =========================
-// 🌐 BASE API URL (FROM ENV)
-// =========================
 const API_URL = import.meta.env.VITE_API_URL;
 
-// =========================
-// 🔐 FETCH PROTECTED DATA
-// =========================
 export const getProtectedData = async () => {
     const token = getToken();
 
@@ -24,7 +18,6 @@ export const getProtectedData = async () => {
 
     const data = await res.json();
 
-    // 🔥 if token expired -> auto logout
     if (res.status === 401 || res.status === 403) {
         logout();
     }

@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
         },
 
         // =========================
-        // 📧 EMAIL VERIFICATION (FIXED STEP 4)
+        // 📧 EMAIL VERIFICATION
         // =========================
         isVerified: {
             type: Boolean,

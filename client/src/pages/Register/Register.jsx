@@ -52,9 +52,20 @@ export default function Register() {
         if (!form.password) return setError("Password is required");
         if (!form.confirmPassword) return setError("Confirm password is required");
 
-        // ✅ match backend rule (8 chars minimum)
+        // =========================
+        // ✅ PASSWORD VALIDATION (MATCH BACKEND)
+        // =========================
         if (form.password.length < 8) {
             return setError("Password must be at least 8 characters");
+        }
+
+        const hasNumber = /\d/.test(form.password);
+
+        // FIX: cleaner regex for frontend (no unnecessary escapes)
+        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(form.password);
+
+        if (!hasNumber || !hasSpecial) {
+            return setError("Password must contain at least 1 number and 1 special character");
         }
 
         if (form.password !== form.confirmPassword) {
@@ -71,7 +82,6 @@ export default function Register() {
         try {
             await registerUser(form);
 
-            // ✅ correct message (must verify before login)
             setSuccess("✅ Account created! Please check your email and verify before logging in.");
 
             setForm({
@@ -124,6 +134,7 @@ export default function Register() {
 
             <input
                 name="email"
+                type="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
@@ -160,7 +171,6 @@ export default function Register() {
                 ))}
             </select>
 
-            {/* ✅ pass loading to AddressInput so it can disable inside too */}
             <AddressInput form={form} setForm={setForm} loading={loading} />
 
             <input

@@ -92,7 +92,7 @@ export const resetPassword = async (token, password, confirmPassword) => {
 // 📩 RESEND VERIFY EMAIL
 // =========================
 export const resendVerifyEmail = async (email) => {
-    const res = await fetch(`${API_URL}/resend-verification`, {
+    const res = await fetch(`${API_URL}/resend-verify-email`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

@@ -49,9 +49,6 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
-        // =========================
-        // 🔥 PASSWORD SECURITY CHECK (PRO)
-        // =========================
         if (password.length < 8) {
             return res.status(400).json({
                 message: "Password must be at least 8 characters"
@@ -59,8 +56,6 @@ exports.register = async (req, res) => {
         }
 
         const hasNumber = /\d/.test(password);
-
-        // ✅ FIX: allow ALL common special characters (including -)
         const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
 
         if (!hasNumber || !hasSpecial) {
@@ -102,9 +97,6 @@ exports.register = async (req, res) => {
             isVerified: false
         });
 
-        // =========================
-        // EMAIL VERIFICATION
-        // =========================
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
         user.emailVerificationToken = crypto
@@ -116,11 +108,6 @@ exports.register = async (req, res) => {
 
         await user.save();
 
-        console.log("VERIFY TOKEN (RAW):", verificationToken);
-        console.log("VERIFY TOKEN (HASHED):", user.emailVerificationToken);
-        console.log("EXPIRE:", user.emailVerificationExpire);
-
-        // 🔥 IMPORTANT: include userId in url
         const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
 
         await sendEmail({
@@ -169,16 +156,11 @@ exports.verifyEmail = async (req, res) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(400).json({
-                message: "User not found"
-            });
+            return res.status(400).json({ message: "User not found" });
         }
 
-        // ✅ already verified
         if (user.isVerified) {
-            return res.status(200).json({
-                message: "Email already verified"
-            });
+            return res.status(200).json({ message: "Email already verified" });
         }
 
         const hashed = crypto
@@ -186,30 +168,21 @@ exports.verifyEmail = async (req, res) => {
             .update(token)
             .digest("hex");
 
-        // ❌ invalid token
         if (user.emailVerificationToken !== hashed) {
-            return res.status(400).json({
-                message: "Invalid token"
-            });
+            return res.status(400).json({ message: "Invalid token" });
         }
 
-        // ⏰ expired token
         if (user.emailVerificationExpire < Date.now()) {
-            return res.status(400).json({
-                message: "Token expired"
-            });
+            return res.status(400).json({ message: "Token expired" });
         }
 
-        // ✅ verify user
         user.isVerified = true;
         user.emailVerificationToken = undefined;
         user.emailVerificationExpire = undefined;
 
         await user.save();
 
-        return res.status(200).json({
-            message: "Email verified successfully"
-        });
+        return res.status(200).json({ message: "Email verified successfully" });
 
     } catch (error) {
         console.error("🔥 VERIFY ERROR:", error);
@@ -236,12 +209,10 @@ exports.resendVerifyEmail = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // already verified
         if (user.isVerified) {
             return res.status(200).json({ message: "Email already verified" });
         }
 
-        // create new token
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
         user.emailVerificationToken = crypto
@@ -277,9 +248,7 @@ exports.resendVerifyEmail = async (req, res) => {
             `
         });
 
-        return res.status(200).json({
-            message: "Verification email sent again"
-        });
+        return res.status(200).json({ message: "Verification email sent again" });
 
     } catch (error) {
         console.error("🔥 RESEND VERIFY ERROR:", error);
@@ -314,7 +283,6 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        // 🔥 BLOCK LOGIN IF EMAIL NOT VERIFIED
         if (!user.isVerified) {
             return res.status(401).json({
                 message: "Please verify your email before logging in"
@@ -389,9 +357,6 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
-        // =========================
-        // 🔥 PASSWORD SECURITY CHECK (RESET TOO)
-        // =========================
         if (password.length < 8) {
             return res.status(400).json({
                 message: "Password must be at least 8 characters"
@@ -399,8 +364,6 @@ exports.resetPassword = async (req, res) => {
         }
 
         const hasNumber = /\d/.test(password);
-
-        // ✅ already correct (kept same)
         const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
 
         if (!hasNumber || !hasSpecial) {
