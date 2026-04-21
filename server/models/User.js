@@ -36,14 +36,16 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        country: {
+        city: {
             type: String,
             required: true,
         },
         country: {
             type: String,
+            required: true,
             default: "",
         },
+
         isAdmin: {
             type: Boolean,
             default: false,
@@ -71,6 +73,25 @@ const userSchema = new mongoose.Schema(
         },
         resetPasswordExpire: {
             type: Date,
+        },
+
+        // =========================
+        // 🔥 PASSWORD HISTORY (för 3 månader)
+        // =========================
+        passwordHistory: {
+            type: [
+                {
+                    password: {
+                        type: String,
+                        required: true,
+                    },
+                    changedAt: {
+                        type: Date,
+                        default: Date.now,
+                    }
+                }
+            ],
+            default: []
         }
     },
     { timestamps: true }

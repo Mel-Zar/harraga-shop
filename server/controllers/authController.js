@@ -94,7 +94,14 @@ exports.register = async (req, res) => {
             postalCode,
             city,
             country: cleanCountry,
-            isVerified: false
+            isVerified: false,
+
+            passwordHistory: [
+                {
+                    password: hashedPassword,
+                    changedAt: new Date()
+                }
+            ]
         });
 
         const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -222,7 +229,8 @@ exports.resendVerifyEmail = async (req, res) => {
 
         user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
 
-        await user.save();
+        // 🔥 FIX: stop mongoose validation problem
+        await user.save({ validateBeforeSave: false });
 
         const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
 
@@ -315,7 +323,6 @@ exports.forgotPassword = async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() });
 
-        // 🔥 NU gör vi exakt som du vill
         if (!user) {
             return res.status(404).json({
                 message: "No account registered with this email"
@@ -331,7 +338,8 @@ exports.forgotPassword = async (req, res) => {
 
         user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
-        await user.save();
+        // 🔥 FIX: stop mongoose validation problem
+        await user.save({ validateBeforeSave: false });
 
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
@@ -346,7 +354,6 @@ exports.forgotPassword = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
-
 
 // =========================
 // RESET PASSWORD
@@ -392,13 +399,44 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Invalid or expired token" });
         }
 
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        user.passwordHistory = user.passwordHistory.filter(
+            (entry) => entry.changedAt >= threeMonthsAgo
+        );
+
+        const isSameAsCurrent = await bcrypt.compare(password, user.password);
+        if (isSameAsCurrent) {
+            return res.status(400).json({
+                message: "You cannot use your current password again"
+            });
+        }
+
+        for (let entry of user.passwordHistory) {
+            const matchOld = await bcrypt.compare(password, entry.password);
+            if (matchOld) {
+                return res.status(400).json({
+                    message: "You cannot reuse an old password (last 3 months)"
+                });
+            }
+        }
+
+        user.passwordHistory.push({
+            password: user.password,
+            changedAt: new Date()
+        });
+
         user.password = await bcrypt.hash(password, 10);
+
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save();
 
-        res.json({ message: "Password reset successful" });
+        return res.status(200).json({
+            message: "Password has changed"
+        });
 
     } catch (err) {
         console.error("🔥 RESET PASSWORD ERROR:", err);

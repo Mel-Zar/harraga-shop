@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../../services/authService";
 
 export default function ResetPassword() {
     const { token } = useParams();
+    const navigate = useNavigate();
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,6 +15,17 @@ export default function ResetPassword() {
 
     // 🔥 NEW: låser sidan efter reset
     const [done, setDone] = useState(false);
+
+    // ✅ redirect after success
+    useEffect(() => {
+        if (done) {
+            const timer = setTimeout(() => {
+                navigate("/login");
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [done, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -47,10 +59,10 @@ export default function ResetPassword() {
 
             const data = await resetPassword(token, password, confirmPassword);
 
-            // 🔥 så ESLint inte klagar (och du tar inte bort något)
+            // 🔥 så ESLint inte klagar 
             console.log("Reset password response:", data);
 
-            // 🔥 du ville att det ska stå password has changed
+
             setSuccess("Password has changed");
 
             setPassword("");
@@ -72,7 +84,8 @@ export default function ResetPassword() {
             <div style={{ maxWidth: "400px", margin: "auto", marginTop: "50px" }}>
                 <h2>Reset Password</h2>
                 <p style={{ color: "green", marginTop: "10px", fontWeight: "bold" }}>
-                    ✅ Password has changed
+                    ✅ Password has changed <br />
+                    Redirecting to login...
                 </p>
             </div>
         );

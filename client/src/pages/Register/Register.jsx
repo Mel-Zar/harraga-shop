@@ -52,16 +52,11 @@ export default function Register() {
         if (!form.password) return setError("Password is required");
         if (!form.confirmPassword) return setError("Confirm password is required");
 
-        // =========================
-        // ✅ PASSWORD VALIDATION (MATCH BACKEND)
-        // =========================
         if (form.password.length < 8) {
             return setError("Password must be at least 8 characters");
         }
 
         const hasNumber = /\d/.test(form.password);
-
-        // FIX: cleaner regex for frontend (no unnecessary escapes)
         const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(form.password);
 
         if (!hasNumber || !hasSpecial) {
