@@ -47,6 +47,9 @@ export default function ResetPassword() {
 
             const data = await resetPassword(token, password, confirmPassword);
 
+            // 🔥 så ESLint inte klagar (och du tar inte bort något)
+            console.log("Reset password response:", data);
+
             // 🔥 du ville att det ska stå password has changed
             setSuccess("Password has changed");
 
