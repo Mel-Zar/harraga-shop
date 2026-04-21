@@ -1,11 +1,11 @@
 const rateLimit = require("express-rate-limit");
 
 // =========================
-// 🔥 REGISTER LIMITER (STRICT)
+// REGISTER LIMITER
 // =========================
 const registerLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: 5, // max 5 register requests per IP
+    windowMs: 15 * 60 * 1000,
+    max: 5,
     message: {
         message: "Too many register attempts. Please try again later."
     },
@@ -14,11 +14,11 @@ const registerLimiter = rateLimit({
 });
 
 // =========================
-// 🔥 LOGIN LIMITER
+// LOGIN LIMITER
 // =========================
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: 10, // max 10 login attempts per IP
+    windowMs: 15 * 60 * 1000,
+    max: 10,
     message: {
         message: "Too many login attempts. Please try again later."
     },
@@ -27,11 +27,11 @@ const loginLimiter = rateLimit({
 });
 
 // =========================
-// 🔥 FORGOT PASSWORD LIMITER
+// FORGOT PASSWORD LIMITER
 // =========================
 const forgotPasswordLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: 5, // max 5 requests
+    windowMs: 15 * 60 * 1000,
+    max: 5,
     message: {
         message: "Too many password reset attempts. Please try again later."
     },
@@ -40,11 +40,24 @@ const forgotPasswordLimiter = rateLimit({
 });
 
 // =========================
-// 🔥 VERIFY EMAIL LIMITER
+// RESET PASSWORD LIMITER
+// =========================
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: {
+        message: "Too many reset password attempts. Please try again later."
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// =========================
+// VERIFY EMAIL LIMITER
 // =========================
 const verifyEmailLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 min
-    max: 20, // max 20 verify attempts per IP
+    windowMs: 15 * 60 * 1000,
+    max: 20,
     message: {
         message: "Too many verification attempts. Please try again later."
     },
@@ -56,5 +69,6 @@ module.exports = {
     registerLimiter,
     loginLimiter,
     forgotPasswordLimiter,
+    resetPasswordLimiter,
     verifyEmailLimiter
 };

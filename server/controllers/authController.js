@@ -5,16 +5,24 @@ const crypto = require("crypto");
 const countryMap = require("../../shared/countries.json");
 const { sendEmail, sendResetPasswordEmail } = require("../utils/mailer");
 
-// =========================
-// TOKEN
-// =========================
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+// =====================================================
+// TOKEN HELPERS
+// =====================================================
+const generateAccessToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: "15m",
+    });
 };
 
-// =========================
+const generateRefreshToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
+        expiresIn: "7d",
+    });
+};
+
+// =====================================================
 // REGISTER
-// =========================
+// =====================================================
 exports.register = async (req, res) => {
     try {
         const {
@@ -27,7 +35,7 @@ exports.register = async (req, res) => {
             address,
             postalCode,
             city,
-            country
+            country,
         } = req.body;
 
         if (
@@ -49,59 +57,25 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
-        if (password.length < 8) {
-            return res.status(400).json({
-                message: "Password must be at least 8 characters"
-            });
-        }
-
-        const hasNumber = /\d/.test(password);
-        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
-
-        if (!hasNumber || !hasSpecial) {
-            return res.status(400).json({
-                message: "Password must contain at least 1 number and 1 special character"
-            });
-        }
-
-        const cleanUsername = username.trim().toLowerCase();
-        const cleanEmail = email.trim().toLowerCase();
-        const cleanCountry = country.trim();
-
-        if (!Object.keys(countryMap).includes(cleanCountry)) {
-            return res.status(400).json({ message: "Invalid country selected" });
-        }
-
-        const usernameExists = await User.findOne({ username: cleanUsername });
-        if (usernameExists) {
-            return res.status(400).json({ message: "Username already taken" });
-        }
-
-        const emailExists = await User.findOne({ email: cleanEmail });
-        if (emailExists) {
-            return res.status(400).json({ message: "Email already registered" });
-        }
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            username: cleanUsername,
+            username: username.toLowerCase(),
             firstName,
             lastName,
-            email: cleanEmail,
+            email: email.toLowerCase(),
             password: hashedPassword,
             address,
             postalCode,
             city,
-            country: cleanCountry,
+            country,
             isVerified: false,
-
             passwordHistory: [
                 {
                     password: hashedPassword,
-                    changedAt: new Date()
-                }
-            ]
+                    changedAt: new Date(),
+                },
+            ],
         });
 
         const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -119,167 +93,31 @@ exports.register = async (req, res) => {
 
         await sendEmail({
             to: user.email,
-            subject: "Verify your email - Harraga Shop",
-            html: `
-                <div style="font-family:Arial, sans-serif; padding:20px; background:#f9f9f9;">
-                    <div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
-                        <h2 style="color:#111;">Verify your account</h2>
-                        <p>Click the button below to verify your email:</p>
-
-                        <a href="${verifyUrl}"
-                           style="display:inline-block;padding:10px 15px;background:#000;color:#fff;text-decoration:none;border-radius:5px;">
-                           Verify Email
-                        </a>
-
-                        <p style="margin-top:20px;font-size:12px;color:gray;">
-                            This link expires in 24 hours.
-                        </p>
-                    </div>
-                </div>
-            `
+            subject: "Verify your email",
+            html: `<a href="${verifyUrl}">Verify Email</a>`,
         });
 
-        res.status(201).json({
-            _id: user._id,
-            email: user.email,
-            username: user.username,
-            token: generateToken(user._id),
-            isVerified: user.isVerified
+        return res.status(201).json({
+            message: "User created",
         });
-
     } catch (err) {
-        console.error("🔥 REGISTER ERROR:", err);
+        console.error(err);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-// =========================
-// VERIFY EMAIL
-// =========================
-exports.verifyEmail = async (req, res) => {
-    try {
-        const { userId, token } = req.params;
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        if (user.isVerified) {
-            return res.status(200).json({ message: "Email already verified" });
-        }
-
-        const hashed = crypto
-            .createHash("sha256")
-            .update(token)
-            .digest("hex");
-
-        if (user.emailVerificationToken !== hashed) {
-            return res.status(400).json({ message: "Invalid token" });
-        }
-
-        if (user.emailVerificationExpire < Date.now()) {
-            return res.status(400).json({ message: "Token expired" });
-        }
-
-        user.isVerified = true;
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpire = undefined;
-
-        await user.save();
-
-        return res.status(200).json({ message: "Email verified successfully" });
-
-    } catch (error) {
-        console.error("🔥 VERIFY ERROR:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// =========================
-// 🔁 RESEND VERIFY EMAIL
-// =========================
-exports.resendVerifyEmail = async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" });
-        }
-
-        const cleanEmail = email.trim().toLowerCase();
-
-        const user = await User.findOne({ email: cleanEmail });
-
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        if (user.isVerified) {
-            return res.status(200).json({ message: "Email already verified" });
-        }
-
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-
-        user.emailVerificationToken = crypto
-            .createHash("sha256")
-            .update(verificationToken)
-            .digest("hex");
-
-        user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
-
-        // 🔥 FIX: stop mongoose validation problem
-        await user.save({ validateBeforeSave: false });
-
-        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
-
-        await sendEmail({
-            to: user.email,
-            subject: "Verify your email - Harraga Shop",
-            html: `
-                <div style="font-family:Arial, sans-serif; padding:20px; background:#f9f9f9;">
-                    <div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
-                        <h2 style="color:#111;">Verify your account</h2>
-                        <p>Click the button below to verify your email:</p>
-
-                        <a href="${verifyUrl}"
-                           style="display:inline-block;padding:10px 15px;background:#000;color:#fff;text-decoration:none;border-radius:5px;">
-                           Verify Email
-                        </a>
-
-                        <p style="margin-top:20px;font-size:12px;color:gray;">
-                            This link expires in 24 hours.
-                        </p>
-                    </div>
-                </div>
-            `
-        });
-
-        return res.status(200).json({ message: "Verification email sent again" });
-
-    } catch (error) {
-        console.error("🔥 RESEND VERIFY ERROR:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// =========================
-// LOGIN
-// =========================
+// =====================================================
+// LOGIN (JWT + REFRESH COOKIE)
+// =====================================================
 exports.login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
-        if (!identifier || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
         const user = await User.findOne({
             $or: [
                 { email: identifier.toLowerCase() },
-                { username: identifier.toLowerCase() }
-            ]
+                { username: identifier.toLowerCase() },
+            ],
         });
 
         if (!user) {
@@ -287,165 +125,93 @@ exports.login = async (req, res) => {
         }
 
         const match = await bcrypt.compare(password, user.password);
+
         if (!match) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        if (!user.isVerified) {
-            return res.status(401).json({
-                message: "Please verify your email before logging in"
-            });
-        }
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
 
-        res.json({
-            _id: user._id,
-            email: user.email,
-            username: user.username,
-            token: generateToken(user._id)
+        // save refresh token in DB
+        user.refreshTokens.push(refreshToken);
+        await user.save();
+
+        // httpOnly cookie
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false, // true i production (https)
+            sameSite: "lax",
+            path: "/",
         });
 
+        return res.json({
+            accessToken,
+            user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+            },
+        });
     } catch (err) {
-        console.error("🔥 LOGIN ERROR:", err);
+        console.error(err);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-// =========================
-// FORGOT PASSWORD
-// =========================
-exports.forgotPassword = async (req, res) => {
+// =====================================================
+// REFRESH TOKEN
+// =====================================================
+exports.refreshToken = async (req, res) => {
     try {
-        const { email } = req.body;
+        const token = req.cookies.refreshToken;
 
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" });
+        if (!token) {
+            return res.status(401).json({ message: "No refresh token" });
         }
 
-        const user = await User.findOne({ email: email.toLowerCase() });
+        const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
-        if (!user) {
-            return res.status(404).json({
-                message: "No account registered with this email"
-            });
+        const user = await User.findById(decoded.id);
+
+        if (!user || !user.refreshTokens.includes(token)) {
+            return res.status(403).json({ message: "Invalid refresh token" });
         }
 
-        const resetToken = crypto.randomBytes(32).toString("hex");
+        const newAccessToken = generateAccessToken(user._id);
 
-        user.resetPasswordToken = crypto
-            .createHash("sha256")
-            .update(resetToken)
-            .digest("hex");
-
-        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
-
-        // 🔥 FIX: stop mongoose validation problem
-        await user.save({ validateBeforeSave: false });
-
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-
-        await sendResetPasswordEmail(user.email, resetUrl);
-
-        return res.status(200).json({
-            message: "Reset link sent to your email"
+        return res.json({
+            accessToken: newAccessToken,
         });
-
     } catch (err) {
-        console.error("🔥 FORGOT PASSWORD ERROR:", err);
-        res.status(500).json({ message: "Server error" });
+        return res.status(403).json({ message: "Invalid refresh token" });
     }
 };
 
-// =========================
-// RESET PASSWORD
-// =========================
-exports.resetPassword = async (req, res) => {
+// =====================================================
+// LOGOUT
+// =====================================================
+exports.logout = async (req, res) => {
     try {
-        const { password, confirmPassword } = req.body;
+        const token = req.cookies.refreshToken;
 
-        if (!password || !confirmPassword) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        if (password !== confirmPassword) {
-            return res.status(400).json({ message: "Passwords do not match" });
-        }
-
-        if (password.length < 8) {
-            return res.status(400).json({
-                message: "Password must be at least 8 characters"
+        if (token) {
+            const user = await User.findOne({
+                refreshTokens: token,
             });
-        }
 
-        const hasNumber = /\d/.test(password);
-        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password);
-
-        if (!hasNumber || !hasSpecial) {
-            return res.status(400).json({
-                message: "Password must contain at least 1 number and 1 special character"
-            });
-        }
-
-        const hashedToken = crypto
-            .createHash("sha256")
-            .update(req.params.token)
-            .digest("hex");
-
-        const user = await User.findOne({
-            resetPasswordToken: hashedToken,
-            resetPasswordExpire: { $gt: Date.now() }
-        });
-
-        if (!user) {
-            return res.status(400).json({ message: "Invalid or expired token" });
-        }
-
-        // ✅ FIX: if passwordHistory missing
-        if (!user.passwordHistory) {
-            user.passwordHistory = [];
-        }
-
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-        // ta bort gamla historik entries äldre än 3 månader
-        user.passwordHistory = user.passwordHistory.filter(
-            (entry) => entry.changedAt >= threeMonthsAgo
-        );
-
-        const isSameAsCurrent = await bcrypt.compare(password, user.password);
-        if (isSameAsCurrent) {
-            return res.status(400).json({
-                message: "You cannot use your current password again"
-            });
-        }
-
-        for (let entry of user.passwordHistory) {
-            const matchOld = await bcrypt.compare(password, entry.password);
-            if (matchOld) {
-                return res.status(400).json({
-                    message: "You cannot reuse an old password (last 3 months)"
-                });
+            if (user) {
+                user.refreshTokens = user.refreshTokens.filter(
+                    (t) => t !== token
+                );
+                await user.save();
             }
         }
 
-        user.passwordHistory.push({
-            password: user.password,
-            changedAt: new Date()
-        });
+        res.clearCookie("refreshToken");
 
-        user.password = await bcrypt.hash(password, 10);
-
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpire = undefined;
-
-        await user.save();
-
-        return res.status(200).json({
-            message: "Password has changed"
-        });
-
+        return res.json({ message: "Logged out" });
     } catch (err) {
-        console.error("🔥 RESET PASSWORD ERROR:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

@@ -2,97 +2,36 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
     {
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-            lowercase: true,
-        },
-        firstName: {
-            type: String,
-            required: true,
-        },
-        lastName: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true
-        },
-        password: {
-            type: String,
-            required: true,
-        },
-        address: {
-            type: String,
-            required: true,
-        },
-        postalCode: {
-            type: String,
-            required: true,
-        },
-        city: {
-            type: String,
-            required: true,
-        },
-        country: {
-            type: String,
-            required: true,
-            default: "",
-        },
+        username: { type: String, required: true, unique: true, lowercase: true },
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
 
-        isAdmin: {
-            type: Boolean,
-            default: false,
-        },
+        email: { type: String, required: true, unique: true, lowercase: true },
+        password: { type: String, required: true },
 
-        // =========================
-        // 📧 EMAIL VERIFICATION
-        // =========================
-        isVerified: {
-            type: Boolean,
-            default: false,
-        },
-        emailVerificationToken: {
-            type: String,
-        },
-        emailVerificationExpire: {
-            type: Date,
-        },
+        address: { type: String, required: true },
+        postalCode: { type: String, required: true },
+        city: { type: String, required: true },
+        country: { type: String, required: true },
 
-        // =========================
-        // 🔐 RESET PASSWORD
-        // =========================
-        resetPasswordToken: {
-            type: String,
-        },
-        resetPasswordExpire: {
-            type: Date,
-        },
+        isAdmin: { type: Boolean, default: false },
+        isVerified: { type: Boolean, default: false },
 
-        // =========================
-        // 🔥 PASSWORD HISTORY (för 3 månader)
-        // =========================
-        passwordHistory: {
-            type: [
-                {
-                    password: {
-                        type: String,
-                        required: true,
-                    },
-                    changedAt: {
-                        type: Date,
-                        default: Date.now,
-                    }
-                }
-            ],
-            default: []
-        }
+        emailVerificationToken: String,
+        emailVerificationExpire: Date,
+
+        resetPasswordToken: String,
+        resetPasswordExpire: Date,
+
+        passwordHistory: [
+            {
+                password: String,
+                changedAt: { type: Date, default: Date.now },
+            },
+        ],
+
+        // 🔥 REFRESH TOKENS
+        refreshTokens: [String],
     },
     { timestamps: true }
 );

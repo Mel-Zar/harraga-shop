@@ -1,36 +1,69 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-    register,
-    login,
-    forgotPassword,
-    resetPassword,
-    verifyEmail,
-    resendVerifyEmail
-} = require("../controllers/authController");
+const controller = require("../controllers/authController");
+const rateLimiter = require("../middleware/rateLimiter");
 
-// ✅ RATE LIMITERS
-const {
-    registerLimiter,
-    loginLimiter,
-    forgotPasswordLimiter,
-    verifyEmailLimiter,
-    resetPasswordLimiter // ✅ NY
-} = require("../middleware/rateLimiter");
+// fallback om något saknas
+const safeFn = (fn, name) => {
+    if (typeof fn !== "function") {
+        console.log(`❌ Missing: ${name}`);
+        return (req, res) => {
+            res.status(500).json({ message: `${name} is not a function` });
+        };
+    }
+    return fn;
+};
 
+// =========================
 // AUTH
-router.post("/register", registerLimiter, register);
-router.post("/login", loginLimiter, login);
+// =========================
+router.post(
+    "/register",
+    rateLimiter.registerLimiter || ((req, res, next) => next()),
+    safeFn(controller.register, "register")
+);
 
+router.post(
+    "/login",
+    rateLimiter.loginLimiter || ((req, res, next) => next()),
+    safeFn(controller.login, "login")
+);
+
+// =========================
+// JWT FLOW
+// =========================
+router.post("/refresh", safeFn(controller.refreshToken, "refreshToken"));
+router.post("/logout", safeFn(controller.logout, "logout"));
+
+// =========================
 // PASSWORD RESET
-router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
-router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
+// =========================
+router.post(
+    "/forgot-password",
+    rateLimiter.forgotPasswordLimiter || ((req, res, next) => next()),
+    safeFn(controller.forgotPassword, "forgotPassword")
+);
 
+router.post(
+    "/reset-password/:token",
+    rateLimiter.resetPasswordLimiter || ((req, res, next) => next()),
+    safeFn(controller.resetPassword, "resetPassword")
+);
+
+// =========================
 // EMAIL VERIFY
-router.get("/verify-email/:userId/:token", verifyEmailLimiter, verifyEmail);
+// =========================
+router.get(
+    "/verify-email/:userId/:token",
+    rateLimiter.verifyEmailLimiter || ((req, res, next) => next()),
+    safeFn(controller.verifyEmail, "verifyEmail")
+);
 
-// 🔁 RESEND VERIFY EMAIL
-router.post("/resend-verify-email", loginLimiter, resendVerifyEmail);
+router.post(
+    "/resend-verify-email",
+    rateLimiter.loginLimiter || ((req, res, next) => next()),
+    safeFn(controller.resendVerifyEmail, "resendVerifyEmail")
+);
 
 module.exports = router;
