@@ -15,7 +15,8 @@ const {
     registerLimiter,
     loginLimiter,
     forgotPasswordLimiter,
-    verifyEmailLimiter
+    verifyEmailLimiter,
+    resetPasswordLimiter // ✅ NY
 } = require("../middleware/rateLimiter");
 
 // AUTH
@@ -24,7 +25,7 @@ router.post("/login", loginLimiter, login);
 
 // PASSWORD RESET
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
-router.post("/reset-password/:token", resetPassword);
+router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
 
 // EMAIL VERIFY
 router.get("/verify-email/:userId/:token", verifyEmailLimiter, verifyEmail);

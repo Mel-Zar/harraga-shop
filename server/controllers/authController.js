@@ -399,9 +399,15 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Invalid or expired token" });
         }
 
+        // ✅ FIX: if passwordHistory missing
+        if (!user.passwordHistory) {
+            user.passwordHistory = [];
+        }
+
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
+        // ta bort gamla historik entries äldre än 3 månader
         user.passwordHistory = user.passwordHistory.filter(
             (entry) => entry.changedAt >= threeMonthsAgo
         );

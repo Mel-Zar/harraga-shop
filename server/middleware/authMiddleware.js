@@ -1,99 +1,54 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-
-// 🔐 Middleware to protect routes (requires valid JWT token)
-const protect = async (req, res, next) => {
-    let token;
-
-    // =========================
-    // 🔍 CHECK FOR TOKEN IN HEADER OR COOKIE
-    // =========================
-
-    // 1. Check Authorization header: "Bearer TOKEN"
-    if (req.headers.authorization?.startsWith("Bearer")) {
-        token = req.headers.authorization.split(" ")[1];
-    }
-
-    // 2. Check httpOnly cookie (for future frontend use)
-    if (!token && req.cookies?.token) {
-        token = req.cookies.token;
-    }
-
-    // =========================
-    // ❌ NO TOKEN PROVIDED
-    // =========================
-    if (!token) {
-        return res.status(401).json({ message: "No token" });
-    }
-
-    try {
-        // =========================
-        // 🔐 VERIFY TOKEN
-        // =========================
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        console.log("DECODED TOKEN:", decoded); // 🔥 DEBUG
-
-        // =========================
-        // 👤 GET USER ID FROM TOKEN
-        // =========================
-
-        const userId = decoded.id || decoded.userId || decoded._id;
-
-        // =========================
-        // 🔎 FIND USER IN DATABASE
-        // =========================
-
-        req.user = await User.findById(userId).select("-password");
-
-        if (!req.user) {
-            return res.status(401).json({ message: "User not found" });
-        }
-
-        // =========================
-        // ⏳ TOKEN EXPIRATION CHECK (extra safety)
-        // =========================
-
-        // jwt.verify already checks expiration, but we can log/debug
-        if (decoded.exp * 1000 < Date.now()) {
-            return res.status(401).json({ message: "Token expired" });
-        }
-
-        // =========================
-        // ✅ ACCESS GRANTED
-        // =========================
-
-        return next();
-
-    } catch (error) {
-        // =========================
-        // ❌ ERROR HANDLING (IMPROVED)
-        // =========================
-
-        if (error.name === "TokenExpiredError") {
-            return res.status(401).json({ message: "Token expired" });
-        }
-
-        if (error.name === "JsonWebTokenError") {
-            return res.status(401).json({ message: "Invalid token" });
-        }
-
-        return res.status(401).json({ message: "Not authorized, token failed" });
-    }
-};
+const rateLimit = require("express-rate-limit");
 
 // =========================
-// 🔐 ROLE-BASED AUTH (ADMIN)
+// REGISTER LIMITER
 // =========================
+const registerLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { message: "Too many register attempts. Try again later." }
+});
 
-// Use this AFTER protect middleware
-const admin = (req, res, next) => {
-    if (req.user && req.user.isAdmin) {
-        return next();
-    }
+// =========================
+// LOGIN LIMITER
+// =========================
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { message: "Too many login attempts. Try again later." }
+});
 
-    return res.status(403).json({ message: "Admin access only" });
+// =========================
+// FORGOT PASSWORD LIMITER
+// =========================
+const forgotPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { message: "Too many reset requests. Try again later." }
+});
+
+// =========================
+// RESET PASSWORD LIMITER (NY)
+// =========================
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { message: "Too many password reset attempts. Try again later." }
+});
+
+// =========================
+// VERIFY EMAIL LIMITER
+// =========================
+const verifyEmailLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { message: "Too many verification attempts. Try again later." }
+});
+
+module.exports = {
+    registerLimiter,
+    loginLimiter,
+    forgotPasswordLimiter,
+    resetPasswordLimiter,
+    verifyEmailLimiter
 };
-
-module.exports = { protect, admin };
