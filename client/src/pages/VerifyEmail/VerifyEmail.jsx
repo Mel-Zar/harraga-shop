@@ -37,8 +37,24 @@ export default function VerifyEmail() {
     }, [userId, token]);
 
     if (status === "loading") return <h2>Verifying email...</h2>;
-    if (status === "success") return <h2>✅ Email verified! You can now login.</h2>;
-    if (status === "already") return <h2>✅ Your email is already verified.</h2>;
+
+    if (status === "success") {
+        return (
+            <div>
+                <h2>✅ Email verified! You can now login.</h2>
+                <a href="/login">Go to Login</a>
+            </div>
+        );
+    }
+
+    if (status === "already") {
+        return (
+            <div>
+                <h2>✅ Your email is already verified.</h2>
+                <a href="/login">Go to Login</a>
+            </div>
+        );
+    }
 
     return <h2>❌ Verification failed or expired link</h2>;
 }

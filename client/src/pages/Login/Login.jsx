@@ -17,6 +17,8 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (loading || resendLoading) return;
+
         setError("");
         setSuccess("");
         setVerifyMessage("");
@@ -38,7 +40,7 @@ export default function Login() {
 
         } catch (err) {
             if (err.message.toLowerCase().includes("verify your email")) {
-                setVerifyMessage(err.message);
+                setVerifyMessage("Your account is not verified. Resend verification email?");
             } else {
                 setError(err.message);
             }
@@ -49,6 +51,8 @@ export default function Login() {
 
     // 🔁 RESEND EMAIL
     const handleResend = async () => {
+        if (resendLoading || loading) return;
+
         setError("");
         setSuccess("");
         setResendMessage("");
@@ -65,12 +69,26 @@ export default function Login() {
             const data = await resendVerifyEmail(identifier);
 
             setResendMessage(data.message);
+            setVerifyMessage("");
 
         } catch (err) {
             setError(err.message);
         } finally {
             setResendLoading(false);
         }
+    };
+
+    // 🔥 PRO: reset verify message when typing
+    const handleIdentifierChange = (e) => {
+        setIdentifier(e.target.value);
+        setVerifyMessage("");
+        setResendMessage("");
+        setError("");
+    };
+
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+        setError("");
     };
 
     return (
@@ -82,7 +100,7 @@ export default function Login() {
                     type="text"
                     placeholder="Email or Username"
                     value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    onChange={handleIdentifierChange}
                     disabled={loading || resendLoading}
                 />
 
@@ -90,7 +108,7 @@ export default function Login() {
                     type="password"
                     placeholder="Password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     disabled={loading || resendLoading}
                 />
 
