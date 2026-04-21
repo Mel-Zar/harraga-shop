@@ -315,8 +315,11 @@ exports.forgotPassword = async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() });
 
+        // 🔥 NU gör vi exakt som du vill
         if (!user) {
-            return res.json({ message: "If email exists, reset link will be sent" });
+            return res.status(404).json({
+                message: "No account registered with this email"
+            });
         }
 
         const resetToken = crypto.randomBytes(32).toString("hex");
@@ -334,13 +337,16 @@ exports.forgotPassword = async (req, res) => {
 
         await sendResetPasswordEmail(user.email, resetUrl);
 
-        res.json({ message: "If email exists, reset link will be sent" });
+        return res.status(200).json({
+            message: "Reset link sent to your email"
+        });
 
     } catch (err) {
         console.error("🔥 FORGOT PASSWORD ERROR:", err);
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 // =========================
 // RESET PASSWORD

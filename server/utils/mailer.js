@@ -6,6 +6,13 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+
+    // ✅ EXTRA STABILITY SETTINGS
+    secure: false,
+    tls: {
+        rejectUnauthorized: false,
+    },
+
     pool: true,
     maxConnections: 5,
     rateLimit: true,

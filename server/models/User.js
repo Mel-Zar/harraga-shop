@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
             required: true,
             unique: true,
             lowercase: true,
+            trim: true
         },
         password: {
             type: String,
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        city: {
+        country: {
             type: String,
             required: true,
         },

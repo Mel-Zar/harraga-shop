@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { loginUser, resendVerifyEmail } from "../../services/authService";
 import { saveUser } from "../../utils/auth";
+import { Link } from "react-router-dom";
 
 export default function Login() {
     const [identifier, setIdentifier] = useState("");
@@ -57,7 +58,6 @@ export default function Login() {
         setSuccess("");
         setResendMessage("");
 
-        // 🔥 must be email to resend
         if (!identifier.trim() || !identifier.includes("@")) {
             setError("Enter your email in the Email/Username field to resend verification.");
             return;
@@ -78,7 +78,6 @@ export default function Login() {
         }
     };
 
-    // 🔥 PRO: reset verify message when typing
     const handleIdentifierChange = (e) => {
         setIdentifier(e.target.value);
         setVerifyMessage("");
@@ -115,6 +114,11 @@ export default function Login() {
                 <button type="submit" disabled={loading || resendLoading}>
                     {loading ? "Logging in..." : "Login"}
                 </button>
+
+                {/* 🔥 Forgot password link */}
+                <p style={{ marginTop: "10px" }}>
+                    <Link to="/forgot-password">Forgot password?</Link>
+                </p>
 
                 {/* 🔥 verify message */}
                 {verifyMessage && (

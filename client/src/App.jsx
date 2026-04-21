@@ -1,14 +1,16 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // pages
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
+import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
-import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 
 function App() {
 
@@ -36,7 +38,13 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* EMAIL VERIFY */}
           <Route path="/verify-email/:userId/:token" element={<VerifyEmail />} />
+
+          {/* FORGOT / RESET PASSWORD */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </div>
     </Router>
