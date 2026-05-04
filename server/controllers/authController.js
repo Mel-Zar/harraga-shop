@@ -215,3 +215,191 @@ exports.logout = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// =====================================================
+// FORGOT PASSWORD
+// =====================================================
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        // Viktigt: avslöja inte om användare finns eller inte
+        if (!user) {
+            return res.json({
+                message: "If the email exists, a reset link has been sent",
+            });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+
+        user.resetPasswordToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
+
+        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minuter
+
+        await user.save();
+
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+        await sendResetPasswordEmail(user.email, resetUrl);
+
+        return res.json({
+            message: "If the email exists, a reset link has been sent",
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =====================================================
+// RESET PASSWORD
+// =====================================================
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, confirmPassword } = req.body;
+
+        if (!password || !confirmPassword) {
+            return res
+                .status(400)
+                .json({ message: "Password and confirmPassword are required" });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpire: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        user.password = hashedPassword;
+
+        if (!user.passwordHistory) user.passwordHistory = [];
+        user.passwordHistory.push({
+            password: hashedPassword,
+            changedAt: new Date(),
+        });
+
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        return res.json({ message: "Password reset successful" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =====================================================
+// VERIFY EMAIL
+// =====================================================
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { userId, token } = req.params;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid user" });
+        }
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
+
+        if (
+            user.emailVerificationToken !== hashedToken ||
+            user.emailVerificationExpire < Date.now()
+        ) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        user.isVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpire = undefined;
+
+        await user.save();
+
+        return res.json({ message: "Email verified successfully" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =====================================================
+// RESEND VERIFY EMAIL
+// =====================================================
+exports.resendVerifyEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        // Viktigt: avslöja inte om användare finns eller inte
+        if (!user) {
+            return res.json({
+                message: "If the email exists, a verification link was sent",
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: "Email already verified" });
+        }
+
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        user.emailVerificationToken = crypto
+            .createHash("sha256")
+            .update(verificationToken)
+            .digest("hex");
+
+        user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+        await user.save();
+
+        const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
+
+        await sendEmail({
+            to: user.email,
+            subject: "Verify your email",
+            html: `<a href="${verifyUrl}">Verify Email</a>`,
+        });
+
+        return res.json({
+            message: "If the email exists, a verification link was sent",
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
