@@ -5,26 +5,21 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
     const [loading, setLoading] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
 
-    // ✅ track if address was selected from dropdown
     const [selected, setSelected] = useState(false);
-
-    // ✅ lock search after selecting address
     const [locked, setLocked] = useState(false);
-
-    // ✅ NEW: only show "No address found" AFTER a real finished search
     const [searchDone, setSearchDone] = useState(false);
+
+    // ✅ NEW: auto-hide fallback message
+    const [showFallback, setShowFallback] = useState(false);
 
     const abortRef = useRef(null);
     const timeoutRef = useRef(null);
+    const fallbackTimerRef = useRef(null);
     const wrapperRef = useRef(null);
 
-    // 🧠 CACHE
     const cacheRef = useRef({});
-
-    // 🧠 store last selected value
     const lastSelectedRef = useRef("");
 
-    // 🧠 CLOSE DROPDOWN ON OUTSIDE CLICK
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -37,13 +32,11 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // 🔥 SEARCH EFFECT (DEBOUNCE + ABORT + CACHE)
     useEffect(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         timeoutRef.current = setTimeout(async () => {
 
-            // 🔥 if form is submitting, stop search
             if (formLoading) {
                 setResults([]);
                 setActiveIndex(-1);
@@ -57,20 +50,17 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                 setActiveIndex(-1);
                 setLoading(false);
                 setSearchDone(false);
+                setShowFallback(false);
                 return;
             }
 
-            // ✅ if locked, do NOT search again
-            if (locked) {
-                return;
-            }
+            if (locked) return;
 
             const cacheKey = `${form.country}_${form.address.toLowerCase()}`;
 
-            // 🔥 reset "done" when new search begins
             setSearchDone(false);
+            setShowFallback(false);
 
-            // ✅ CACHE HIT
             if (cacheRef.current[cacheKey]) {
                 setResults(cacheRef.current[cacheKey]);
                 setActiveIndex(-1);
@@ -91,13 +81,6 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                     { signal: abortRef.current.signal }
                 );
 
-                if (!res.ok) {
-                    setResults([]);
-                    setActiveIndex(-1);
-                    setSearchDone(true);
-                    return;
-                }
-
                 const data = await res.json();
                 const safeData = Array.isArray(data) ? data : [];
 
@@ -107,12 +90,29 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                 setActiveIndex(-1);
                 setSearchDone(true);
 
+                // ❗ SHOW FALLBACK ONLY IF EMPTY
+                if (safeData.length === 0) {
+                    setShowFallback(true);
+
+                    if (fallbackTimerRef.current) {
+                        clearTimeout(fallbackTimerRef.current);
+                    }
+
+                    fallbackTimerRef.current = setTimeout(() => {
+                        setShowFallback(false);
+                    }, 3000);
+                }
+
             } catch (err) {
                 if (err.name !== "AbortError") {
-                    console.log("Address error:", err);
                     setResults([]);
                     setActiveIndex(-1);
                     setSearchDone(true);
+                    setShowFallback(true);
+
+                    fallbackTimerRef.current = setTimeout(() => {
+                        setShowFallback(false);
+                    }, 3000);
                 }
             } finally {
                 setLoading(false);
@@ -122,7 +122,6 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
         return () => clearTimeout(timeoutRef.current);
     }, [form.address, form.country, locked, formLoading]);
 
-    // 🧠 CLEAN DISPLAY LABEL
     const getLabel = (place) => {
         const addr = place.address || {};
 
@@ -140,7 +139,6 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
         return `${street}${postcode ? `, ${postcode}` : ""}${city ? ` ${city}` : ""}`.trim();
     };
 
-    // 🧠 SELECT ADDRESS (LOCK SEARCH AFTER SELECT)
     const selectAddress = (place) => {
         const addr = place.address || {};
 
@@ -148,18 +146,9 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
 
         setForm((prev) => ({
             ...prev,
-
             address: cleanStreet,
-
-            city:
-                addr.city ||
-                addr.town ||
-                addr.village ||
-                addr.municipality ||
-                "",
-
+            city: addr.city || addr.town || addr.village || addr.municipality || "",
             postalCode: addr.postcode || "",
-
             country: prev.country
         }));
 
@@ -167,15 +156,13 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
 
         setSelected(true);
         setLocked(true);
-
-        // ✅ IMPORTANT: selection = valid, so no fallback
         setSearchDone(false);
+        setShowFallback(false);
 
         setResults([]);
         setActiveIndex(-1);
     };
 
-    // ⌨️ KEYBOARD NAVIGATION
     const handleKeyDown = (e) => {
         if (!results.length) return;
 
@@ -200,21 +187,18 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
         }
     };
 
-    // 🧠 MANUAL INPUT HANDLING
     const handleChange = (value) => {
-        // ✅ unlock search when user types new input
         if (value !== lastSelectedRef.current) {
             setSelected(false);
             setLocked(false);
         }
 
-        // ✅ reset fallback until search is done again
         setSearchDone(false);
+        setShowFallback(false);
 
         setForm((prev) => ({
             ...prev,
             address: value,
-
             ...(value.length === 0 && {
                 city: "",
                 postalCode: ""
@@ -241,21 +225,19 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
             )}
 
             {results.length > 0 && (
-                <ul
-                    style={{
-                        border: "1px solid #ddd",
-                        marginTop: 5,
-                        padding: 0,
-                        listStyle: "none",
-                        position: "absolute",
-                        background: "white",
-                        width: "100%",
-                        zIndex: 9999,
-                        maxHeight: 250,
-                        overflowY: "auto",
-                        borderRadius: 6
-                    }}
-                >
+                <ul style={{
+                    border: "1px solid #ddd",
+                    marginTop: 5,
+                    padding: 0,
+                    listStyle: "none",
+                    position: "absolute",
+                    background: "white",
+                    width: "100%",
+                    zIndex: 9999,
+                    maxHeight: 250,
+                    overflowY: "auto",
+                    borderRadius: 6
+                }}>
                     {results.map((place, i) => (
                         <li
                             key={i}
@@ -273,9 +255,8 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                 </ul>
             )}
 
-            {/* ✅ FALLBACK (PRO: only after a REAL finished search) */}
-            {!loading &&
-                searchDone &&
+            {/* ✅ AUTO-HIDE FALLBACK */}
+            {showFallback &&
                 !selected &&
                 !locked &&
                 form.address.length >= 3 &&
@@ -283,8 +264,7 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                     <div style={{ fontSize: 12, opacity: 0.6, marginTop: 5 }}>
                         No address found — you can still enter manually
                     </div>
-                )
-            }
+                )}
         </div>
     );
 }
