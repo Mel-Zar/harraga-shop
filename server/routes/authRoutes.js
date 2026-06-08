@@ -4,7 +4,7 @@ const router = express.Router();
 const controller = require("../controllers/authController");
 const rateLimiter = require("../middleware/rateLimiter");
 
-// fallback om något saknas
+// fallback om något saknas (för debug)
 const safeFn = (fn, name) => {
     if (typeof fn !== "function") {
         console.log(`❌ Missing: ${name}`);
@@ -15,18 +15,23 @@ const safeFn = (fn, name) => {
     return fn;
 };
 
+// extra safety check (syns i console direkt om något är fel)
+if (!rateLimiter) {
+    console.error("❌ rateLimiter middleware not found!");
+}
+
 // =========================
 // AUTH
 // =========================
 router.post(
     "/register",
-    rateLimiter.registerLimiter || ((req, res, next) => next()),
+    rateLimiter.registerLimiter,
     safeFn(controller.register, "register")
 );
 
 router.post(
     "/login",
-    rateLimiter.loginLimiter || ((req, res, next) => next()),
+    rateLimiter.loginLimiter,
     safeFn(controller.login, "login")
 );
 
@@ -41,13 +46,13 @@ router.post("/logout", safeFn(controller.logout, "logout"));
 // =========================
 router.post(
     "/forgot-password",
-    rateLimiter.forgotPasswordLimiter || ((req, res, next) => next()),
+    rateLimiter.forgotPasswordLimiter,
     safeFn(controller.forgotPassword, "forgotPassword")
 );
 
 router.post(
     "/reset-password/:token",
-    rateLimiter.resetPasswordLimiter || ((req, res, next) => next()),
+    rateLimiter.resetPasswordLimiter,
     safeFn(controller.resetPassword, "resetPassword")
 );
 
@@ -56,13 +61,13 @@ router.post(
 // =========================
 router.get(
     "/verify-email/:userId/:token",
-    rateLimiter.verifyEmailLimiter || ((req, res, next) => next()),
+    rateLimiter.verifyEmailLimiter,
     safeFn(controller.verifyEmail, "verifyEmail")
 );
 
 router.post(
     "/resend-verify-email",
-    rateLimiter.loginLimiter || ((req, res, next) => next()),
+    rateLimiter.verifyEmailLimiter,
     safeFn(controller.resendVerifyEmail, "resendVerifyEmail")
 );
 

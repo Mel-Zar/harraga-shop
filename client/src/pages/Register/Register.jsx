@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { registerUser } from "../../services/authService";
 import countryMap from "../../../../shared/countries.json";
 import AddressInput from "../../components/address/AddressInput.jsx";
@@ -14,12 +14,19 @@ export default function Register() {
         address: "",
         postalCode: "",
         city: "",
-        country: ""
+        country: "",
+
+        // 🧠 HONEYPOT FIELD (MÅSTE VARA TOM)
+        website: ""
     });
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const lastSubmitRef = useRef(0);
+    const cooldownMs = 5000;
+    const retryAfterRef = useRef(0);
 
     const countries = Object.keys(countryMap);
 
@@ -29,7 +36,6 @@ export default function Register() {
         setForm((prev) => ({
             ...prev,
             [name]: value,
-
             ...(name === "address" && {
                 city: "",
                 postalCode: "",
@@ -44,6 +50,26 @@ export default function Register() {
 
         setError("");
         setSuccess("");
+
+        // 🧠 HONEYPOT CHECK (bots fyller detta)
+        if (form.website) {
+            setError("Bot detected");
+            return;
+        }
+
+        const now = Date.now();
+
+        if (now - lastSubmitRef.current < cooldownMs) {
+            setError("⏳ Please wait before trying again");
+            return;
+        }
+
+        if (retryAfterRef.current > now) {
+            setError("⏳ Too many attempts. Try again soon.");
+            return;
+        }
+
+        lastSubmitRef.current = now;
 
         if (!form.username.trim()) return setError("Username is required");
         if (!form.firstName.trim()) return setError("First name is required");
@@ -89,11 +115,18 @@ export default function Register() {
                 address: "",
                 postalCode: "",
                 city: "",
-                country: ""
+                country: "",
+                website: ""
             });
 
         } catch (err) {
-            setError(err.message);
+            if (err?.response?.status === 429) {
+                const retryAfter = Date.now() + 10000;
+                retryAfterRef.current = retryAfter;
+                setError("⛔ Too many requests. Slow down.");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -103,63 +136,24 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
+            {/* 🧠 HONEYPOT (OSYNLIGT FÖR MÄNNISKOR) */}
             <input
-                name="username"
-                value={form.username}
+                name="website"
+                value={form.website}
                 onChange={handleChange}
-                placeholder="Username"
-                disabled={loading}
+                style={{ display: "none" }}
+                tabIndex="-1"
+                autoComplete="off"
             />
 
-            <input
-                name="firstName"
-                value={form.firstName}
-                onChange={handleChange}
-                placeholder="First Name"
-                disabled={loading}
-            />
+            <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
+            <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
+            <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
+            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+            <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
+            <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
 
-            <input
-                name="lastName"
-                value={form.lastName}
-                onChange={handleChange}
-                placeholder="Last Name"
-                disabled={loading}
-            />
-
-            <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Email"
-                disabled={loading}
-            />
-
-            <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Password"
-                disabled={loading}
-            />
-
-            <input
-                name="confirmPassword"
-                type="password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm Password"
-                disabled={loading}
-            />
-
-            <select
-                name="country"
-                value={form.country}
-                onChange={handleChange}
-                disabled={loading}
-            >
+            <select name="country" value={form.country} onChange={handleChange}>
                 <option value="">Select country</option>
                 {countries.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -168,21 +162,8 @@ export default function Register() {
 
             <AddressInput form={form} setForm={setForm} loading={loading} />
 
-            <input
-                name="postalCode"
-                value={form.postalCode}
-                onChange={handleChange}
-                placeholder="Postal Code"
-                disabled={loading}
-            />
-
-            <input
-                name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="City"
-                disabled={loading}
-            />
+            <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
+            <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
 
             <button disabled={loading}>
                 {loading ? "Creating account..." : "Register"}

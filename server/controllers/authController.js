@@ -25,7 +25,7 @@ const generateRefreshToken = (id) => {
 // =====================================================
 exports.register = async (req, res) => {
     try {
-        const {
+        let {
             username,
             firstName,
             lastName,
@@ -36,10 +36,26 @@ exports.register = async (req, res) => {
             postalCode,
             city,
             country,
+            website // honeypot
         } = req.body;
 
         // =============================
-        // BASIC VALIDATION (oförändrat)
+        // NORMALIZATION (BEST PRACTICE)
+        // =============================
+        email = email?.toLowerCase().trim();
+        username = username?.toLowerCase().trim();
+
+        // =============================
+        // 🧠 HONEYPOT BOT PROTECTION
+        // =============================
+        if (website && website.trim() !== "") {
+            return res.status(400).json({
+                message: "Bot detected"
+            });
+        }
+
+        // =============================
+        // BASIC VALIDATION
         // =============================
         if (
             !username ||
@@ -61,7 +77,7 @@ exports.register = async (req, res) => {
         }
 
         // =============================
-        // EMAIL FORMAT CHECK
+        // EMAIL VALIDATION
         // =============================
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
@@ -88,38 +104,31 @@ exports.register = async (req, res) => {
         }
 
         // =============================
-        // ❗ FIX: CHECK EMAIL & USERNAME SEPARATELY (VIKTIG DEL)
+        // DUPLICATE CHECK
         // =============================
-        const emailExists = await User.findOne({
-            email: email.toLowerCase(),
+        const existingUser = await User.findOne({
+            $or: [
+                { email },
+                { username },
+            ],
         });
 
-        if (emailExists) {
+        if (existingUser) {
             return res.status(400).json({
-                message: "Email already exists",
-            });
-        }
-
-        const usernameExists = await User.findOne({
-            username: username.toLowerCase(),
-        });
-
-        if (usernameExists) {
-            return res.status(400).json({
-                message: "Username already exists",
+                message: "Email or username already exists",
             });
         }
 
         // =============================
-        // CREATE USER (oförändrat)
+        // CREATE USER
         // =============================
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            username: username.toLowerCase(),
+            username,
             firstName,
             lastName,
-            email: email.toLowerCase(),
+            email,
             password: hashedPassword,
             address,
             postalCode,
@@ -134,6 +143,9 @@ exports.register = async (req, res) => {
             ],
         });
 
+        // =============================
+        // EMAIL VERIFICATION TOKEN
+        // =============================
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
         user.emailVerificationToken = crypto
@@ -148,7 +160,7 @@ exports.register = async (req, res) => {
         const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
 
         await sendEmail({
-            to: user.email,
+            to: email,
             subject: "Verify your email",
             html: `<a href="${verifyUrl}">Verify Email</a>`,
         });
@@ -156,25 +168,11 @@ exports.register = async (req, res) => {
         return res.status(201).json({
             message: "User created",
         });
+
     } catch (err) {
         console.error(err);
 
-        // =============================
-        // FALLBACK SAFETY (om Mongo ändå triggar duplicate)
-        // =============================
         if (err.code === 11000) {
-            if (err.keyPattern?.email) {
-                return res.status(400).json({
-                    message: "Email already exists",
-                });
-            }
-
-            if (err.keyPattern?.username) {
-                return res.status(400).json({
-                    message: "Username already exists",
-                });
-            }
-
             const field = Object.keys(err.keyValue)[0];
             return res.status(400).json({
                 message: `${field} already exists`,
