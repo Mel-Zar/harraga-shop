@@ -17,7 +17,10 @@ export const getUser = () => {
 // =========================
 export const getToken = () => {
     const user = getUser();
-    return user?.token;
+
+    // ✅ Backend returns accessToken
+    // fallback if token exists in future
+    return user?.accessToken || user?.token;
 };
 
 // =========================
@@ -34,3 +37,4 @@ export const isLoggedIn = () => {
 export const logout = () => {
     localStorage.removeItem("user");
 };
+

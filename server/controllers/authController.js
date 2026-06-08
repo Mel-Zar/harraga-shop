@@ -38,6 +38,9 @@ exports.register = async (req, res) => {
             country,
         } = req.body;
 
+        // =============================
+        // BASIC VALIDATION (oförändrat)
+        // =============================
         if (
             !username ||
             !firstName ||
@@ -57,6 +60,59 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
+        // =============================
+        // EMAIL FORMAT CHECK
+        // =============================
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                message: "Invalid email format",
+            });
+        }
+
+        // =============================
+        // USERNAME VALIDATION
+        // =============================
+        const usernameHasLetter = /[a-zA-Z]/.test(username);
+        if (!usernameHasLetter) {
+            return res.status(400).json({
+                message: "Username must contain at least one letter",
+            });
+        }
+
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({
+                message: "Username can only contain letters, numbers and underscore",
+            });
+        }
+
+        // =============================
+        // ❗ FIX: CHECK EMAIL & USERNAME SEPARATELY (VIKTIG DEL)
+        // =============================
+        const emailExists = await User.findOne({
+            email: email.toLowerCase(),
+        });
+
+        if (emailExists) {
+            return res.status(400).json({
+                message: "Email already exists",
+            });
+        }
+
+        const usernameExists = await User.findOne({
+            username: username.toLowerCase(),
+        });
+
+        if (usernameExists) {
+            return res.status(400).json({
+                message: "Username already exists",
+            });
+        }
+
+        // =============================
+        // CREATE USER (oförändrat)
+        // =============================
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
@@ -102,7 +158,30 @@ exports.register = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+
+        // =============================
+        // FALLBACK SAFETY (om Mongo ändå triggar duplicate)
+        // =============================
+        if (err.code === 11000) {
+            if (err.keyPattern?.email) {
+                return res.status(400).json({
+                    message: "Email already exists",
+                });
+            }
+
+            if (err.keyPattern?.username) {
+                return res.status(400).json({
+                    message: "Username already exists",
+                });
+            }
+
+            const field = Object.keys(err.keyValue)[0];
+            return res.status(400).json({
+                message: `${field} already exists`,
+            });
+        }
+
+        return res.status(500).json({ message: "Server error" });
     }
 };
 
@@ -112,6 +191,11 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
+
+        // ✅ extra validation
+        if (!identifier || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
 
         const user = await User.findOne({
             $or: [
@@ -128,6 +212,13 @@ exports.login = async (req, res) => {
 
         if (!match) {
             return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // ✅ VERIFY CHECK (frontend expects this)
+        if (!user.isVerified) {
+            return res.status(401).json({
+                message: "Please verify your email before login",
+            });
         }
 
         const accessToken = generateAccessToken(user._id);
@@ -208,7 +299,13 @@ exports.logout = async (req, res) => {
             }
         }
 
-        res.clearCookie("refreshToken");
+        // ✅ clear cookie safely
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            path: "/",
+        });
 
         return res.json({ message: "Logged out" });
     } catch (err) {
@@ -325,6 +422,11 @@ exports.verifyEmail = async (req, res) => {
 
         if (!user) {
             return res.status(400).json({ message: "Invalid user" });
+        }
+
+        // ✅ IMPORTANT: frontend expects this exact message
+        if (user.isVerified) {
+            return res.json({ message: "Email already verified" });
         }
 
         const hashedToken = crypto
