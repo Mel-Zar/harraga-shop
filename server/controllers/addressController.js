@@ -1,4 +1,4 @@
-const countryMap = require("../../shared/countries.json");
+const countryMap = require("../config/countries.json");
 
 exports.searchAddress = async (req, res) => {
     try {
@@ -25,8 +25,9 @@ exports.searchAddress = async (req, res) => {
         // ✅ Normalize country input for lookup
         const normalizedCountry = country.toLowerCase();
 
-        // ✅ country validation via shared file
-        const countryCodeRaw = countryMap[normalizedCountry] || countryMap[country];
+        // ✅ country validation via backend config file
+        const countryCodeRaw =
+            countryMap[normalizedCountry] || countryMap[country];
 
         if (!countryCodeRaw || typeof countryCodeRaw !== "string") {
             return res.status(200).json([]);
@@ -35,7 +36,6 @@ exports.searchAddress = async (req, res) => {
         const countryCode = countryCodeRaw.toLowerCase().trim();
 
         // 🔥 SMART QUERY BOOST (IMPORTANT)
-        // Ex: "Street 5, Sweden"
         const smartQuery = `${q}, ${country}`;
 
         // ✅ Build URL safely
@@ -52,11 +52,11 @@ exports.searchAddress = async (req, res) => {
         const timeout = setTimeout(() => controller.abort(), 6000);
 
         let response;
+
         try {
             response = await fetch(url.toString(), {
                 method: "GET",
                 headers: {
-                    // Nominatim kräver tydlig User-Agent / contact
                     "User-Agent": "workhub-app/1.0 (contact: dev)",
                     "Accept": "application/json",
                     "Accept-Language": "en"
@@ -73,13 +73,13 @@ exports.searchAddress = async (req, res) => {
 
         // ✅ Handle non-200
         if (!response.ok) {
-            // Nominatim kan rate-limita (429) osv.
             console.warn("⚠️ Nominatim response not OK:", response.status);
             return res.status(200).json([]);
         }
 
         // ✅ Safely parse JSON
         let data;
+
         try {
             data = await response.json();
         } catch (err) {
@@ -99,7 +99,7 @@ exports.searchAddress = async (req, res) => {
                 address: item.address || {}
             }));
 
-        // ✅ Cache headers (reduces load & improves speed)
+        // ✅ Cache headers
         res.set("Cache-Control", "public, max-age=60");
 
         return res.status(200).json(cleaned);

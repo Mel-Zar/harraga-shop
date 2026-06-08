@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { searchAddress } from "../../services/addressService";
 
 export default function AddressInput({ form, setForm, loading: formLoading }) {
     const [results, setResults] = useState([]);
@@ -93,16 +94,12 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
                 if (abortRef.current) abortRef.current.abort();
                 abortRef.current = new AbortController();
 
-                const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/address/search?q=${encodeURIComponent(
-                        query
-                    )}&country=${encodeURIComponent(country)}`,
-                    { signal: abortRef.current.signal }
+                const data = await searchAddress(
+                    query,
+                    country
                 );
 
-                const data = await res.json();
                 const safeData = Array.isArray(data) ? data : [];
-
                 const ranked = rankResults(safeData, query);
 
                 cacheRef.current[cacheKey] = ranked;
@@ -264,11 +261,11 @@ export default function AddressInput({ form, setForm, loading: formLoading }) {
             {results.length > 0 && (
                 <ul ref={listRef}>
                     {results.map((place, i) => (
-                        <li
-                            key={i}
-                            onMouseDown={() => selectAddress(place)}
-                        >
-                            {highlight(getLabel(place) || place.display_name, form.address)}
+                        <li key={i} onMouseDown={() => selectAddress(place)}>
+                            {highlight(
+                                getLabel(place) || place.display_name,
+                                form.address
+                            )}
                         </li>
                     ))}
                 </ul>

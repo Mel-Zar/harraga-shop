@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { registerUser } from "../../services/authService";
-import countryMap from "../../../../shared/countries.json";
 import AddressInput from "../../components/address/AddressInput.jsx";
 
 export default function Register() {
@@ -15,11 +15,12 @@ export default function Register() {
         postalCode: "",
         city: "",
         country: "",
-
-        // 🧠 HONEYPOT FIELD (MÅSTE VARA TOM)
         website: ""
     });
 
+    const [countries, setCountries] = useState([]);
+
+    const [captchaToken, setCaptchaToken] = useState("");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
@@ -28,7 +29,32 @@ export default function Register() {
     const cooldownMs = 5000;
     const retryAfterRef = useRef(0);
 
-    const countries = Object.keys(countryMap);
+    // =========================
+    // LOAD COUNTRIES FROM BACKEND
+    // =========================
+    useEffect(() => {
+        const loadCountries = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/countries`);
+                const data = await res.json();
+
+                // 🔥 FIX: robust handling (STOP "message")
+                if (Array.isArray(data)) {
+                    setCountries(data);
+                } else if (data && typeof data === "object") {
+                    setCountries(Object.values(data)); // viktig fix
+                } else {
+                    setCountries([]);
+                }
+
+            } catch (err) {
+                console.error("Failed to load countries:", err);
+                setCountries([]);
+            }
+        };
+
+        loadCountries();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -51,7 +77,6 @@ export default function Register() {
         setError("");
         setSuccess("");
 
-        // 🧠 HONEYPOT CHECK (bots fyller detta)
         if (form.website) {
             setError("Bot detected");
             return;
@@ -71,6 +96,7 @@ export default function Register() {
 
         lastSubmitRef.current = now;
 
+        if (!captchaToken) return setError("Please complete captcha");
         if (!form.username.trim()) return setError("Username is required");
         if (!form.firstName.trim()) return setError("First name is required");
         if (!form.lastName.trim()) return setError("Last name is required");
@@ -78,9 +104,7 @@ export default function Register() {
         if (!form.password) return setError("Password is required");
         if (!form.confirmPassword) return setError("Confirm password is required");
 
-        if (form.password.length < 8) {
-            return setError("Password must be at least 8 characters");
-        }
+        if (form.password.length < 8) return setError("Password must be at least 8 characters");
 
         const hasNumber = /\d/.test(form.password);
         const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(form.password);
@@ -101,9 +125,12 @@ export default function Register() {
         setLoading(true);
 
         try {
-            await registerUser(form);
+            await registerUser({
+                ...form,
+                captchaToken
+            });
 
-            setSuccess("✅ Account created! Please check your email and verify before logging in.");
+            setSuccess("Account created!");
 
             setForm({
                 username: "",
@@ -119,14 +146,10 @@ export default function Register() {
                 website: ""
             });
 
+            setCaptchaToken("");
+
         } catch (err) {
-            if (err?.response?.status === 429) {
-                const retryAfter = Date.now() + 10000;
-                retryAfterRef.current = retryAfter;
-                setError("⛔ Too many requests. Slow down.");
-            } else {
-                setError(err.message);
-            }
+            setError(err?.message || "Something went wrong");
         } finally {
             setLoading(false);
         }
@@ -136,15 +159,7 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
-            {/* 🧠 HONEYPOT (OSYNLIGT FÖR MÄNNISKOR) */}
-            <input
-                name="website"
-                value={form.website}
-                onChange={handleChange}
-                style={{ display: "none" }}
-                tabIndex="-1"
-                autoComplete="off"
-            />
+            <input name="website" value={form.website} onChange={handleChange} style={{ display: "none" }} />
 
             <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
             <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
@@ -155,8 +170,8 @@ export default function Register() {
 
             <select name="country" value={form.country} onChange={handleChange}>
                 <option value="">Select country</option>
-                {countries.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                {countries.map((c, i) => (
+                    <option key={i} value={c}>{c}</option>
                 ))}
             </select>
 
@@ -164,6 +179,12 @@ export default function Register() {
 
             <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
             <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
+
+            <HCaptcha
+                sitekey="fc8ee466-865a-456e-87ae-edc4e3983756"
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken("")}
+            />
 
             <button disabled={loading}>
                 {loading ? "Creating account..." : "Register"}

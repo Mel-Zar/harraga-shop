@@ -2,8 +2,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const countryMap = require("../../shared/countries.json");
 const { sendEmail, sendResetPasswordEmail } = require("../utils/mailer");
+const axios = require("axios");
 
 // =====================================================
 // TOKEN HELPERS
@@ -36,27 +36,33 @@ exports.register = async (req, res) => {
             postalCode,
             city,
             country,
-            website // honeypot
+            website,
+            captchaToken
         } = req.body;
 
-        // =============================
-        // NORMALIZATION (BEST PRACTICE)
-        // =============================
         email = email?.toLowerCase().trim();
         username = username?.toLowerCase().trim();
 
-        // =============================
-        // 🧠 HONEYPOT BOT PROTECTION
-        // =============================
         if (website && website.trim() !== "") {
-            return res.status(400).json({
-                message: "Bot detected"
-            });
+            return res.status(400).json({ message: "Bot detected" });
         }
 
-        // =============================
-        // BASIC VALIDATION
-        // =============================
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Captcha required" });
+        }
+
+        const captchaRes = await axios.post(
+            "https://api.hcaptcha.com/siteverify",
+            new URLSearchParams({
+                secret: process.env.HCAPTCHA_SECRET,
+                response: captchaToken,
+            })
+        );
+
+        if (!captchaRes.data.success) {
+            return res.status(400).json({ message: "Captcha verification failed" });
+        }
+
         if (
             !username ||
             !firstName ||
@@ -76,52 +82,19 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
-        // =============================
-        // EMAIL VALIDATION
-        // =============================
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                message: "Invalid email format",
-            });
+            return res.status(400).json({ message: "Invalid email format" });
         }
 
-        // =============================
-        // USERNAME VALIDATION
-        // =============================
-        const usernameHasLetter = /[a-zA-Z]/.test(username);
-        if (!usernameHasLetter) {
-            return res.status(400).json({
-                message: "Username must contain at least one letter",
-            });
-        }
-
-        const usernameRegex = /^[a-zA-Z0-9_]+$/;
-        if (!usernameRegex.test(username)) {
-            return res.status(400).json({
-                message: "Username can only contain letters, numbers and underscore",
-            });
-        }
-
-        // =============================
-        // DUPLICATE CHECK
-        // =============================
         const existingUser = await User.findOne({
-            $or: [
-                { email },
-                { username },
-            ],
+            $or: [{ email }, { username }]
         });
 
         if (existingUser) {
-            return res.status(400).json({
-                message: "Email or username already exists",
-            });
+            return res.status(400).json({ message: "Email or username exists" });
         }
 
-        // =============================
-        // CREATE USER
-        // =============================
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
@@ -135,17 +108,12 @@ exports.register = async (req, res) => {
             city,
             country,
             isVerified: false,
-            passwordHistory: [
-                {
-                    password: hashedPassword,
-                    changedAt: new Date(),
-                },
-            ],
+            passwordHistory: [{
+                password: hashedPassword,
+                changedAt: new Date(),
+            }],
         });
 
-        // =============================
-        // EMAIL VERIFICATION TOKEN
-        // =============================
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
         user.emailVerificationToken = crypto
@@ -165,20 +133,10 @@ exports.register = async (req, res) => {
             html: `<a href="${verifyUrl}">Verify Email</a>`,
         });
 
-        return res.status(201).json({
-            message: "User created",
-        });
+        return res.status(201).json({ message: "User created" });
 
     } catch (err) {
         console.error(err);
-
-        if (err.code === 11000) {
-            const field = Object.keys(err.keyValue)[0];
-            return res.status(400).json({
-                message: `${field} already exists`,
-            });
-        }
-
         return res.status(500).json({ message: "Server error" });
     }
 };

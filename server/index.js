@@ -10,74 +10,104 @@ const rateLimit = require("express-rate-limit");
 const app = express();
 
 // =========================
-// TRUST PROXY
+// TRUST PROXY (for deployment)
 // =========================
 app.set("trust proxy", 1);
 
 // =========================
-// SECURITY
+// SECURITY HEADERS
 // =========================
 app.use(helmet());
 
 // =========================
-// CORS
+// CORS CONFIG
 // =========================
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
+        origin: process.env.CORS_ORIGIN
+            ? process.env.CORS_ORIGIN.split(",")
+            : "http://localhost:5173",
         credentials: true,
     })
 );
 
 // =========================
-// BODY
+// BODY PARSING
 // =========================
 app.use(express.json());
 app.use(cookieParser());
 
 // =========================
-// RATE LIMIT
+// GLOBAL RATE LIMIT
 // =========================
 app.use(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 300,
+        standardHeaders: true,
+        legacyHeaders: false,
     })
 );
 
 // =========================
-// DB
+// DATABASE CONNECTION
 // =========================
 connectDB();
 
 // =========================
 // ROUTES
 // =========================
+
+// 🔥 DEBUG: confirm routes load
+console.log("🔵 Loading routes...");
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/address", require("./routes/addressRoutes"));
+
+// 🔥 IMPORTANT: ADDRESS ROUTE
+try {
+    app.use("/api/address", require("./routes/addressRoutes"));
+    console.log("🟢 /api/address route loaded");
+} catch (err) {
+    console.error("🔴 Failed to load addressRoutes:", err);
+}
+
+app.use("/api/countries", require("./routes/countryRoutes"));
+
+
+// OPTIONAL PROTECTED ROUTES
 app.use("/api/protected", require("./routes/protectedRoutes"));
 
 // =========================
-// 404
+// HEALTH CHECK
+// =========================
+app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "OK" });
+});
+
+// =========================
+// 404 HANDLER
 // =========================
 app.use((req, res) => {
-    res.status(404).json({ message: "Route not found" });
+    res.status(404).json({
+        message: "Route not found",
+        path: req.originalUrl
+    });
 });
 
 // =========================
 // ERROR HANDLER
 // =========================
 app.use((err, req, res, next) => {
-    console.error(err);
+    console.error("❌ Server error:", err);
     res.status(500).json({ message: "Server error" });
 });
 
 // =========================
-// START
+// START SERVER
 // =========================
 const PORT = process.env.PORT || 5050;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
