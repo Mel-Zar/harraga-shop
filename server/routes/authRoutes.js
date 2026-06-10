@@ -15,7 +15,7 @@ const safeFn = (fn, name) => {
     return fn;
 };
 
-// extra safety check (syns i console direkt om något är fel)
+// extra safety check
 if (!rateLimiter) {
     console.error("❌ rateLimiter middleware not found!");
 }
@@ -25,34 +25,41 @@ if (!rateLimiter) {
 // =========================
 router.post(
     "/register",
-    rateLimiter.registerLimiter,
+    rateLimiter?.registerLimiter,
     safeFn(controller.register, "register")
 );
 
 router.post(
     "/login",
-    rateLimiter.loginLimiter,
+    rateLimiter?.loginLimiter,
     safeFn(controller.login, "login")
 );
 
 // =========================
 // JWT FLOW
 // =========================
-router.post("/refresh", safeFn(controller.refreshToken, "refreshToken"));
-router.post("/logout", safeFn(controller.logout, "logout"));
+router.post(
+    "/refresh",
+    safeFn(controller.refreshToken, "refreshToken")
+);
+
+router.post(
+    "/logout",
+    safeFn(controller.logout, "logout")
+);
 
 // =========================
 // PASSWORD RESET
 // =========================
 router.post(
     "/forgot-password",
-    rateLimiter.forgotPasswordLimiter,
+    rateLimiter?.forgotPasswordLimiter,
     safeFn(controller.forgotPassword, "forgotPassword")
 );
 
 router.post(
     "/reset-password/:token",
-    rateLimiter.resetPasswordLimiter,
+    rateLimiter?.resetPasswordLimiter,
     safeFn(controller.resetPassword, "resetPassword")
 );
 
@@ -61,13 +68,13 @@ router.post(
 // =========================
 router.get(
     "/verify-email/:userId/:token",
-    rateLimiter.verifyEmailLimiter,
+    rateLimiter?.verifyEmailLimiter,
     safeFn(controller.verifyEmail, "verifyEmail")
 );
 
 router.post(
     "/resend-verify-email",
-    rateLimiter.verifyEmailLimiter,
+    rateLimiter?.verifyEmailLimiter,
     safeFn(controller.resendVerifyEmail, "resendVerifyEmail")
 );
 

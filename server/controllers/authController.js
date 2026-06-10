@@ -82,6 +82,40 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
+        // =====================================================
+        // 🧂 PASSWORD POLICY (SERVER-SIDE - SAFE & PRO)
+        // =====================================================
+
+        password = (password || "").trim();
+
+        if (password.length < 8) {
+            return res.status(400).json({
+                message: "Password must be at least 8 characters"
+            });
+        }
+
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password);
+        const hasUppercase = /[A-Z]/.test(password);
+
+        if (!hasNumber) {
+            return res.status(400).json({
+                message: "Password must contain at least 1 number"
+            });
+        }
+
+        if (!hasSpecial) {
+            return res.status(400).json({
+                message: "Password must contain at least 1 special character"
+            });
+        }
+
+        if (!hasUppercase) {
+            return res.status(400).json({
+                message: "Password must contain at least 1 uppercase letter"
+            });
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ message: "Invalid email format" });
@@ -148,7 +182,6 @@ exports.login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
-        // ✅ extra validation
         if (!identifier || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -170,7 +203,6 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        // ✅ VERIFY CHECK (frontend expects this)
         if (!user.isVerified) {
             return res.status(401).json({
                 message: "Please verify your email before login",
@@ -180,14 +212,12 @@ exports.login = async (req, res) => {
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
 
-        // save refresh token in DB
         user.refreshTokens.push(refreshToken);
         await user.save();
 
-        // httpOnly cookie
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: false, // true i production (https)
+            secure: false,
             sameSite: "lax",
             path: "/",
         });
@@ -200,6 +230,7 @@ exports.login = async (req, res) => {
                 username: user.username,
             },
         });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error" });
@@ -230,6 +261,7 @@ exports.refreshToken = async (req, res) => {
         return res.json({
             accessToken: newAccessToken,
         });
+
     } catch (err) {
         return res.status(403).json({ message: "Invalid refresh token" });
     }
@@ -243,19 +275,14 @@ exports.logout = async (req, res) => {
         const token = req.cookies.refreshToken;
 
         if (token) {
-            const user = await User.findOne({
-                refreshTokens: token,
-            });
+            const user = await User.findOne({ refreshTokens: token });
 
             if (user) {
-                user.refreshTokens = user.refreshTokens.filter(
-                    (t) => t !== token
-                );
+                user.refreshTokens = user.refreshTokens.filter(t => t !== token);
                 await user.save();
             }
         }
 
-        // ✅ clear cookie safely
         res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: false,
@@ -264,6 +291,7 @@ exports.logout = async (req, res) => {
         });
 
         return res.json({ message: "Logged out" });
+
     } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
@@ -282,7 +310,6 @@ exports.forgotPassword = async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() });
 
-        // Viktigt: avslöja inte om användare finns eller inte
         if (!user) {
             return res.json({
                 message: "If the email exists, a reset link has been sent",
@@ -296,7 +323,7 @@ exports.forgotPassword = async (req, res) => {
             .update(resetToken)
             .digest("hex");
 
-        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minuter
+        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
         await user.save();
 
@@ -307,6 +334,7 @@ exports.forgotPassword = async (req, res) => {
         return res.json({
             message: "If the email exists, a reset link has been sent",
         });
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Server error" });
@@ -322,19 +350,14 @@ exports.resetPassword = async (req, res) => {
         const { password, confirmPassword } = req.body;
 
         if (!password || !confirmPassword) {
-            return res
-                .status(400)
-                .json({ message: "Password and confirmPassword are required" });
+            return res.status(400).json({ message: "Password and confirmPassword are required" });
         }
 
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
-        const hashedToken = crypto
-            .createHash("sha256")
-            .update(token)
-            .digest("hex");
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
         const user = await User.findOne({
             resetPasswordToken: hashedToken,
@@ -350,6 +373,7 @@ exports.resetPassword = async (req, res) => {
         user.password = hashedPassword;
 
         if (!user.passwordHistory) user.passwordHistory = [];
+
         user.passwordHistory.push({
             password: hashedPassword,
             changedAt: new Date(),
@@ -361,6 +385,7 @@ exports.resetPassword = async (req, res) => {
         await user.save();
 
         return res.json({ message: "Password reset successful" });
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Server error" });
@@ -380,15 +405,11 @@ exports.verifyEmail = async (req, res) => {
             return res.status(400).json({ message: "Invalid user" });
         }
 
-        // ✅ IMPORTANT: frontend expects this exact message
         if (user.isVerified) {
             return res.json({ message: "Email already verified" });
         }
 
-        const hashedToken = crypto
-            .createHash("sha256")
-            .update(token)
-            .digest("hex");
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
         if (
             user.emailVerificationToken !== hashedToken ||
@@ -404,6 +425,7 @@ exports.verifyEmail = async (req, res) => {
         await user.save();
 
         return res.json({ message: "Email verified successfully" });
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Server error" });
@@ -423,7 +445,6 @@ exports.resendVerifyEmail = async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() });
 
-        // Viktigt: avslöja inte om användare finns eller inte
         if (!user) {
             return res.json({
                 message: "If the email exists, a verification link was sent",
@@ -456,8 +477,9 @@ exports.resendVerifyEmail = async (req, res) => {
         return res.json({
             message: "If the email exists, a verification link was sent",
         });
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Server error" });
     }
-};
+}; 

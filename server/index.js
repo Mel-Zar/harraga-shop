@@ -20,13 +20,15 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 // =========================
-// CORS CONFIG
+// CORS CONFIG (PRO FIX)
 // =========================
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:5173"];
+
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN
-            ? process.env.CORS_ORIGIN.split(",")
-            : "http://localhost:5173",
+        origin: allowedOrigins,
         credentials: true,
     })
 );
@@ -74,8 +76,6 @@ try {
 
 app.use("/api/countries", require("./routes/countryRoutes"));
 
-
-// OPTIONAL PROTECTED ROUTES
 app.use("/api/protected", require("./routes/protectedRoutes"));
 
 // =========================
