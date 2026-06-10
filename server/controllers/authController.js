@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
         }
 
         const captchaRes = await axios.post(
-            "https://api.hcaptcha.com/siteverify",
+            "https://hcaptcha.com/siteverify",
             new URLSearchParams({
                 secret: process.env.HCAPTCHA_SECRET,
                 response: captchaToken,

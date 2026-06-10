@@ -21,28 +21,33 @@ export default function Register() {
     const [countries, setCountries] = useState([]);
 
     const [captchaToken, setCaptchaToken] = useState("");
+    const [showCaptcha, setShowCaptcha] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const [passwordStrength, setPasswordStrength] = useState({
+        score: 0,
+        label: "",
+        color: ""
+    });
 
     const lastSubmitRef = useRef(0);
     const cooldownMs = 5000;
     const retryAfterRef = useRef(0);
 
-    // =========================
-    // LOAD COUNTRIES FROM BACKEND
-    // =========================
     useEffect(() => {
         const loadCountries = async () => {
             try {
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/api/countries`);
                 const data = await res.json();
 
-                // 🔥 FIX: robust handling (STOP "message")
+                console.log("📦 COUNTRIES API RESPONSE:", data);
+
                 if (Array.isArray(data)) {
                     setCountries(data);
                 } else if (data && typeof data === "object") {
-                    setCountries(Object.values(data)); // viktig fix
+                    setCountries(Object.values(data));
                 } else {
                     setCountries([]);
                 }
@@ -56,6 +61,20 @@ export default function Register() {
         loadCountries();
     }, []);
 
+    const checkPasswordStrength = (password) => {
+        let score = 0;
+
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (/\d/.test(password)) score++;
+        if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) score++;
+        if (/[A-Z]/.test(password)) score++;
+
+        if (score <= 2) return { score, label: "Weak", color: "red" };
+        if (score === 3 || score === 4) return { score, label: "Medium", color: "orange" };
+        return { score, label: "Strong", color: "green" };
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -67,10 +86,18 @@ export default function Register() {
                 postalCode: "",
             })
         }));
+
+        if (name === "password") {
+            setPasswordStrength(checkPasswordStrength(value));
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        console.log("🚀 FORM SUBMIT START");
+        console.log("🔐 CAPTCHA TOKEN:", captchaToken);
+        console.log("📄 FORM DATA:", form);
 
         if (loading) return;
 
@@ -96,7 +123,12 @@ export default function Register() {
 
         lastSubmitRef.current = now;
 
-        if (!captchaToken) return setError("Please complete captcha");
+        if (!captchaToken) {
+            setShowCaptcha(true);
+            setError("Please complete captcha");
+            return;
+        }
+
         if (!form.username.trim()) return setError("Username is required");
         if (!form.firstName.trim()) return setError("First name is required");
         if (!form.lastName.trim()) return setError("Last name is required");
@@ -125,10 +157,12 @@ export default function Register() {
         setLoading(true);
 
         try {
-            await registerUser({
+            const res = await registerUser({
                 ...form,
                 captchaToken
             });
+
+            console.log("✅ REGISTER SUCCESS:", res);
 
             setSuccess("Account created!");
 
@@ -147,8 +181,11 @@ export default function Register() {
             });
 
             setCaptchaToken("");
+            setShowCaptcha(false);
+            setPasswordStrength({ score: 0, label: "", color: "" });
 
         } catch (err) {
+            console.log("❌ REGISTER ERROR:", err);
             setError(err?.message || "Something went wrong");
         } finally {
             setLoading(false);
@@ -159,13 +196,34 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
             <h2>Register</h2>
 
-            <input name="website" value={form.website} onChange={handleChange} style={{ display: "none" }} />
+            <input
+                name="website"
+                value={form.website}
+                onChange={handleChange}
+                style={{ display: "none" }}
+            />
 
             <input name="username" value={form.username} onChange={handleChange} placeholder="Username" />
             <input name="firstName" value={form.firstName} onChange={handleChange} placeholder="First Name" />
             <input name="lastName" value={form.lastName} onChange={handleChange} placeholder="Last Name" />
             <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+
             <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" />
+
+            {/* PASSWORD STRENGTH (SASS HANDLES STYLE) */}
+            {form.password && (
+                <div className="password-strength">
+                    <div
+                        className="password-strength__bar"
+                        data-strength={passwordStrength.label}
+                        style={{ width: `${passwordStrength.score * 20}%` }}
+                    />
+                    <small className="password-strength__label">
+                        {passwordStrength.label}
+                    </small>
+                </div>
+            )}
+
             <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
 
             <select name="country" value={form.country} onChange={handleChange}>
@@ -180,11 +238,18 @@ export default function Register() {
             <input name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="Postal Code" />
             <input name="city" value={form.city} onChange={handleChange} placeholder="City" />
 
-            <HCaptcha
-                sitekey="fc8ee466-865a-456e-87ae-edc4e3983756"
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken("")}
-            />
+            {showCaptcha && (
+                <div style={{ marginTop: "20px" }}>
+                    <HCaptcha
+                        sitekey="fc8ee466-865a-456e-87ae-edc4e3983756"
+                        onVerify={(token) => {
+                            setCaptchaToken(token);
+                            setError("");
+                        }}
+                        onExpire={() => setCaptchaToken("")}
+                    />
+                </div>
+            )}
 
             <button disabled={loading}>
                 {loading ? "Creating account..." : "Register"}
