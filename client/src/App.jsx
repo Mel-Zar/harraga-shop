@@ -8,6 +8,10 @@ import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
+// Product pages
+import Home from "./pages/Home/Home";
+import CreateProduct from "./pages/CreateProduct/CreateProduct";
+
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
@@ -35,16 +39,40 @@ function App() {
            📍 ROUTES
         ========================= */}
         <Routes>
-          <Route path="/" element={<Login />} />
+
+          {/* AUTH */}
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
           {/* EMAIL VERIFY */}
-          <Route path="/verify-email/:userId/:token" element={<VerifyEmail />} />
+          <Route
+            path="/verify-email/:userId/:token"
+            element={<VerifyEmail />}
+          />
 
           {/* FORGOT / RESET PASSWORD */}
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword />}
+          />
+
+          {/* PRODUCTS */}
+          <Route
+            path="/products"
+            element={<Home />}
+          />
+
+          <Route
+            path="/products/create"
+            element={<CreateProduct />}
+          />
+
         </Routes>
       </div>
     </Router>
