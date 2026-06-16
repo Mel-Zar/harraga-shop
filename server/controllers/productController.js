@@ -19,7 +19,10 @@ const createProduct = async (req, res) => {
 
         // HANDLE MULTER IMAGES (max 4)
         const images = req.files
-            ? req.files.map((file) => file.originalname)
+            ? req.files.map(
+                (file) =>
+                    `/uploads/${file.filename}`
+            )
             : [];
 
         const product = await Product.create({
@@ -103,21 +106,23 @@ const updateProduct = async (req, res) => {
 
         if (req.files && req.files.length > 0) {
             const images = req.files.map(
-                (file) => file.originalname
+                (file) =>
+                    `/uploads/${file.filename}`
             );
 
             updateData.images = images;
             updateData.image = images[0];
         }
 
-        const product = await Product.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            {
-                new: true,
-                runValidators: true,
-            }
-        );
+        const product =
+            await Product.findByIdAndUpdate(
+                req.params.id,
+                updateData,
+                {
+                    new: true,
+                    runValidators: true,
+                }
+            );
 
         if (!product) {
             return res.status(404).json({
@@ -144,9 +149,10 @@ const deleteProduct = async (req, res) => {
             });
         }
 
-        const product = await Product.findByIdAndDelete(
-            req.params.id
-        );
+        const product =
+            await Product.findByIdAndDelete(
+                req.params.id
+            );
 
         if (!product) {
             return res.status(404).json({
@@ -155,7 +161,8 @@ const deleteProduct = async (req, res) => {
         }
 
         res.status(200).json({
-            message: "Product deleted successfully",
+            message:
+                "Product deleted successfully",
         });
     } catch (error) {
         console.error(error);

@@ -7,10 +7,18 @@ function CreateProduct() {
 
     const handleCreate = async (formData) => {
         try {
-            await createProduct(formData);
+            const product = await createProduct(formData);
+
+            console.log("✅ Product created:", product);
+
             navigate("/products");
         } catch (error) {
-            console.error("Create product failed:", error);
+            console.error("❌ Create product failed:", error);
+
+            alert(
+                error.message ||
+                "Failed to create product"
+            );
         }
     };
 

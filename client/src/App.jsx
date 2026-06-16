@@ -17,33 +17,50 @@ import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
 
 function App() {
-
   // =========================
   // 🔐 TEST PROTECTED ROUTE
   // =========================
   useEffect(() => {
     getProtectedData()
-      .then((data) => console.log("✅ PROTECTED DATA:", data))
-      .catch((err) => console.log("❌ PROTECTED ERROR:", err.message));
+      .then((data) =>
+        console.log("✅ PROTECTED DATA:", data)
+      )
+      .catch((err) =>
+        console.log(
+          "❌ PROTECTED ERROR:",
+          err.message
+        )
+      );
   }, []);
 
   return (
     <Router>
       <div>
         {/* =========================
-           🔥 NAVBAR
+            🔥 NAVBAR
         ========================= */}
         <Navbar />
 
         {/* =========================
-           📍 ROUTES
+            📍 ROUTES
         ========================= */}
         <Routes>
+          {/* HOME */}
+          <Route
+            path="/"
+            element={<Home />}
+          />
 
           {/* AUTH */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
 
           {/* EMAIL VERIFY */}
           <Route
@@ -51,12 +68,13 @@ function App() {
             element={<VerifyEmail />}
           />
 
-          {/* FORGOT / RESET PASSWORD */}
+          {/* FORGOT PASSWORD */}
           <Route
             path="/forgot-password"
             element={<ForgotPassword />}
           />
 
+          {/* RESET PASSWORD */}
           <Route
             path="/reset-password/:token"
             element={<ResetPassword />}
@@ -72,7 +90,6 @@ function App() {
             path="/products/create"
             element={<CreateProduct />}
           />
-
         </Routes>
       </div>
     </Router>

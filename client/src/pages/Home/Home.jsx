@@ -35,9 +35,93 @@ function Home() {
                 <p>No products found</p>
             ) : (
                 products.map((product) => (
-                    <div key={product._id}>
-                        <h3>{product.name}</h3>
-                        <p>${product.price}</p>
+                    <div
+                        key={product._id}
+                        style={{
+                            border: "1px solid #ddd",
+                            padding: "15px",
+                            marginBottom: "15px",
+                            borderRadius: "8px",
+                        }}
+                    >
+                        <h2>{product.name}</h2>
+
+                        <p>
+                            <strong>
+                                Description:
+                            </strong>{" "}
+                            {
+                                product.description
+                            }
+                        </p>
+
+                        <p>
+                            <strong>
+                                Price:
+                            </strong>{" "}
+                            ${product.price}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Category:
+                            </strong>{" "}
+                            {product.category}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Stock:
+                            </strong>{" "}
+                            {product.stock}
+                        </p>
+
+                        {product.image && (
+                            <div>
+                                <p>
+                                    Main image:
+                                </p>
+
+                                <img
+                                    src={`${import.meta.env.VITE_API_URL}${product.image}`}
+                                    alt={
+                                        product.name
+                                    }
+                                    width="200"
+                                />
+                            </div>
+                        )}
+
+                        {product.images &&
+                            product.images
+                                .length >
+                            0 && (
+                                <div>
+                                    <p>
+                                        Gallery:
+                                    </p>
+
+                                    {product.images.map(
+                                        (
+                                            image,
+                                            index
+                                        ) => (
+                                            <img
+                                                key={
+                                                    index
+                                                }
+                                                src={`${import.meta.env.VITE_API_URL}${image}`}
+                                                alt={`${product.name}-${index}`}
+                                                width="100"
+                                                style={{
+                                                    marginRight:
+                                                        "10px",
+                                                }}
+                                            />
+                                        )
+                                    )}
+                                </div>
+                            )}
                     </div>
                 ))
             )}
