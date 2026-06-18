@@ -30,7 +30,7 @@ router
     .route("/:id")
     .get(getProductById)
     .put(
-        upload.array("images", 4),
+        upload.array("images", 4), // gamla + nya bilder hanteras i controllern
         updateProduct
     )
     .delete(deleteProduct);

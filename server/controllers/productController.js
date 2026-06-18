@@ -17,7 +17,6 @@ const createProduct = async (req, res) => {
             stock,
         } = req.body;
 
-        // HANDLE MULTER IMAGES (max 4)
         const images = req.files
             ? req.files.map(
                 (file) =>
@@ -100,35 +99,82 @@ const updateProduct = async (req, res) => {
             });
         }
 
-        const updateData = {
-            ...req.body,
-        };
-
-        if (req.files && req.files.length > 0) {
-            const images = req.files.map(
-                (file) =>
-                    `/uploads/${file.filename}`
-            );
-
-            updateData.images = images;
-            updateData.image = images[0];
-        }
-
-        const product =
-            await Product.findByIdAndUpdate(
-                req.params.id,
-                updateData,
-                {
-                    new: true,
-                    runValidators: true,
-                }
-            );
+        const product = await Product.findById(
+            req.params.id
+        );
 
         if (!product) {
             return res.status(404).json({
                 message: "Product not found",
             });
         }
+
+        product.name =
+            req.body.name ??
+            product.name;
+
+        product.description =
+            req.body.description ??
+            product.description;
+
+        product.price =
+            req.body.price ??
+            product.price;
+
+        product.category =
+            req.body.category ??
+            product.category;
+
+        product.stock =
+            req.body.stock ??
+            product.stock;
+
+        // Ta bort specifika bilder
+        if (req.body.removedImages) {
+            let removedImages =
+                req.body.removedImages;
+
+            if (
+                typeof removedImages ===
+                "string"
+            ) {
+                removedImages =
+                    JSON.parse(
+                        removedImages
+                    );
+            }
+
+            product.images =
+                product.images.filter(
+                    (img) =>
+                        !removedImages.includes(
+                            img
+                        )
+                );
+        }
+
+        // Lägg till nya bilder
+        if (
+            req.files &&
+            req.files.length > 0
+        ) {
+            const newImages =
+                req.files.map(
+                    (file) =>
+                        `/uploads/${file.filename}`
+                );
+
+            product.images = [
+                ...product.images,
+                ...newImages,
+            ].slice(0, 4);
+        }
+
+        // Uppdatera huvudbild
+        product.image =
+            product.images[0] || "";
+
+        await product.save();
 
         res.status(200).json(product);
     } catch (error) {

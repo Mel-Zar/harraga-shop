@@ -19,19 +19,21 @@ const productSchema = new mongoose.Schema(
             min: 0,
         },
 
+        // Första bilden (thumbnail)
         image: {
             type: String,
             default: "",
         },
 
-
+        // Alla bilder
         images: {
             type: [String],
             validate: {
                 validator: function (arr) {
                     return arr.length <= 4;
                 },
-                message: "Max 4 extra images allowed",
+                message:
+                    "Max 4 images allowed",
             },
             default: [],
         },
@@ -39,11 +41,18 @@ const productSchema = new mongoose.Schema(
         category: {
             type: String,
             required: true,
+            trim: true,
         },
 
         stock: {
             type: Number,
             default: 0,
+            min: 0,
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true,
         },
     },
     {
@@ -51,4 +60,7 @@ const productSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Product", productSchema);
+module.exports = mongoose.model(
+    "Product",
+    productSchema
+);

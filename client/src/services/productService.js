@@ -20,8 +20,10 @@ export const getProducts = async () => {
     } catch (error) {
         console.error(
             "❌ GET PRODUCTS ERROR:",
-            error.response?.data || error.message
+            error.response?.data ||
+            error.message
         );
+
         throw error;
     }
 };
@@ -44,8 +46,10 @@ export const getProductById = async (
     } catch (error) {
         console.error(
             "❌ GET PRODUCT ERROR:",
-            error.response?.data || error.message
+            error.response?.data ||
+            error.message
         );
+
         throw error;
     }
 };
@@ -110,8 +114,10 @@ export const updateProduct = async (
     } catch (error) {
         console.error(
             "❌ UPDATE PRODUCT ERROR:",
-            error.response?.data || error.message
+            error.response?.data ||
+            error.message
         );
+
         throw error;
     }
 };
@@ -134,8 +140,10 @@ export const deleteProduct = async (
     } catch (error) {
         console.error(
             "❌ DELETE PRODUCT ERROR:",
-            error.response?.data || error.message
+            error.response?.data ||
+            error.message
         );
+
         throw error;
     }
 };
