@@ -18,10 +18,12 @@ const createProduct = async (req, res) => {
         } = req.body;
 
         const images = req.files
-            ? req.files.map(
-                (file) =>
-                    `/uploads/${file.filename}`
-            )
+            ? req.files
+                .slice(0, 4)
+                .map(
+                    (file) =>
+                        `/uploads/${file.filename}`
+                )
             : [];
 
         const product = await Product.create({
@@ -138,10 +140,14 @@ const updateProduct = async (req, res) => {
                 typeof removedImages ===
                 "string"
             ) {
-                removedImages =
-                    JSON.parse(
-                        removedImages
-                    );
+                try {
+                    removedImages =
+                        JSON.parse(
+                            removedImages
+                        );
+                } catch {
+                    removedImages = [];
+                }
             }
 
             product.images =

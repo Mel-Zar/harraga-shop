@@ -28,6 +28,9 @@ function CreateProduct() {
     const [removedImages, setRemovedImages] =
         useState([]);
 
+    const [newImagePreviews, setNewImagePreviews] =
+        useState([]);
+
     useEffect(() => {
         let mounted = true;
 
@@ -90,6 +93,7 @@ function CreateProduct() {
 
         setEditImages([]);
         setRemovedImages([]);
+        setNewImagePreviews([]);
     };
 
     const saveEdit = async (
@@ -144,6 +148,7 @@ function CreateProduct() {
             setEditingId(null);
             setEditImages([]);
             setRemovedImages([]);
+            setNewImagePreviews([]);
 
             await loadProducts();
         } catch (error) {
@@ -307,86 +312,117 @@ function CreateProduct() {
                                     }
                                 />
 
-                                {editData.images &&
-                                    editData
-                                        .images
-                                        .length >
-                                    0 && (
-                                        <div
-                                            style={{
-                                                display:
-                                                    "flex",
-                                                gap: "10px",
-                                                flexWrap:
-                                                    "wrap",
-                                                marginBottom:
-                                                    "15px",
-                                            }}
-                                        >
-                                            {editData.images.map(
-                                                (
-                                                    img,
-                                                    index
-                                                ) => (
-                                                    <div
-                                                        key={
-                                                            index
-                                                        }
-                                                    >
-                                                        <img
-                                                            src={`${import.meta.env.VITE_API_URL}${img}`}
-                                                            alt=""
-                                                            width="100"
-                                                        />
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        gap: "10px",
+                                        flexWrap: "wrap",
+                                        marginBottom: "15px",
+                                    }}
+                                >
+                                    {editData.images?.map(
+                                        (img, index) => (
+                                            <div key={`old-${index}`}>
+                                                <img
+                                                    src={`${import.meta.env.VITE_API_URL}${img}`}
+                                                    alt=""
+                                                    width="100"
+                                                />
 
-                                                        <br />
+                                                <br />
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setRemovedImages(
-                                                                    [
-                                                                        ...removedImages,
-                                                                        img,
-                                                                    ]
-                                                                );
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setRemovedImages([
+                                                            ...removedImages,
+                                                            img,
+                                                        ]);
 
-                                                                setEditData(
-                                                                    {
-                                                                        ...editData,
-                                                                        images:
-                                                                            editData.images.filter(
-                                                                                (
-                                                                                    image
-                                                                                ) =>
-                                                                                    image !==
-                                                                                    img
-                                                                            ),
-                                                                    }
-                                                                );
-                                                            }}
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </div>
-                                                )
-                                            )}
-                                        </div>
+                                                        setEditData({
+                                                            ...editData,
+                                                            images:
+                                                                editData.images.filter(
+                                                                    (image) =>
+                                                                        image !== img
+                                                                ),
+                                                        });
+                                                    }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        )
                                     )}
+
+                                    {newImagePreviews.map(
+                                        (image, index) => (
+                                            <div key={`new-${index}`}>
+                                                <img
+                                                    src={image.preview}
+                                                    alt=""
+                                                    width="100"
+                                                />
+
+                                                <br />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated =
+                                                            newImagePreviews.filter(
+                                                                (_, i) =>
+                                                                    i !== index
+                                                            );
+
+                                                        setNewImagePreviews(
+                                                            updated
+                                                        );
+
+                                                        setEditImages(
+                                                            updated.map(
+                                                                (item) =>
+                                                                    item.file
+                                                            )
+                                                        );
+                                                    }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
 
                                 <input
                                     type="file"
                                     multiple
                                     accept="image/*"
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditImages(
-                                            e
-                                                .target
-                                                .files
-                                        )
-                                    }
+                                    onChange={(e) => {
+                                        const files = Array.from(
+                                            e.target.files
+                                        );
+
+                                        const newPreviews =
+                                            files.map((file) => ({
+                                                file,
+                                                preview:
+                                                    URL.createObjectURL(
+                                                        file
+                                                    ),
+                                            }));
+
+                                        setEditImages((prev) => [
+                                            ...prev,
+                                            ...files,
+                                        ]);
+
+                                        setNewImagePreviews((prev) => [
+                                            ...prev,
+                                            ...newPreviews,
+                                        ]);
+                                    }}
+
                                 />
 
                                 <br />
@@ -405,11 +441,12 @@ function CreateProduct() {
                                 {" "}
 
                                 <button
-                                    onClick={() =>
-                                        setEditingId(
-                                            null
-                                        )
-                                    }
+                                    onClick={() => {
+                                        setEditingId(null);
+                                        setEditImages([]);
+                                        setRemovedImages([]);
+                                        setNewImagePreviews([]);
+                                    }}
                                 >
                                     Cancel
                                 </button>
