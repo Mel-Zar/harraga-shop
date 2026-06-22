@@ -211,106 +211,110 @@ function CreateProduct() {
                         {editingId ===
                             product._id ? (
                             <>
-                                <input
-                                    value={
-                                        editData.name ||
-                                        ""
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditData(
-                                            {
+                                <h3>
+                                    <input
+                                        style={{
+                                            fontSize: "1.17em",
+                                            fontWeight: "bold",
+                                            border: "none",
+                                            background: "transparent",
+                                            width: "100%",
+                                            outline: "none",
+                                        }}
+                                        value={editData.name || ""}
+                                        onChange={(e) =>
+                                            setEditData({
                                                 ...editData,
-                                                name: e
-                                                    .target
-                                                    .value,
-                                            }
-                                        )
-                                    }
-                                />
+                                                name: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </h3>
 
-                                <textarea
-                                    value={
-                                        editData.description ||
-                                        ""
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditData(
-                                            {
+                                <p>
+                                    <textarea
+                                        style={{
+                                            width: "100%",
+                                            border: "none",
+                                            background: "transparent",
+                                            resize: "none",
+                                            outline: "none",
+                                            font: "inherit",
+                                        }}
+                                        value={editData.description || ""}
+                                        onChange={(e) =>
+                                            setEditData({
                                                 ...editData,
                                                 description:
-                                                    e
-                                                        .target
-                                                        .value,
-                                            }
-                                        )
-                                    }
-                                />
+                                                    e.target.value,
+                                            })
+                                        }
+                                    />
+                                </p>
 
-                                <input
-                                    type="number"
-                                    value={
-                                        editData.price ||
-                                        ""
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditData(
-                                            {
+                                <p>
+                                    Price: $
+                                    <input
+                                        type="number"
+                                        style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            outline: "none",
+                                            font: "inherit",
+                                            width: "100px",
+                                        }}
+                                        value={editData.price || ""}
+                                        onChange={(e) =>
+                                            setEditData({
                                                 ...editData,
                                                 price:
-                                                    e
-                                                        .target
-                                                        .value,
-                                            }
-                                        )
-                                    }
-                                />
+                                                    e.target.value,
+                                            })
+                                        }
+                                    />
+                                </p>
 
-                                <input
-                                    value={
-                                        editData.category ||
-                                        ""
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditData(
-                                            {
+                                <p>
+                                    Category:{" "}
+                                    <input
+                                        style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            outline: "none",
+                                            font: "inherit",
+                                        }}
+                                        value={editData.category || ""}
+                                        onChange={(e) =>
+                                            setEditData({
                                                 ...editData,
                                                 category:
-                                                    e
-                                                        .target
-                                                        .value,
-                                            }
-                                        )
-                                    }
-                                />
+                                                    e.target.value,
+                                            })
+                                        }
+                                    />
+                                </p>
 
-                                <input
-                                    type="number"
-                                    value={
-                                        editData.stock ||
-                                        0
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        setEditData(
-                                            {
+                                <p>
+                                    Stock:{" "}
+                                    <input
+                                        type="number"
+                                        style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            outline: "none",
+                                            font: "inherit",
+                                            width: "80px",
+                                        }}
+                                        value={editData.stock || 0}
+                                        onChange={(e) =>
+                                            setEditData({
                                                 ...editData,
                                                 stock:
-                                                    e
-                                                        .target
-                                                        .value,
-                                            }
-                                        )
-                                    }
-                                />
+                                                    e.target.value,
+                                            })
+                                        }
+                                    />
+                                </p>
 
                                 <div
                                     style={{
@@ -320,48 +324,57 @@ function CreateProduct() {
                                         marginBottom: "15px",
                                     }}
                                 >
-                                    {editData.images?.map(
-                                        (img, index) => (
-                                            <div key={`old-${index}`}>
-                                                <img
-                                                    src={`${import.meta.env.VITE_API_URL}${img}`}
-                                                    alt=""
-                                                    width="100"
-                                                />
+                                    {editData.images?.map((img, index) => (
+                                        <div
+                                            key={`old-${index}`}
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <img
+                                                src={`${import.meta.env.VITE_API_URL}${img}`}
+                                                alt=""
+                                                style={{
+                                                    width: "120px",
+                                                    height: "250px",
+                                                    objectFit: "cover",
+                                                }}
+                                            />
 
-                                                <br />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setRemovedImages([
+                                                        ...removedImages,
+                                                        img,
+                                                    ]);
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setRemovedImages([
-                                                            ...removedImages,
-                                                            img,
-                                                        ]);
-
-                                                        setEditData({
-                                                            ...editData,
-                                                            images:
-                                                                editData.images.filter(
-                                                                    (image) =>
-                                                                        image !== img
-                                                                ),
-                                                        });
-                                                    }}
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-                                        )
-                                    )}
-
+                                                    setEditData({
+                                                        ...editData,
+                                                        images: editData.images.filter(
+                                                            (image) =>
+                                                                image !== img
+                                                        ),
+                                                    });
+                                                }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ))}
                                     {newImagePreviews.map(
                                         (image, index) => (
                                             <div key={`new-${index}`}>
                                                 <img
                                                     src={image.preview}
                                                     alt=""
-                                                    width="100"
+                                                    style={{
+                                                        width: "120px",
+                                                        height: "250px",
+                                                        objectFit: "cover",
+                                                    }}
                                                 />
 
                                                 <br />
@@ -506,14 +519,14 @@ function CreateProduct() {
                                                     index
                                                 ) => (
                                                     <img
-                                                        key={
-                                                            index
-                                                        }
+                                                        key={index}
                                                         src={`${import.meta.env.VITE_API_URL}${image}`}
-                                                        alt={
-                                                            product.name
-                                                        }
-                                                        width="120"
+                                                        alt={product.name}
+                                                        style={{
+                                                            width: "120px",
+                                                            height: "250px",
+                                                            objectFit: "cover",
+                                                        }}
                                                     />
                                                 )
                                             )}
