@@ -10,7 +10,7 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
 // Product pages
 import Home from "./pages/Home/Home";
-import CreateProduct from "./pages/CreateProduct/CreateProduct";
+import CreateProduct from "./pages/Admin/CreateProduct";
 
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
