@@ -407,6 +407,18 @@ function CreateProduct() {
                                     )}
                                 </div>
 
+                                <p
+                                    style={{
+                                        fontWeight: "bold",
+                                        marginBottom: "10px",
+                                    }}
+                                >
+                                    Images:{" "}
+                                    {(editData.images?.length || 0) +
+                                        newImagePreviews.length}
+                                    /4
+                                </p>
+
                                 <input
                                     type="file"
                                     multiple
@@ -415,6 +427,23 @@ function CreateProduct() {
                                         const files = Array.from(
                                             e.target.files
                                         );
+
+                                        const currentImages =
+                                            (editData.images?.length || 0) +
+                                            newImagePreviews.length;
+
+                                        if (
+                                            currentImages +
+                                            files.length >
+                                            4
+                                        ) {
+                                            alert(
+                                                `Maximum 4 images allowed. You currently have ${currentImages} image(s).`
+                                            );
+
+                                            e.target.value = "";
+                                            return;
+                                        }
 
                                         const newPreviews =
                                             files.map((file) => ({
@@ -434,8 +463,9 @@ function CreateProduct() {
                                             ...prev,
                                             ...newPreviews,
                                         ]);
-                                    }}
 
+                                        e.target.value = "";
+                                    }}
                                 />
 
                                 <br />
