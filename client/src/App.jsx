@@ -20,6 +20,10 @@ import Product from "./pages/Product/Product";
 import Footer from "./components/Footer/Footer";
 import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
+import Orders from "./pages/Admin/Orders";
+
+// 🔥 NEW
+import OrderDetails from "./pages/Admin/OrderDetails";
 
 function App() {
   // =========================
@@ -28,7 +32,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (!token) return; // 🔥 FIX: kör inte request om ingen login
+    if (!token) return;
 
     getProtectedData()
       .then((data) =>
@@ -54,32 +58,81 @@ function App() {
             📍 ROUTES
         ========================= */}
         <Routes>
+
           {/* HOME */}
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={<Home />}
+          />
 
           {/* AUTH */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
 
           {/* EMAIL VERIFY */}
-          <Route path="/verify-email/:userId/:token" element={<VerifyEmail />} />
+          <Route
+            path="/verify-email/:userId/:token"
+            element={<VerifyEmail />}
+          />
 
           {/* FORGOT PASSWORD */}
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
 
           {/* RESET PASSWORD */}
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword />}
+          />
 
           {/* PRODUCTS */}
-          <Route path="/products" element={<Products />} />
-          <Route path="/products/:id" element={<Product />} />
+          <Route
+            path="/products"
+            element={<Products />}
+          />
 
-          <Route path="/products/create" element={<CreateProduct />} />
+          <Route
+            path="/products/:id"
+            element={<Product />}
+          />
+
+          {/* ADMIN */}
+          <Route
+            path="/admin/create"
+            element={<CreateProduct />}
+          />
+
+          <Route
+            path="/admin/orders"
+            element={<Orders />}
+          />
+
+          {/* 🔥 SINGLE ORDER */}
+          <Route
+            path="/admin/orders/:id"
+            element={<OrderDetails />}
+          />
 
           {/* CART */}
-          <Route path="/cart" element={<Cart />} />
+          <Route
+            path="/cart"
+            element={<Cart />}
+          />
 
-          <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
+
         </Routes>
 
         <Footer />

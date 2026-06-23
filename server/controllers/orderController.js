@@ -17,22 +17,52 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: "Missing customer info" });
         }
 
-        // 🔥 email optional (fixar ditt tidigare crash)
+        // =========================
+        // GENERATE ORDER NUMBER
+        // =========================
+        const lastOrder = await Order.findOne()
+            .sort({ createdAt: -1 });
+
+        let nextNumber = 1;
+
+        if (lastOrder?.orderNumber) {
+            const currentNumber = parseInt(
+                lastOrder.orderNumber.replace("HARRAGA-", "")
+            );
+
+            if (!isNaN(currentNumber)) {
+                nextNumber = currentNumber + 1;
+            }
+        }
+
+        const orderNumber =
+            `HARRAGA-${String(nextNumber).padStart(6, "0")}`;
+
+        // =========================
+        // SAFE CUSTOMER
+        // =========================
         const safeCustomer = {
             name: customer.name,
             email: customer.email || "",
             address: customer.address,
             phone: customer.phone,
+            city: customer.city || "",
+            postalCode: customer.postalCode || "",
         };
 
+        // =========================
+        // SAFE ITEMS
+        // =========================
         const safeItems = items.map((item) => ({
             productId: item.productId,
             name: item.name,
+            image: item.image || "",
             price: item.price,
             quantity: item.quantity,
         }));
 
         const order = new Order({
+            orderNumber,
             user: req.user?._id || null,
             items: safeItems,
             customer: safeCustomer,
@@ -67,7 +97,8 @@ export const createOrder = async (req, res) => {
 // =========================
 export const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find().sort({ createdAt: -1 });
+        const orders = await Order.find()
+            .sort({ createdAt: -1 });
 
         return res.json({
             success: true,

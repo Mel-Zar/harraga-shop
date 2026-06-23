@@ -26,8 +26,12 @@ export default function Navbar() {
 
             <Link to="/products">Products</Link>
 
-            <Link to="/products/create">
+            <Link to="/admin/create">
                 Create Product
+            </Link>
+
+            <Link to="/admin/orders">
+                Orders
             </Link>
 
             {/* 🔥 CART MED COUNT */}

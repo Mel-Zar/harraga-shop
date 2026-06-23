@@ -1,5 +1,10 @@
 import express from "express";
-import { createOrder } from "../controllers/orderController.js";
+import {
+    createOrder,
+    getAllOrders,
+    getOrderById,
+} from "../controllers/orderController.js";
+
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -17,5 +22,15 @@ const optionalProtect = (req, res, next) => {
 // CREATE ORDER
 // =========================
 router.post("/", optionalProtect, createOrder);
+
+// =========================
+// GET ALL ORDERS
+// =========================
+router.get("/", getAllOrders);
+
+// =========================
+// GET SINGLE ORDER
+// =========================
+router.get("/:id", getOrderById);
 
 export default router;

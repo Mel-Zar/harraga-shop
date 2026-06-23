@@ -2,29 +2,47 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
     {
-        // 🔥 FIX: allow guest checkout
+        // =========================
+        // ORDER NUMBER
+        // =========================
+        orderNumber: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+
+        // =========================
+        // USER (OPTIONAL)
+        // =========================
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: false,   // CHANGED
-            default: null
+            required: false,
+            default: null,
         },
 
+        // =========================
+        // ORDER ITEMS
+        // =========================
         items: [
             {
                 productId: {
                     type: String,
                     required: true,
                 },
+
                 name: {
                     type: String,
                     required: true,
                 },
+
                 image: String,
+
                 price: {
                     type: Number,
                     required: true,
                 },
+
                 quantity: {
                     type: Number,
                     required: true,
@@ -33,6 +51,9 @@ const orderSchema = new mongoose.Schema(
             },
         ],
 
+        // =========================
+        // CUSTOMER
+        // =========================
         customer: {
             name: {
                 type: String,
@@ -40,65 +61,93 @@ const orderSchema = new mongoose.Schema(
                 trim: true,
             },
 
-            // 🔥 FIX: guest-safe checkout
             email: {
                 type: String,
-                required: false,   // CHANGED (was true)
+                required: false,
                 trim: true,
-                default: ""
+                default: "",
             },
 
             phone: {
                 type: String,
                 required: true,
             },
+
             address: {
                 type: String,
                 required: true,
             },
+
             city: String,
+
             postalCode: String,
         },
 
+        // =========================
+        // PRICING
+        // =========================
         pricing: {
             subtotal: {
                 type: Number,
                 required: true,
             },
+
             tax: {
                 type: Number,
                 default: 0,
             },
+
             shipping: {
                 type: Number,
                 default: 0,
             },
+
             total: {
                 type: Number,
                 required: true,
             },
         },
 
+        // =========================
+        // PAYMENT
+        // =========================
         payment: {
             method: {
                 type: String,
                 enum: ["cod", "stripe", "klarna", "swish"],
                 default: "cod",
             },
+
             status: {
                 type: String,
-                enum: ["pending", "paid", "failed", "refunded"],
+                enum: [
+                    "pending",
+                    "paid",
+                    "failed",
+                    "refunded",
+                ],
                 default: "pending",
             },
         },
 
+        // =========================
+        // ORDER STATUS
+        // =========================
         status: {
             type: String,
-            enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+            enum: [
+                "pending",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled",
+            ],
             default: "pending",
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
 export default mongoose.model("Order", orderSchema);
