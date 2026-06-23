@@ -17,6 +17,7 @@ import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
 import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
+import Footer from "./components/Footer/Footer";
 
 function App() {
   // =========================
@@ -99,6 +100,7 @@ function App() {
             element={<CreateProduct />}
           />
         </Routes>
+        <Footer />
       </div>
     </Router>
   );
