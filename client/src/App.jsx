@@ -19,6 +19,7 @@ import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
 import Footer from "./components/Footer/Footer";
 import Cart from "./pages/Cart/Cart";
+import Checkout from "./pages/Checkout/Checkout";
 
 function App() {
   // =========================
@@ -106,6 +107,12 @@ function App() {
             path="/cart"
             element={<Cart />}
           />
+
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
+
         </Routes>
         <Footer />
       </div>

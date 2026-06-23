@@ -121,7 +121,6 @@ function Cart() {
                 </div>
             ))}
 
-            {/* Footer */}
             <hr />
 
             <h2>
