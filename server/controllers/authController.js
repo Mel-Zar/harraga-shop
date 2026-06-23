@@ -1,9 +1,9 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const { sendEmail, sendResetPasswordEmail } = require("../utils/mailer");
-const axios = require("axios");
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendEmail, sendResetPasswordEmail } from "../utils/mailer.js";
+import axios from "axios";
 
 // =====================================================
 // TOKEN HELPERS
@@ -23,7 +23,7 @@ const generateRefreshToken = (id) => {
 // =====================================================
 // REGISTER
 // =====================================================
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
     try {
         let {
             username,
@@ -81,10 +81,6 @@ exports.register = async (req, res) => {
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
         }
-
-        // =====================================================
-        // 🧂 PASSWORD POLICY (SERVER-SIDE - SAFE & PRO)
-        // =====================================================
 
         password = (password || "").trim();
 
@@ -176,9 +172,9 @@ exports.register = async (req, res) => {
 };
 
 // =====================================================
-// LOGIN (JWT + REFRESH COOKIE)
+// LOGIN
 // =====================================================
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
@@ -240,7 +236,7 @@ exports.login = async (req, res) => {
 // =====================================================
 // REFRESH TOKEN
 // =====================================================
-exports.refreshToken = async (req, res) => {
+export const refreshToken = async (req, res) => {
     try {
         const token = req.cookies.refreshToken;
 
@@ -270,7 +266,7 @@ exports.refreshToken = async (req, res) => {
 // =====================================================
 // LOGOUT
 // =====================================================
-exports.logout = async (req, res) => {
+export const logout = async (req, res) => {
     try {
         const token = req.cookies.refreshToken;
 
@@ -300,7 +296,7 @@ exports.logout = async (req, res) => {
 // =====================================================
 // FORGOT PASSWORD
 // =====================================================
-exports.forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -344,7 +340,7 @@ exports.forgotPassword = async (req, res) => {
 // =====================================================
 // RESET PASSWORD
 // =====================================================
-exports.resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { password, confirmPassword } = req.body;
@@ -395,7 +391,7 @@ exports.resetPassword = async (req, res) => {
 // =====================================================
 // VERIFY EMAIL
 // =====================================================
-exports.verifyEmail = async (req, res) => {
+export const verifyEmail = async (req, res) => {
     try {
         const { userId, token } = req.params;
 
@@ -435,7 +431,7 @@ exports.verifyEmail = async (req, res) => {
 // =====================================================
 // RESEND VERIFY EMAIL
 // =====================================================
-exports.resendVerifyEmail = async (req, res) => {
+export const resendVerifyEmail = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -482,4 +478,4 @@ exports.resendVerifyEmail = async (req, res) => {
         console.error(err);
         return res.status(500).json({ message: "Server error" });
     }
-}; 
+};

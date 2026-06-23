@@ -1,31 +1,38 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-const path = require("path");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const connectDB = require("./config/db");
-const cookieParser = require("cookie-parser");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+import connectDB from "./config/db.js";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
+dotenv.config();
 
 const app = express();
 
 // =========================
-// TRUST PROXY (for deployment)
+// FIX __dirname (ESM)
+// =========================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// =========================
+// TRUST PROXY
 // =========================
 app.set("trust proxy", 1);
 
 // =========================
-// SECURITY HEADERS
+// SECURITY
 // =========================
 app.use(helmet());
 
 // =========================
-// CORS CONFIG (PRO FIX)
+// CORS
 // =========================
-const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(",")
-    : ["http://localhost:5173"];
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
 
 app.use(
     cors({
@@ -41,7 +48,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =========================
-// GLOBAL RATE LIMIT
+// RATE LIMIT
 // =========================
 app.use(
     rateLimit({
@@ -53,7 +60,7 @@ app.use(
 );
 
 // =========================
-// 🧠 FIX: STATIC FILES (UPLOADS)
+// STATIC FILES
 // =========================
 app.use(
     "/uploads",
@@ -67,14 +74,13 @@ app.use(
     })
 );
 
-// extra safety header middleware (fixar browser block)
 app.use("/uploads", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     next();
 });
 
 // =========================
-// DATABASE CONNECTION
+// DB
 // =========================
 connectDB();
 
@@ -84,44 +90,31 @@ connectDB();
 
 console.log("🔵 Loading routes...");
 
-app.use("/api/auth", require("./routes/authRoutes"));
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
+import countryRoutes from "./routes/countryRoutes.js";
+import protectedRoutes from "./routes/protectedRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
-app.use("/api/users", require("./routes/userRoutes"));
-
-try {
-    app.use(
-        "/api/address",
-        require("./routes/addressRoutes")
-    );
-
-    console.log("🟢 /api/address route loaded");
-} catch (err) {
-    console.error("🔴 Failed to load addressRoutes:", err);
-}
-
-app.use("/api/countries", require("./routes/countryRoutes"));
-
-app.use("/api/protected", require("./routes/protectedRoutes"));
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/address", addressRoutes);
+app.use("/api/countries", countryRoutes);
+app.use("/api/protected", protectedRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
 
 // =========================
-// 🛒 PRODUCTS ROUTE
-// =========================
-app.use(
-    "/api/products",
-    require("./routes/productRoutes")
-);
-
-// =========================
-// HEALTH CHECK
+// HEALTH
 // =========================
 app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        status: "OK",
-    });
+    res.status(200).json({ status: "OK" });
 });
 
 // =========================
-// 404 HANDLER
+// 404
 // =========================
 app.use((req, res) => {
     res.status(404).json({

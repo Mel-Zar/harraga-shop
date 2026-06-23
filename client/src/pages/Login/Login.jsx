@@ -37,6 +37,11 @@ export default function Login() {
 
             saveUser(data);
 
+            // 🔥 FIX: extra säkerhet (viktig!)
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+            }
+
             setSuccess("Login successful!");
 
         } catch (err) {
@@ -50,7 +55,6 @@ export default function Login() {
         }
     };
 
-    // 🔁 RESEND EMAIL
     const handleResend = async () => {
         if (resendLoading || loading) return;
 
@@ -115,12 +119,10 @@ export default function Login() {
                     {loading ? "Logging in..." : "Login"}
                 </button>
 
-                {/* 🔥 Forgot password link */}
                 <p style={{ marginTop: "10px" }}>
                     <Link to="/forgot-password">Forgot password?</Link>
                 </p>
 
-                {/* 🔥 verify message */}
                 {verifyMessage && (
                     <div style={{ marginTop: 15 }}>
                         <p style={{ color: "orange", fontWeight: "bold" }}>
@@ -147,16 +149,14 @@ export default function Login() {
                     </div>
                 )}
 
-                {/* 🔥 resend success */}
                 {resendMessage && (
                     <p style={{ color: "green", marginTop: 10 }}>
                         ✅ {resendMessage}
                     </p>
                 )}
 
-                {/* errors */}
                 {error && (
-                    <p className="error" style={{ color: "red", marginTop: 10 }}>
+                    <p style={{ color: "red", marginTop: 10 }}>
                         {error}
                     </p>
                 )}

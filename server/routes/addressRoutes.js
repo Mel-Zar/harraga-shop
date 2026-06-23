@@ -1,10 +1,11 @@
-const express = require("express");
+import express from "express";
+import { searchAddress } from "../controllers/addressController.js";
+
 const router = express.Router();
-const { searchAddress } = require("../controllers/addressController");
 
 // =========================
 // ADDRESS ROUTES
 // =========================
 router.get("/search", searchAddress);
 
-module.exports = router;
+export default router;

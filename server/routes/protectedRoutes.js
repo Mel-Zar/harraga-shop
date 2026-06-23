@@ -1,14 +1,17 @@
-const express = require("express");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
-const { protect } = require("../middleware/authMiddleware");
-
 // fallback
-const safeProtect = typeof protect === "function"
-    ? protect
-    : (req, res, next) => next();
+const safeProtect =
+    typeof protect === "function"
+        ? protect
+        : (req, res, next) => next();
 
-// 👇 FIX: root route "/"
+// =========================
+// ROOT ROUTE
+// =========================
 router.get("/", safeProtect, (req, res) => {
     res.json({
         message: "You are authenticated 🔐",
@@ -16,4 +19,4 @@ router.get("/", safeProtect, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

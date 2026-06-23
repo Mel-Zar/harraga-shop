@@ -1,6 +1,6 @@
-const axios = require("axios");
+import axios from "axios";
 
-const verifyCaptcha = async (token) => {
+export const verifyCaptcha = async (token) => {
     const res = await axios.post(
         "https://api.hcaptcha.com/siteverify",
         new URLSearchParams({
@@ -10,4 +10,4 @@ const verifyCaptcha = async (token) => {
     );
 
     return res.data.success;
-};
+}; 

@@ -1,9 +1,9 @@
-const rateLimit = require("express-rate-limit");
+import rateLimit from "express-rate-limit";
 
 // =========================
 // REGISTER LIMITER
 // =========================
-const registerLimiter = rateLimit({
+export const registerLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: {
@@ -16,7 +16,7 @@ const registerLimiter = rateLimit({
 // =========================
 // LOGIN LIMITER
 // =========================
-const loginLimiter = rateLimit({
+export const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: {
@@ -29,7 +29,7 @@ const loginLimiter = rateLimit({
 // =========================
 // FORGOT PASSWORD LIMITER
 // =========================
-const forgotPasswordLimiter = rateLimit({
+export const forgotPasswordLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: {
@@ -42,7 +42,7 @@ const forgotPasswordLimiter = rateLimit({
 // =========================
 // RESET PASSWORD LIMITER
 // =========================
-const resetPasswordLimiter = rateLimit({
+export const resetPasswordLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: {
@@ -55,7 +55,7 @@ const resetPasswordLimiter = rateLimit({
 // =========================
 // VERIFY EMAIL LIMITER
 // =========================
-const verifyEmailLimiter = rateLimit({
+export const verifyEmailLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
     message: {
@@ -64,11 +64,3 @@ const verifyEmailLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
-
-module.exports = {
-    registerLimiter,
-    loginLimiter,
-    forgotPasswordLimiter,
-    resetPasswordLimiter,
-    verifyEmailLimiter
-};

@@ -41,6 +41,11 @@ export const loginUser = async (userData) => {
         throw new Error(data.message || "Login failed");
     }
 
+    // 🔥 FIX: spara token direkt om backend skickar den
+    if (data.token) {
+        localStorage.setItem("token", data.token);
+    }
+
     return data;
 };
 

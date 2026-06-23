@@ -1,7 +1,7 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
+import countryMap from "../config/countries.json" assert { type: "json" };
 
-const countryMap = require("../config/countries.json");
+const router = express.Router();
 
 // =========================
 // GET COUNTRIES
@@ -17,4 +17,4 @@ router.get("/", (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

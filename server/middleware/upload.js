@@ -1,12 +1,12 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 // =========================
 // CREATE UPLOADS FOLDER
 // =========================
 const uploadPath = path.join(
-    __dirname,
+    path.dirname(new URL(import.meta.url).pathname),
     "../uploads"
 );
 
@@ -76,4 +76,4 @@ const upload = multer({
     },
 });
 
-module.exports = upload;
+export default upload;

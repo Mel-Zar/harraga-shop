@@ -1,6 +1,6 @@
-const countryMap = require("../config/countries.json");
+import countryMap from "../config/countries.json" assert { type: "json" };
 
-exports.getCountryCode = (country) => {
+export const getCountryCode = (country) => {
     if (!country || typeof country !== "string") return null;
 
     const normalized = country.toLowerCase().trim();

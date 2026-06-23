@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCart } from "../../context/useCart";
 import { useNavigate } from "react-router-dom";
+import { createOrder } from "../../services/ordersService";
 
 function Checkout() {
     const { cartItems, clearCart } = useCart();
@@ -8,13 +9,13 @@ function Checkout() {
 
     const [form, setForm] = useState({
         name: "",
+        email: "",
         address: "",
         phone: "",
     });
 
     const totalPrice = cartItems.reduce(
-        (total, item) =>
-            total + item.price * item.quantity,
+        (total, item) => total + item.price * item.quantity,
         0
     );
 
@@ -25,143 +26,79 @@ function Checkout() {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (cartItems.length === 0) {
+        if (!cartItems.length) {
             alert("Cart is empty!");
             return;
         }
 
-        if (
-            !form.name ||
-            !form.address ||
-            !form.phone
-        ) {
+        if (!form.name || !form.email || !form.address || !form.phone) {
             alert("Please fill all fields");
             return;
         }
 
-        // 🔥 Här kommer backend senare (order API)
         const order = {
-            customer: form,
-            items: cartItems,
-            total: totalPrice,
-            createdAt: new Date(),
+            customer: { ...form },
+
+            items: cartItems.map((item) => ({
+                productId: item._id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+            })),
+
+            pricing: {
+                subtotal: totalPrice,
+                tax: totalPrice * 0.25,
+                shipping: 49,
+                total: totalPrice + totalPrice * 0.25 + 49,
+            },
+
+            payment: {
+                method: "cod",
+                status: "pending",
+            },
         };
 
-        console.log("ORDER CREATED:", order);
+        try {
+            const data = await createOrder(order);
 
-        alert("Order placed successfully!");
+            console.log("ORDER CREATED:", data);
 
-        clearCart();
+            alert("Order placed successfully!");
 
-        navigate("/");
+            clearCart();
+            navigate("/");
+
+        } catch (error) {
+            console.error("ORDER ERROR:", error);
+            alert("Failed to place order");
+        }
     };
 
     return (
-        <div
-            style={{
-                maxWidth: "900px",
-                margin: "0 auto",
-                padding: "20px",
-            }}
-        >
+        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "20px" }}>
             <h1>Checkout 🧾</h1>
 
-            {/* FORM */}
             <form onSubmit={handleSubmit}>
-                <div>
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Full Name"
-                        value={form.name}
-                        onChange={handleChange}
-                        style={{
-                            display: "block",
-                            marginBottom: "10px",
-                            padding: "8px",
-                            width: "100%",
-                        }}
-                    />
+                <input name="name" placeholder="Full Name" onChange={handleChange} />
+                <input name="email" placeholder="Email" onChange={handleChange} />
+                <input name="address" placeholder="Address" onChange={handleChange} />
+                <input name="phone" placeholder="Phone" onChange={handleChange} />
 
-                    <input
-                        type="text"
-                        name="address"
-                        placeholder="Address"
-                        value={form.address}
-                        onChange={handleChange}
-                        style={{
-                            display: "block",
-                            marginBottom: "10px",
-                            padding: "8px",
-                            width: "100%",
-                        }}
-                    />
-
-                    <input
-                        type="text"
-                        name="phone"
-                        placeholder="Phone"
-                        value={form.phone}
-                        onChange={handleChange}
-                        style={{
-                            display: "block",
-                            marginBottom: "10px",
-                            padding: "8px",
-                            width: "100%",
-                        }}
-                    />
-                </div>
-
-                {/* ORDER SUMMARY */}
                 <h2>Order Summary</h2>
 
                 {cartItems.map((item) => (
-                    <div
-                        key={item._id}
-                        style={{
-                            display: "flex",
-                            justifyContent:
-                                "space-between",
-                            marginBottom: "5px",
-                        }}
-                    >
-                        <span>
-                            {item.name} ×{" "}
-                            {item.quantity}
-                        </span>
-
-                        <span>
-                            $
-                            {(
-                                item.price *
-                                item.quantity
-                            ).toFixed(2)}
-                        </span>
+                    <div key={item._id}>
+                        {item.name} × {item.quantity}
                     </div>
                 ))}
 
-                <hr />
+                <h3>Total: ${totalPrice.toFixed(2)}</h3>
 
-                <h3>
-                    Total: $
-                    {totalPrice.toFixed(2)}
-                </h3>
-
-                <button
-                    type="submit"
-                    style={{
-                        marginTop: "20px",
-                        background: "green",
-                        color: "white",
-                        padding: "10px",
-                        width: "100%",
-                    }}
-                >
-                    Place Order
-                </button>
+                <button type="submit">Place Order</button>
             </form>
         </div>
     );

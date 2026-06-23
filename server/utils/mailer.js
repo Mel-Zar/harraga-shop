@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -27,7 +27,7 @@ transporter.verify((err) => {
     }
 });
 
-const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async ({ to, subject, html }) => {
     if (!to || !subject || !html) {
         throw new Error("Missing email parameters");
     }
@@ -47,7 +47,7 @@ const sendEmail = async ({ to, subject, html }) => {
 // =========================
 // WELCOME EMAIL
 // =========================
-const sendWelcomeEmail = async (to, firstName) => {
+export const sendWelcomeEmail = async (to, firstName) => {
     return sendEmail({
         to,
         subject: "Welcome to Harraga Shop 🎉",
@@ -63,7 +63,7 @@ const sendWelcomeEmail = async (to, firstName) => {
 // =========================
 // VERIFICATION EMAIL (NY)
 // =========================
-const sendVerificationEmail = async (to, verifyUrl) => {
+export const sendVerificationEmail = async (to, verifyUrl) => {
     return sendEmail({
         to,
         subject: "Verify your email - Harraga Shop",
@@ -81,7 +81,7 @@ const sendVerificationEmail = async (to, verifyUrl) => {
 // =========================
 // RESET EMAIL
 // =========================
-const sendResetPasswordEmail = async (to, resetUrl) => {
+export const sendResetPasswordEmail = async (to, resetUrl) => {
     return sendEmail({
         to,
         subject: "Reset your password",
@@ -92,11 +92,4 @@ const sendResetPasswordEmail = async (to, resetUrl) => {
             </div>
         `
     });
-};
-
-module.exports = {
-    sendEmail,
-    sendWelcomeEmail,
-    sendVerificationEmail,
-    sendResetPasswordEmail,
 };

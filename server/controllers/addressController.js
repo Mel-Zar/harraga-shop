@@ -1,9 +1,9 @@
-const { getCountryCode } = require("./countryController");
+import { getCountryCode } from "./countryController.js";
 
 // =========================
 // ADDRESS SEARCH
 // =========================
-exports.searchAddress = async (req, res) => {
+export const searchAddress = async (req, res) => {
     try {
         const qRaw = req.query?.q;
         const countryRaw = req.query?.country;

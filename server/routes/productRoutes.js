@@ -1,16 +1,15 @@
-const express = require("express");
+import express from "express";
+import upload from "../middleware/upload.js";
 
-const router = express.Router();
-
-const upload = require("../middleware/upload");
-
-const {
+import {
     createProduct,
     getProducts,
     getProductById,
     updateProduct,
     deleteProduct,
-} = require("../controllers/productController");
+} from "../controllers/productController.js";
+
+const router = express.Router();
 
 // =======================
 // PRODUCTS ROUTES
@@ -30,9 +29,9 @@ router
     .route("/:id")
     .get(getProductById)
     .put(
-        upload.array("images", 4), // gamla + nya bilder hanteras i controllern
+        upload.array("images", 4),
         updateProduct
     )
     .delete(deleteProduct);
 
-module.exports = router;
+export default router;

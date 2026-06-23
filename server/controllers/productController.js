@@ -1,13 +1,17 @@
-const mongoose = require("mongoose");
-const Product = require("../models/Product");
+import mongoose from "mongoose";
+import Product from "../models/Product.js";
 
-// Helper
+// =========================
+// HELPER
+// =========================
 const isValidObjectId = (id) => {
     return mongoose.Types.ObjectId.isValid(id);
 };
 
+// =========================
 // CREATE PRODUCT
-const createProduct = async (req, res) => {
+// =========================
+export const createProduct = async (req, res) => {
     try {
         const {
             name,
@@ -17,7 +21,7 @@ const createProduct = async (req, res) => {
             stock,
         } = req.body;
 
-        const images = req.files
+        const images = req.files?.length
             ? req.files
                 .slice(0, 4)
                 .map(
@@ -36,45 +40,49 @@ const createProduct = async (req, res) => {
             stock,
         });
 
-        res.status(201).json(product);
+        return res.status(201).json(product);
     } catch (error) {
-        console.error(error);
+        console.error("CREATE PRODUCT ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Failed to create product",
         });
     }
 };
 
+// =========================
 // GET ALL PRODUCTS
-const getProducts = async (req, res) => {
+// =========================
+export const getProducts = async (req, res) => {
     try {
         const products = await Product.find().sort({
             createdAt: -1,
         });
 
-        res.status(200).json(products);
+        return res.status(200).json(products);
     } catch (error) {
-        console.error(error);
+        console.error("GET PRODUCTS ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Failed to fetch products",
         });
     }
 };
 
+// =========================
 // GET SINGLE PRODUCT
-const getProductById = async (req, res) => {
+// =========================
+export const getProductById = async (req, res) => {
     try {
-        if (!isValidObjectId(req.params.id)) {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
             return res.status(400).json({
                 message: "Invalid product ID",
             });
         }
 
-        const product = await Product.findById(
-            req.params.id
-        );
+        const product = await Product.findById(id);
 
         if (!product) {
             return res.status(404).json({
@@ -82,28 +90,30 @@ const getProductById = async (req, res) => {
             });
         }
 
-        res.status(200).json(product);
+        return res.status(200).json(product);
     } catch (error) {
-        console.error(error);
+        console.error("GET PRODUCT ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Failed to fetch product",
         });
     }
 };
 
+// =========================
 // UPDATE PRODUCT
-const updateProduct = async (req, res) => {
+// =========================
+export const updateProduct = async (req, res) => {
     try {
-        if (!isValidObjectId(req.params.id)) {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
             return res.status(400).json({
                 message: "Invalid product ID",
             });
         }
 
-        const product = await Product.findById(
-            req.params.id
-        );
+        const product = await Product.findById(id);
 
         if (!product) {
             return res.status(404).json({
@@ -111,64 +121,39 @@ const updateProduct = async (req, res) => {
             });
         }
 
-        product.name =
-            req.body.name ??
-            product.name;
+        product.name = req.body.name ?? product.name;
+        product.description = req.body.description ?? product.description;
+        product.price = req.body.price ?? product.price;
+        product.category = req.body.category ?? product.category;
+        product.stock = req.body.stock ?? product.stock;
 
-        product.description =
-            req.body.description ??
-            product.description;
-
-        product.price =
-            req.body.price ??
-            product.price;
-
-        product.category =
-            req.body.category ??
-            product.category;
-
-        product.stock =
-            req.body.stock ??
-            product.stock;
-
-        // Ta bort specifika bilder
+        // =========================
+        // REMOVE IMAGES
+        // =========================
         if (req.body.removedImages) {
-            let removedImages =
-                req.body.removedImages;
+            let removedImages = req.body.removedImages;
 
-            if (
-                typeof removedImages ===
-                "string"
-            ) {
+            if (typeof removedImages === "string") {
                 try {
-                    removedImages =
-                        JSON.parse(
-                            removedImages
-                        );
+                    removedImages = JSON.parse(removedImages);
                 } catch {
                     removedImages = [];
                 }
             }
 
-            product.images =
-                product.images.filter(
-                    (img) =>
-                        !removedImages.includes(
-                            img
-                        )
-                );
+            product.images = product.images.filter(
+                (img) => !removedImages.includes(img)
+            );
         }
 
-        // Lägg till nya bilder
-        if (
-            req.files &&
-            req.files.length > 0
-        ) {
-            const newImages =
-                req.files.map(
-                    (file) =>
-                        `/uploads/${file.filename}`
-                );
+        // =========================
+        // ADD NEW IMAGES
+        // =========================
+        if (req.files?.length > 0) {
+            const newImages = req.files.map(
+                (file) =>
+                    `/uploads/${file.filename}`
+            );
 
             product.images = [
                 ...product.images,
@@ -176,35 +161,37 @@ const updateProduct = async (req, res) => {
             ].slice(0, 4);
         }
 
-        // Uppdatera huvudbild
-        product.image =
-            product.images[0] || "";
+        // =========================
+        // MAIN IMAGE
+        // =========================
+        product.image = product.images[0] || "";
 
         await product.save();
 
-        res.status(200).json(product);
+        return res.status(200).json(product);
     } catch (error) {
-        console.error(error);
+        console.error("UPDATE PRODUCT ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Failed to update product",
         });
     }
 };
 
+// =========================
 // DELETE PRODUCT
-const deleteProduct = async (req, res) => {
+// =========================
+export const deleteProduct = async (req, res) => {
     try {
-        if (!isValidObjectId(req.params.id)) {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
             return res.status(400).json({
                 message: "Invalid product ID",
             });
         }
 
-        const product =
-            await Product.findByIdAndDelete(
-                req.params.id
-            );
+        const product = await Product.findByIdAndDelete(id);
 
         if (!product) {
             return res.status(404).json({
@@ -212,23 +199,14 @@ const deleteProduct = async (req, res) => {
             });
         }
 
-        res.status(200).json({
-            message:
-                "Product deleted successfully",
+        return res.status(200).json({
+            message: "Product deleted successfully",
         });
     } catch (error) {
-        console.error(error);
+        console.error("DELETE PRODUCT ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Failed to delete product",
         });
     }
-};
-
-module.exports = {
-    createProduct,
-    getProducts,
-    getProductById,
-    updateProduct,
-    deleteProduct,
 };

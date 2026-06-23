@@ -26,6 +26,10 @@ function App() {
   // 🔐 TEST PROTECTED ROUTE
   // =========================
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) return; // 🔥 FIX: kör inte request om ingen login
+
     getProtectedData()
       .then((data) =>
         console.log("✅ PROTECTED DATA:", data)
@@ -51,69 +55,33 @@ function App() {
         ========================= */}
         <Routes>
           {/* HOME */}
-          <Route
-            path="/"
-            element={<Home />}
-          />
+          <Route path="/" element={<Home />} />
 
           {/* AUTH */}
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           {/* EMAIL VERIFY */}
-          <Route
-            path="/verify-email/:userId/:token"
-            element={<VerifyEmail />}
-          />
+          <Route path="/verify-email/:userId/:token" element={<VerifyEmail />} />
 
           {/* FORGOT PASSWORD */}
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* RESET PASSWORD */}
-          <Route
-            path="/reset-password/:token"
-            element={<ResetPassword />}
-          />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* PRODUCTS */}
-          <Route
-            path="/products"
-            element={<Products />}
-          />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<Product />} />
 
-          <Route
-            path="/products/:id"
-            element={<Product />}
-          />
-
-
-          <Route
-            path="/products/create"
-            element={<CreateProduct />}
-          />
+          <Route path="/products/create" element={<CreateProduct />} />
 
           {/* CART */}
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
+          <Route path="/cart" element={<Cart />} />
 
-          <Route
-            path="/checkout"
-            element={<Checkout />}
-          />
-
+          <Route path="/checkout" element={<Checkout />} />
         </Routes>
+
         <Footer />
       </div>
     </Router>

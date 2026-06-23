@@ -1,71 +1,66 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 // =========================
-// PROTECT ROUTES
+// PROTECT ROUTES (GUEST SAFE)
 // =========================
-const protect = async (req, res, next) => {
-    let token;
-
-    // =========================
-    // 1) ACCESS TOKEN (Bearer)
-    // =========================
-    if (req.headers.authorization?.startsWith("Bearer")) {
-        token = req.headers.authorization.split(" ")[1];
-    }
-
-    // =========================
-    // 2) COOKIE TOKEN (if you ever use it)
-    // =========================
-    if (!token && req.cookies?.token) {
-        token = req.cookies.token;
-    }
-
-    // =========================
-    // 3) REFRESH TOKEN COOKIE (fallback)
-    // =========================
-    if (!token && req.cookies?.refreshToken) {
-        token = req.cookies.refreshToken;
-    }
-
-    if (!token) {
-        return res.status(401).json({ message: "No token" });
-    }
-
+export const protect = async (req, res, next) => {
     try {
+        let token;
+
+        // 1) Bearer token
+        const authHeader = req.headers.authorization;
+
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            token = authHeader.split(" ")[1];
+        }
+
+        // 2) cookie token
+        if (!token && req.cookies?.token) {
+            token = req.cookies.token;
+        }
+
+        // 3) refresh token fallback
+        if (!token && req.cookies?.refreshToken) {
+            token = req.cookies.refreshToken;
+        }
+
+        // 🔥 IMPORTANT: ALLOW GUESTS
+        if (!token || token === "null" || token === "undefined") {
+            req.user = null;
+            return next();
+        }
+
         let decoded;
 
-        // =========================
-        // Try JWT_SECRET first
-        // =========================
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch (err) {
-            // =========================
-            // fallback: verify refresh secret
-            decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+            try {
+                decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+            } catch (e) {
+                req.user = null;
+                return next();
+            }
         }
 
-        const userId = decoded.id || decoded._id;
+        const user = await User.findById(decoded?.id || decoded?._id);
 
-        req.user = await User.findById(userId).select("-password");
+        req.user = user || null;
 
-        if (!req.user) {
-            return res.status(401).json({ message: "User not found" });
-        }
+        return next();
 
-        next();
     } catch (err) {
-        return res.status(401).json({ message: "Not authorized" });
+        console.error("AUTH ERROR:", err);
+        req.user = null;
+        return next();
     }
 };
 
 // =========================
 // ADMIN ONLY
 // =========================
-const admin = (req, res, next) => {
+export const admin = (req, res, next) => {
     if (req.user?.isAdmin) return next();
     return res.status(403).json({ message: "Admin only" });
 };
-
-module.exports = { protect, admin };

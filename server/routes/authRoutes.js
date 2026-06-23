@@ -1,8 +1,17 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
 
-const controller = require("../controllers/authController");
-const rateLimiter = require("../middleware/rateLimiter");
+import * as controller from "../controllers/authController.js";
+
+// 🔥 FIX: import named exports korrekt
+import {
+    registerLimiter,
+    loginLimiter,
+    forgotPasswordLimiter,
+    resetPasswordLimiter,
+    verifyEmailLimiter
+} from "../middleware/rateLimiter.js";
+
+const router = express.Router();
 
 // fallback om något saknas (för debug)
 const safeFn = (fn, name) => {
@@ -15,23 +24,18 @@ const safeFn = (fn, name) => {
     return fn;
 };
 
-// extra safety check
-if (!rateLimiter) {
-    console.error("❌ rateLimiter middleware not found!");
-}
-
 // =========================
 // AUTH
 // =========================
 router.post(
     "/register",
-    rateLimiter?.registerLimiter,
+    registerLimiter,
     safeFn(controller.register, "register")
 );
 
 router.post(
     "/login",
-    rateLimiter?.loginLimiter,
+    loginLimiter,
     safeFn(controller.login, "login")
 );
 
@@ -53,13 +57,13 @@ router.post(
 // =========================
 router.post(
     "/forgot-password",
-    rateLimiter?.forgotPasswordLimiter,
+    forgotPasswordLimiter,
     safeFn(controller.forgotPassword, "forgotPassword")
 );
 
 router.post(
     "/reset-password/:token",
-    rateLimiter?.resetPasswordLimiter,
+    resetPasswordLimiter,
     safeFn(controller.resetPassword, "resetPassword")
 );
 
@@ -68,14 +72,14 @@ router.post(
 // =========================
 router.get(
     "/verify-email/:userId/:token",
-    rateLimiter?.verifyEmailLimiter,
+    verifyEmailLimiter,
     safeFn(controller.verifyEmail, "verifyEmail")
 );
 
 router.post(
     "/resend-verify-email",
-    rateLimiter?.verifyEmailLimiter,
+    verifyEmailLimiter,
     safeFn(controller.resendVerifyEmail, "resendVerifyEmail")
 );
 
-module.exports = router;
+export default router;
