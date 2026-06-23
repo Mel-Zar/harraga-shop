@@ -18,6 +18,7 @@ import Navbar from "./components/Navbar/Navbar";
 import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
 import Footer from "./components/Footer/Footer";
+import Cart from "./pages/Cart/Cart";
 
 function App() {
   // =========================
@@ -98,6 +99,12 @@ function App() {
           <Route
             path="/products/create"
             element={<CreateProduct />}
+          />
+
+          {/* CART */}
+          <Route
+            path="/cart"
+            element={<Cart />}
           />
         </Routes>
         <Footer />

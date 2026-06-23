@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProducts } from "../../services/productService";
 import ProductGallery from "../../components/ProductGallery/ProductGallery";
+import { useCart } from "../../context/useCart";
 
 function Product() {
     const { id } = useParams();
@@ -9,6 +10,8 @@ function Product() {
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
+
+    const { addToCart } = useCart();
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -54,7 +57,7 @@ function Product() {
                     width: "100%",
                     maxWidth: "600px",
                     aspectRatio: "1 / 1",
-                    objectFit: "fit",
+                    objectFit: "contain",
                     borderRadius: "12px",
                 }}
             />
@@ -66,20 +69,17 @@ function Product() {
             </p>
 
             <p>
-                <strong>Price:</strong>
-                {" "}
+                <strong>Price:</strong>{" "}
                 ${product.price}
             </p>
 
             <p>
-                <strong>Category:</strong>
-                {" "}
+                <strong>Category:</strong>{" "}
                 {product.category}
             </p>
 
             <p>
-                <strong>Stock:</strong>
-                {" "}
+                <strong>Stock:</strong>{" "}
                 {product.stock}
             </p>
 
@@ -92,34 +92,70 @@ function Product() {
                     Quantity:
                 </label>
 
-                <input
-                    type="number"
-                    min="1"
-                    max={product.stock}
-                    value={quantity}
-                    onChange={(e) =>
-                        setQuantity(
-                            Number(
-                                e.target.value
-                            )
-                        )
-                    }
+                <div
                     style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
                         marginLeft: "10px",
-                        width: "80px",
                     }}
-                />
+                >
+                    <button
+                        onClick={() =>
+                            setQuantity((prev) =>
+                                prev > 1 ? prev - 1 : 1
+                            )
+                        }
+                    >
+                        -
+                    </button>
+
+                    <span
+                        style={{
+                            minWidth: "30px",
+                            textAlign: "center",
+                        }}
+                    >
+                        {quantity}
+                    </span>
+
+                    <button
+                        onClick={() =>
+                            setQuantity((prev) =>
+                                prev < product.stock
+                                    ? prev + 1
+                                    : prev
+                            )
+                        }
+                    >
+                        +
+                    </button>
+                </div>
             </div>
 
             <br />
 
-            <button>
+            <button
+                onClick={() =>
+                    addToCart(
+                        product,
+                        quantity
+                    )
+                }
+            >
                 Add To Cart
             </button>
 
             {" "}
 
-            <button>
+            <button
+                onClick={() =>
+                    addToCart(
+                        product,
+                        quantity
+                    )
+                }
+            >
                 Buy Now
             </button>
         </div>

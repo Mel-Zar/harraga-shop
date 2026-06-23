@@ -1,9 +1,12 @@
 import ProductGallery from "../ProductGallery/ProductGallery";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useCart } from "../../context/useCart";
 
 function ProductListCard({ product }) {
     const [quantity, setQuantity] = useState(1);
+
+    const { addToCart } = useCart();
 
     return (
         <div
@@ -19,7 +22,7 @@ function ProductListCard({ product }) {
                 imageStyle={{
                     width: "100%",
                     height: "220px",
-                    objectFit: "fit",
+                    objectFit: "cover",
                     borderRadius: "8px",
                 }}
             />
@@ -29,14 +32,12 @@ function ProductListCard({ product }) {
             <p>{product.description}</p>
 
             <p>
-                <strong>Price:</strong>
-                {" "}
+                <strong>Price:</strong>{" "}
                 ${product.price}
             </p>
 
             <p>
-                <strong>Stock:</strong>
-                {" "}
+                <strong>Stock:</strong>{" "}
                 {product.stock}
             </p>
 
@@ -48,22 +49,53 @@ function ProductListCard({ product }) {
                     marginTop: "15px",
                 }}
             >
-                <input
-                    type="number"
-                    min="1"
-                    max={product.stock}
-                    value={quantity}
-                    onChange={(e) =>
-                        setQuantity(
-                            Number(e.target.value)
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                    }}
+                >
+                    <button
+                        onClick={() =>
+                            setQuantity((prev) =>
+                                prev > 1 ? prev - 1 : 1
+                            )
+                        }
+                    >
+                        -
+                    </button>
+
+                    <span
+                        style={{
+                            minWidth: "30px",
+                            textAlign: "center",
+                        }}
+                    >
+                        {quantity}
+                    </span>
+
+                    <button
+                        onClick={() =>
+                            setQuantity((prev) =>
+                                prev < product.stock
+                                    ? prev + 1
+                                    : prev
+                            )
+                        }
+                    >
+                        +
+                    </button>
+                </div>
+
+                <button
+                    onClick={() =>
+                        addToCart(
+                            product,
+                            quantity
                         )
                     }
-                    style={{
-                        width: "70px",
-                    }}
-                />
-
-                <button>
+                >
                     Buy
                 </button>
 
