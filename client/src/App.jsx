@@ -15,6 +15,8 @@ import CreateProduct from "./pages/Admin/CreateProduct";
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
+import Products from "./pages/Products/Products";
+import Product from "./pages/Product/Product";
 
 function App() {
   // =========================
@@ -83,8 +85,14 @@ function App() {
           {/* PRODUCTS */}
           <Route
             path="/products"
-            element={<Home />}
+            element={<Products />}
           />
+
+          <Route
+            path="/products/:id"
+            element={<Product />}
+          />
+
 
           <Route
             path="/products/create"

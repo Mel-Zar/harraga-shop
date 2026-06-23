@@ -10,7 +10,7 @@ export default function Navbar() {
                 alignItems: "center",
             }}
         >
-            <h2>Harraga</h2>
+            <Link to="/"><h2>Harraga</h2></Link>
 
             {/* =========================
                🔗 NAV LINKS
