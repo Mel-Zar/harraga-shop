@@ -16,6 +16,12 @@ function ProductListCard({ product }) {
             <ProductGallery
                 images={product.images}
                 productName={product.name}
+                imageStyle={{
+                    width: "100%",
+                    height: "220px",
+                    objectFit: "fit",
+                    borderRadius: "8px",
+                }}
             />
 
             <h2>{product.name}</h2>

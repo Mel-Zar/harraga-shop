@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ProductListCard from "../../components/ProductListCard/ProductListCard";
+import HomeProductCard from "../../components/HomeProductCard/HomeProductCard";
 import { getProducts } from "../../services/productService";
 
 function Home() {
@@ -11,7 +11,8 @@ function Home() {
             try {
                 const data = await getProducts();
 
-                setProducts(data);
+                // Visa t.ex. bara de 4 första produkterna på startsidan
+                setProducts(data.slice(0, 4));
             } catch (error) {
                 console.error(error);
             } finally {
@@ -27,7 +28,11 @@ function Home() {
     }
 
     return (
-        <div>
+        <div
+            style={{
+                padding: "20px",
+            }}
+        >
             <h1>Featured Products</h1>
 
             {products.length === 0 ? (
@@ -37,12 +42,12 @@ function Home() {
                     style={{
                         display: "grid",
                         gridTemplateColumns:
-                            "repeat(auto-fill, minmax(350px, 1fr))",
+                            "repeat(auto-fill, minmax(300px, 1fr))",
                         gap: "20px",
                     }}
                 >
                     {products.map((product) => (
-                        <ProductListCard
+                        <HomeProductCard
                             key={product._id}
                             product={product}
                         />

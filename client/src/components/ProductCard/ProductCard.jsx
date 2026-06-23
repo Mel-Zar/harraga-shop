@@ -33,6 +33,12 @@ function ProductCard({
             <ProductGallery
                 images={product.images}
                 productName={product.name}
+                imageStyle={{
+                    width: "150px",
+                    height: "300px",
+                    objectFit: "fit",
+                    borderRadius: "8px",
+                }}
             />
 
             <br />

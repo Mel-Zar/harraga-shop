@@ -2,44 +2,23 @@ function ProductGallery({
     images = [],
     productName,
     onRemove,
+    imageStyle = {},
 }) {
     if (!images.length) return null;
 
     return (
-        <div
-            style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-            }}
-        >
+        <div>
             {images.map((image, index) => (
-                <div
-                    key={index}
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        width: "120px",
-                    }}
-                >
+                <div key={index}>
                     <img
                         src={`${import.meta.env.VITE_API_URL}${image}`}
                         alt={productName}
-                        style={{
-                            width: "120px",
-                            height: "250px",
-                            objectFit: "cover",
-                        }}
+                        style={imageStyle}
                     />
 
                     {onRemove && (
                         <button
                             type="button"
-                            style={{
-                                marginTop: "10px",
-                                width: "100%",
-                            }}
                             onClick={() =>
                                 onRemove(image, index)
                             }

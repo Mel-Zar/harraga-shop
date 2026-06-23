@@ -50,6 +50,13 @@ function Product() {
             <ProductGallery
                 images={product.images}
                 productName={product.name}
+                imageStyle={{
+                    width: "100%",
+                    maxWidth: "600px",
+                    aspectRatio: "1 / 1",
+                    objectFit: "fit",
+                    borderRadius: "12px",
+                }}
             />
 
             <h1>{product.name}</h1>
