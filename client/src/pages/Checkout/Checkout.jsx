@@ -12,6 +12,8 @@ function Checkout() {
         email: "",
         address: "",
         phone: "",
+        city: "",
+        postalCode: "",
     });
 
     const totalPrice = cartItems.reduce(
@@ -34,17 +36,25 @@ function Checkout() {
             return;
         }
 
-        if (!form.name || !form.email || !form.address || !form.phone) {
-            alert("Please fill all fields");
+        if (!form.name || !form.address || !form.phone) {
+            alert("Please fill all required fields");
             return;
         }
 
         const order = {
-            customer: { ...form },
+            customer: {
+                name: form.name,
+                email: form.email,
+                phone: form.phone,
+                address: form.address,
+                city: form.city,
+                postalCode: form.postalCode,
+            },
 
             items: cartItems.map((item) => ({
                 productId: item._id,
                 name: item.name,
+                image: item.image || "",
                 price: item.price,
                 quantity: item.quantity,
             })),
@@ -87,6 +97,8 @@ function Checkout() {
                 <input name="email" placeholder="Email" onChange={handleChange} />
                 <input name="address" placeholder="Address" onChange={handleChange} />
                 <input name="phone" placeholder="Phone" onChange={handleChange} />
+                <input name="city" placeholder="City" onChange={handleChange} />
+                <input name="postalCode" placeholder="Postal Code" onChange={handleChange} />
 
                 <h2>Order Summary</h2>
 

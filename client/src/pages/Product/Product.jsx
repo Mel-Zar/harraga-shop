@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getProducts } from "../../services/productService";
 import ProductGallery from "../../components/ProductGallery/ProductGallery";
 import { useCart } from "../../context/useCart";
 
 function Product() {
     const { id } = useParams();
+    const navigate = useNavigate(); // 🔥 FIX
 
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
@@ -18,10 +19,9 @@ function Product() {
             try {
                 const products = await getProducts();
 
-                const foundProduct =
-                    products.find(
-                        (p) => p._id === id
-                    );
+                const foundProduct = products.find(
+                    (p) => p._id === id
+                );
 
                 setProduct(foundProduct);
             } catch (error) {
@@ -64,33 +64,22 @@ function Product() {
 
             <h1>{product.name}</h1>
 
+            <p>{product.description}</p>
+
             <p>
-                {product.description}
+                <strong>Price:</strong> ${product.price}
             </p>
 
             <p>
-                <strong>Price:</strong>{" "}
-                ${product.price}
+                <strong>Category:</strong> {product.category}
             </p>
 
             <p>
-                <strong>Category:</strong>{" "}
-                {product.category}
+                <strong>Stock:</strong> {product.stock}
             </p>
 
-            <p>
-                <strong>Stock:</strong>{" "}
-                {product.stock}
-            </p>
-
-            <div
-                style={{
-                    marginTop: "20px",
-                }}
-            >
-                <label>
-                    Quantity:
-                </label>
+            <div style={{ marginTop: "20px" }}>
+                <label>Quantity:</label>
 
                 <div
                     style={{
@@ -110,21 +99,14 @@ function Product() {
                         -
                     </button>
 
-                    <span
-                        style={{
-                            minWidth: "30px",
-                            textAlign: "center",
-                        }}
-                    >
+                    <span style={{ minWidth: "30px", textAlign: "center" }}>
                         {quantity}
                     </span>
 
                     <button
                         onClick={() =>
                             setQuantity((prev) =>
-                                prev < product.stock
-                                    ? prev + 1
-                                    : prev
+                                prev < product.stock ? prev + 1 : prev
                             )
                         }
                     >
@@ -136,12 +118,7 @@ function Product() {
             <br />
 
             <button
-                onClick={() =>
-                    addToCart(
-                        product,
-                        quantity
-                    )
-                }
+                onClick={() => addToCart(product, quantity)}
             >
                 Add To Cart
             </button>
@@ -149,12 +126,10 @@ function Product() {
             {" "}
 
             <button
-                onClick={() =>
-                    addToCart(
-                        product,
-                        quantity
-                    )
-                }
+                onClick={() => {
+                    addToCart(product, quantity);
+                    navigate("/cart"); // 🔥 FIX
+                }}
             >
                 Buy Now
             </button>
