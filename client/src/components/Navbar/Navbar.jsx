@@ -36,6 +36,13 @@ export default function Navbar() {
 
             <Link to="/products">Products</Link>
 
+            {/* 🔥 VISAS FÖR ALLA INLOGGADE */}
+            {isLoggedIn() && (
+                <Link to="/profile">
+                    My Profile
+                </Link>
+            )}
+
             {/* 🔥 VISAS ENDAST FÖR ADMIN */}
             {isAdmin() && (
                 <>

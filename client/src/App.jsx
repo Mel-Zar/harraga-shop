@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Home from "./pages/Home/Home";
 import CreateProduct from "./pages/Admin/CreateProduct";
 
+
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
@@ -22,9 +23,12 @@ import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 import Orders from "./pages/Admin/Orders";
 import OrderDetails from "./pages/Admin/OrderDetails";
+import Profile from "./pages/Account/Profile";
 
-// 🔥 NEW
+
+// 🔥 ROUTES
 import AdminRoute from "./routes/AdminRoute";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
   // =========================
@@ -106,6 +110,34 @@ function App() {
             element={<Product />}
           />
 
+          {/* CART */}
+          <Route
+            path="/cart"
+            element={<Cart />}
+          />
+
+          {/* CHECKOUT */}
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* =========================
+              👤 Guest
+          ========================= */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
           {/* =========================
               🔥 ADMIN ROUTES
           ========================= */}
@@ -135,17 +167,6 @@ function App() {
                 <OrderDetails />
               </AdminRoute>
             }
-          />
-
-          {/* CART */}
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
-
-          <Route
-            path="/checkout"
-            element={<Checkout />}
           />
 
         </Routes>
