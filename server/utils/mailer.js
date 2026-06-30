@@ -1,47 +1,52 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import dotenv from "dotenv";
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+dotenv.config();
 
-    // ✅ EXTRA STABILITY SETTINGS
-    secure: false,
-    tls: {
-        rejectUnauthorized: false,
-    },
+// =========================
+// CHECK API KEY
+// =========================
+const apiKey = process.env.RESEND_API_KEY;
 
-    pool: true,
-    maxConnections: 5,
-    rateLimit: true,
-});
+console.log("🔵 RESEND KEY CHECK:", apiKey ? "SET ✅" : "MISSING ❌");
+console.log("RESEND KEY:", process.env.RESEND_API_KEY);
 
-// verify SMTP connection
-transporter.verify((err) => {
-    if (err) {
-        console.log("❌ SMTP ERROR:", err);
-    } else {
-        console.log("✅ Mail server ready");
-    }
-});
+if (!apiKey) {
+    console.error("❌ RESEND_API_KEY is missing in your .env file");
+}
 
+// =========================
+// INIT RESEND SAFELY
+// =========================
+const resend = apiKey ? new Resend(apiKey) : null;
+
+// =========================
+// CORE EMAIL FUNCTION
+// =========================
 export const sendEmail = async ({ to, subject, html }) => {
     if (!to || !subject || !html) {
         throw new Error("Missing email parameters");
     }
 
-    return transporter.sendMail({
-        from: {
-            name: "Harraga Shop",
-            address: process.env.EMAIL_USER
-        },
-        to,
-        subject,
-        html,
-        replyTo: process.env.EMAIL_USER,
-    });
+    if (!resend) {
+        throw new Error("Resend is not initialized (missing API key)");
+    }
+
+    try {
+        const result = await resend.emails.send({
+            from: "Harraga Shop <onboarding@resend.dev>",
+            to,
+            subject,
+            html,
+        });
+
+        console.log("✅ Email sent:", result?.data?.id || result);
+        return result;
+
+    } catch (err) {
+        console.error("❌ Email failed:", err);
+        throw err;
+    }
 };
 
 // =========================
@@ -56,12 +61,12 @@ export const sendWelcomeEmail = async (to, firstName) => {
                 <h2>Welcome ${firstName} 👋</h2>
                 <p>Your account is now active.</p>
             </div>
-        `
+        `,
     });
 };
 
 // =========================
-// VERIFICATION EMAIL (NY)
+// VERIFICATION EMAIL
 // =========================
 export const sendVerificationEmail = async (to, verifyUrl) => {
     return sendEmail({
@@ -71,15 +76,19 @@ export const sendVerificationEmail = async (to, verifyUrl) => {
             <div style="font-family:Arial;padding:20px">
                 <h2>Verify your email</h2>
                 <p>Click below to activate your account:</p>
-                <a href="${verifyUrl}">Verify Email</a>
-                <p>This link expires in 24h.</p>
+
+                <a href="${verifyUrl}" style="padding:10px 16px;display:inline-block;background:black;color:white;text-decoration:none;border-radius:6px;">
+                    Verify Email
+                </a>
+
+                <p>This link expires in 24 hours.</p>
             </div>
-        `
+        `,
     });
 };
 
 // =========================
-// RESET EMAIL
+// RESET PASSWORD EMAIL
 // =========================
 export const sendResetPasswordEmail = async (to, resetUrl) => {
     return sendEmail({
@@ -87,9 +96,14 @@ export const sendResetPasswordEmail = async (to, resetUrl) => {
         subject: "Reset your password",
         html: `
             <div style="font-family:Arial;padding:20px">
-                <h2>Password Reset</h2>
-                <a href="${resetUrl}">Reset Password</a>
+                <h2>Reset Password</h2>
+
+                <a href="${resetUrl}" style="padding:10px 16px;display:inline-block;background:black;color:white;text-decoration:none;border-radius:6px;">
+                    Reset Password
+                </a>
+
+                <p>If you didn't request this, ignore this email.</p>
             </div>
-        `
+        `,
     });
 };

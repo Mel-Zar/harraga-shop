@@ -24,6 +24,14 @@ export const getToken = () => {
 };
 
 // =========================
+// 👑 IS ADMIN
+// =========================
+export const isAdmin = () => {
+    const user = getUser();
+    return user?.user?.isAdmin === true;
+};
+
+// =========================
 // ✅ IS LOGGED IN
 // =========================
 export const isLoggedIn = () => {
@@ -37,4 +45,3 @@ export const isLoggedIn = () => {
 export const logout = () => {
     localStorage.removeItem("user");
 };
-

@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/useCart";
+import {
+    isAdmin,
+    isLoggedIn,
+    logout,
+} from "../../utils/auth";
 
 export default function Navbar() {
     const { cartItems } = useCart();
@@ -8,6 +13,11 @@ export default function Navbar() {
         (total, item) => total + item.quantity,
         0
     );
+
+    const handleLogout = () => {
+        logout();
+        window.location.href = "/";
+    };
 
     return (
         <nav
@@ -26,13 +36,18 @@ export default function Navbar() {
 
             <Link to="/products">Products</Link>
 
-            <Link to="/admin/create">
-                Create Product
-            </Link>
+            {/* 🔥 VISAS ENDAST FÖR ADMIN */}
+            {isAdmin() && (
+                <>
+                    <Link to="/admin/create">
+                        Create Product
+                    </Link>
 
-            <Link to="/admin/orders">
-                Orders
-            </Link>
+                    <Link to="/admin/orders">
+                        Orders
+                    </Link>
+                </>
+            )}
 
             {/* 🔥 CART MED COUNT */}
             <Link
@@ -58,9 +73,27 @@ export default function Navbar() {
                 )}
             </Link>
 
-            <Link to="/login">Login</Link>
+            {!isLoggedIn() ? (
+                <>
+                    <Link to="/login">Login</Link>
 
-            <Link to="/register">Register</Link>
+                    <Link to="/register">Register</Link>
+                </>
+            ) : (
+                <button
+                    onClick={handleLogout}
+                    style={{
+                        background: "black",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        cursor: "pointer",
+                        borderRadius: "6px",
+                    }}
+                >
+                    Logout
+                </button>
+            )}
         </nav>
     );
 }

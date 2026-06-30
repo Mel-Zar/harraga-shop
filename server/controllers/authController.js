@@ -157,13 +157,22 @@ export const register = async (req, res) => {
 
         const verifyUrl = `${process.env.FRONTEND_URL}/verify-email/${user._id}/${verificationToken}`;
 
-        await sendEmail({
-            to: email,
-            subject: "Verify your email",
-            html: `<a href="${verifyUrl}">Verify Email</a>`,
-        });
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: "Verify your email",
+                html: `<a href="${verifyUrl}">Verify Email</a>`,
+            });
 
-        return res.status(201).json({ message: "User created" });
+            console.log("✅ Verification email sent");
+        } catch (mailError) {
+            // Registreringen ska fortfarande lyckas även om mejlet inte går att skicka
+            console.error("❌ Failed to send verification email:", mailError);
+        }
+
+        return res.status(201).json({
+            message: "User created",
+        });
 
     } catch (err) {
         console.error(err);
@@ -222,8 +231,12 @@ export const login = async (req, res) => {
             accessToken,
             user: {
                 id: user._id,
-                email: user.email,
                 username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,          // ⭐ viktigt
+                isVerified: user.isVerified,
             },
         });
 

@@ -21,9 +21,10 @@ import Footer from "./components/Footer/Footer";
 import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 import Orders from "./pages/Admin/Orders";
+import OrderDetails from "./pages/Admin/OrderDetails";
 
 // 🔥 NEW
-import OrderDetails from "./pages/Admin/OrderDetails";
+import AdminRoute from "./routes/AdminRoute";
 
 function App() {
   // =========================
@@ -105,21 +106,35 @@ function App() {
             element={<Product />}
           />
 
-          {/* ADMIN */}
+          {/* =========================
+              🔥 ADMIN ROUTES
+          ========================= */}
+
           <Route
             path="/admin/create"
-            element={<CreateProduct />}
+            element={
+              <AdminRoute>
+                <CreateProduct />
+              </AdminRoute>
+            }
           />
 
           <Route
             path="/admin/orders"
-            element={<Orders />}
+            element={
+              <AdminRoute>
+                <Orders />
+              </AdminRoute>
+            }
           />
 
-          {/* 🔥 SINGLE ORDER */}
           <Route
             path="/admin/orders/:id"
-            element={<OrderDetails />}
+            element={
+              <AdminRoute>
+                <OrderDetails />
+              </AdminRoute>
+            }
           />
 
           {/* CART */}

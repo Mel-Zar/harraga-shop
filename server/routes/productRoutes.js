@@ -1,5 +1,9 @@
 import express from "express";
 import upload from "../middleware/upload.js";
+import {
+    protect,
+    admin,
+} from "../middleware/authMiddleware.js";
 
 import {
     createProduct,
@@ -20,6 +24,8 @@ router
     .route("/")
     .get(getProducts)
     .post(
+        protect,
+        admin,
         upload.array("images", 4),
         createProduct
     );
@@ -29,9 +35,15 @@ router
     .route("/:id")
     .get(getProductById)
     .put(
+        protect,
+        admin,
         upload.array("images", 4),
         updateProduct
     )
-    .delete(deleteProduct);
+    .delete(
+        protect,
+        admin,
+        deleteProduct
+    );
 
 export default router;

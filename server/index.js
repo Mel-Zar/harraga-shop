@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -9,8 +11,27 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
-dotenv.config();
+// =========================
+// ENV DEBUG (STABIL)
+// =========================
+console.log("🔵 ENV CHECK:");
+console.log("EMAIL_USER:", process.env.EMAIL_USER ?? "MISSING ❌");
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "SET ✅" : "MISSING ❌");
+console.log("MONGO_URI:", process.env.MONGO_URI ? "SET ✅" : "MISSING ❌");
+console.log("PORT:", process.env.PORT ?? "5050 (default)");
+console.log("CORS_ORIGIN:", process.env.CORS_ORIGIN ?? "NOT SET ❌");
 
+// =========================
+// SAFETY CHECK (VIKTIGT)
+// =========================
+if (!process.env.MONGO_URI) {
+    console.error("❌ MONGO_URI saknas i .env");
+    process.exit(1);
+}
+
+// =========================
+// APP INIT
+// =========================
 const app = express();
 
 // =========================
@@ -32,7 +53,9 @@ app.use(helmet());
 // =========================
 // CORS
 // =========================
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+    : ["http://localhost:5173"];
 
 app.use(
     cors({
@@ -66,10 +89,7 @@ app.use(
     "/uploads",
     express.static(path.join(__dirname, "uploads"), {
         setHeaders: (res) => {
-            res.setHeader(
-                "Cross-Origin-Resource-Policy",
-                "cross-origin"
-            );
+            res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         },
     })
 );
@@ -80,14 +100,13 @@ app.use("/uploads", (req, res, next) => {
 });
 
 // =========================
-// DB
+// DB (SAFE INIT)
 // =========================
 connectDB();
 
 // =========================
 // ROUTES
 // =========================
-
 console.log("🔵 Loading routes...");
 
 import authRoutes from "./routes/authRoutes.js";

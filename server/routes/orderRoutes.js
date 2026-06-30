@@ -5,7 +5,10 @@ import {
     getOrderById,
 } from "../controllers/orderController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import {
+    protect,
+    admin,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -24,13 +27,23 @@ const optionalProtect = (req, res, next) => {
 router.post("/", optionalProtect, createOrder);
 
 // =========================
-// GET ALL ORDERS
+// GET ALL ORDERS (ADMIN ONLY)
 // =========================
-router.get("/", getAllOrders);
+router.get(
+    "/",
+    protect,
+    admin,
+    getAllOrders
+);
 
 // =========================
-// GET SINGLE ORDER
+// GET SINGLE ORDER (ADMIN ONLY)
 // =========================
-router.get("/:id", getOrderById);
+router.get(
+    "/:id",
+    protect,
+    admin,
+    getOrderById
+);
 
 export default router;

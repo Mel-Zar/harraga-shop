@@ -3,14 +3,24 @@ import { useParams } from "react-router-dom";
 
 export default function VerifyEmail() {
     const { userId, token } = useParams();
+
+    console.log("🟢 VerifyEmail page loaded");
+    console.log("USER ID:", userId);
+    console.log("TOKEN:", token);
+    console.log("API URL:", import.meta.env.VITE_API_URL);
+
     const [status, setStatus] = useState("loading");
 
     useEffect(() => {
         const verify = async () => {
             try {
-                const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/auth/verify-email/${userId}/${token}`
-                );
+                const url = `${import.meta.env.VITE_API_URL}/api/auth/verify-email/${userId}/${token}`;
+
+                console.log("➡️ Fetching:", url);
+
+                const res = await fetch(url);
+
+                console.log("STATUS:", res.status);
 
                 const data = await res.json();
 
@@ -26,9 +36,15 @@ export default function VerifyEmail() {
                     return;
                 }
 
-                setStatus("success");
+                if (data.message === "Email verified successfully") {
+                    setStatus("success");
+                    return;
+                }
+
+                setStatus("error");
+
             } catch (err) {
-                console.log("NETWORK ERROR:", err);
+                console.error("❌ NETWORK ERROR:", err);
                 setStatus("error");
             }
         };
@@ -36,11 +52,17 @@ export default function VerifyEmail() {
         verify();
     }, [userId, token]);
 
-    if (status === "loading") return <h2>Verifying email...</h2>;
+    if (status === "loading") {
+        return (
+            <div style={{ padding: "40px", textAlign: "center" }}>
+                <h2>Verifying email...</h2>
+            </div>
+        );
+    }
 
     if (status === "success") {
         return (
-            <div>
+            <div style={{ padding: "40px", textAlign: "center" }}>
                 <h2>✅ Email verified! You can now login.</h2>
                 <a href="/login">Go to Login</a>
             </div>
@@ -49,12 +71,16 @@ export default function VerifyEmail() {
 
     if (status === "already") {
         return (
-            <div>
+            <div style={{ padding: "40px", textAlign: "center" }}>
                 <h2>✅ Your email is already verified.</h2>
                 <a href="/login">Go to Login</a>
             </div>
         );
     }
 
-    return <h2>❌ Verification failed or expired link</h2>;
+    return (
+        <div style={{ padding: "40px", textAlign: "center" }}>
+            <h2>❌ Verification failed or expired link</h2>
+        </div>
+    );
 }
