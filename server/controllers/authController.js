@@ -235,7 +235,7 @@ export const login = async (req, res) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                role: user.role,          // ⭐ viktigt
+                isAdmin: user.isAdmin,
                 isVerified: user.isVerified,
             },
         });

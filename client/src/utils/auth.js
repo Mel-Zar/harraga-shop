@@ -2,25 +2,26 @@
 // 💾 SAVE USER + TOKEN
 // =========================
 export const saveUser = (data) => {
-    localStorage.setItem("user", JSON.stringify(data));
+    localStorage.setItem("token", data.accessToken);
+    localStorage.setItem("user", JSON.stringify(data.user));
 };
 
 // =========================
 // 📦 GET USER
 // =========================
 export const getUser = () => {
-    return JSON.parse(localStorage.getItem("user"));
+    const user = localStorage.getItem("user");
+
+    if (!user) return null;
+
+    return JSON.parse(user);
 };
 
 // =========================
 // 🔐 GET TOKEN
 // =========================
 export const getToken = () => {
-    const user = getUser();
-
-    // ✅ Backend returns accessToken
-    // fallback if token exists in future
-    return user?.accessToken || user?.token;
+    return localStorage.getItem("token");
 };
 
 // =========================
@@ -28,20 +29,21 @@ export const getToken = () => {
 // =========================
 export const isAdmin = () => {
     const user = getUser();
-    return user?.user?.isAdmin === true;
+
+    return user?.isAdmin === true;
 };
 
 // =========================
 // ✅ IS LOGGED IN
 // =========================
 export const isLoggedIn = () => {
-    const token = getToken();
-    return !!token;
+    return !!getToken();
 };
 
 // =========================
 // 🚪 LOGOUT
 // =========================
 export const logout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
 };
