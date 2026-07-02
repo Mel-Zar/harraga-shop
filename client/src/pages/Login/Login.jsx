@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { loginUser, resendVerifyEmail } from "../../services/authService";
+import { Link, useNavigate } from "react-router-dom";
+import {
+    loginUser,
+    resendVerifyEmail,
+} from "../../services/authService";
 import { saveUser } from "../../utils/auth";
-import { Link } from "react-router-dom";
 
 export default function Login() {
+    const navigate = useNavigate();
+
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
 
@@ -26,27 +31,37 @@ export default function Login() {
         setResendMessage("");
         setLoading(true);
 
-        if (!identifier.trim() || !password) {
-            setError("All fields are required");
+        if (!identifier.trim() || !password.trim()) {
+            setError("All fields are required.");
             setLoading(false);
             return;
         }
 
         try {
-            const data = await loginUser({ identifier, password });
+            const data = await loginUser({
+                identifier,
+                password,
+            });
 
+            // Sparar token + user
             saveUser(data);
-
-            // 🔥 FIX: extra säkerhet (viktig!)
-            if (data.token) {
-                localStorage.setItem("token", data.token);
-            }
 
             setSuccess("Login successful!");
 
+            // Vänta lite så användaren ser meddelandet
+            setTimeout(() => {
+                navigate("/");
+            }, 500);
+
         } catch (err) {
-            if (err.message.toLowerCase().includes("verify your email")) {
-                setVerifyMessage("Your account is not verified. Resend verification email?");
+            if (
+                err.message
+                    .toLowerCase()
+                    .includes("verify your email")
+            ) {
+                setVerifyMessage(
+                    "Your account is not verified. Resend verification email?"
+                );
             } else {
                 setError(err.message);
             }
@@ -56,42 +71,35 @@ export default function Login() {
     };
 
     const handleResend = async () => {
-        if (resendLoading || loading) return;
+        if (loading || resendLoading) return;
 
         setError("");
         setSuccess("");
         setResendMessage("");
 
-        if (!identifier.trim() || !identifier.includes("@")) {
-            setError("Enter your email in the Email/Username field to resend verification.");
+        if (
+            !identifier.trim() ||
+            !identifier.includes("@")
+        ) {
+            setError(
+                "Enter your email in the Email/Username field to resend verification."
+            );
             return;
         }
 
         try {
             setResendLoading(true);
 
-            const data = await resendVerifyEmail(identifier);
+            const data =
+                await resendVerifyEmail(identifier);
 
             setResendMessage(data.message);
             setVerifyMessage("");
-
         } catch (err) {
             setError(err.message);
         } finally {
             setResendLoading(false);
         }
-    };
-
-    const handleIdentifierChange = (e) => {
-        setIdentifier(e.target.value);
-        setVerifyMessage("");
-        setResendMessage("");
-        setError("");
-    };
-
-    const handlePasswordChange = (e) => {
-        setPassword(e.target.value);
-        setError("");
     };
 
     return (
@@ -103,67 +111,114 @@ export default function Login() {
                     type="text"
                     placeholder="Email or Username"
                     value={identifier}
-                    onChange={handleIdentifierChange}
-                    disabled={loading || resendLoading}
+                    onChange={(e) => {
+                        setIdentifier(e.target.value);
+                        setError("");
+                        setVerifyMessage("");
+                        setResendMessage("");
+                    }}
+                    disabled={
+                        loading || resendLoading
+                    }
                 />
 
                 <input
                     type="password"
                     placeholder="Password"
                     value={password}
-                    onChange={handlePasswordChange}
-                    disabled={loading || resendLoading}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError("");
+                    }}
+                    disabled={
+                        loading || resendLoading
+                    }
                 />
 
-                <button type="submit" disabled={loading || resendLoading}>
-                    {loading ? "Logging in..." : "Login"}
+                <button
+                    type="submit"
+                    disabled={
+                        loading || resendLoading
+                    }
+                >
+                    {loading
+                        ? "Logging in..."
+                        : "Login"}
                 </button>
 
                 <p style={{ marginTop: "10px" }}>
-                    <Link to="/forgot-password">Forgot password?</Link>
+                    <Link to="/forgot-password">
+                        Forgot password?
+                    </Link>
                 </p>
 
                 {verifyMessage && (
                     <div style={{ marginTop: 15 }}>
-                        <p style={{ color: "orange", fontWeight: "bold" }}>
+                        <p
+                            style={{
+                                color: "orange",
+                                fontWeight: "bold",
+                            }}
+                        >
                             ⚠️ {verifyMessage}
                         </p>
 
                         <button
                             type="button"
                             onClick={handleResend}
-                            disabled={resendLoading}
+                            disabled={
+                                resendLoading
+                            }
                             style={{
                                 marginTop: 10,
-                                background: "black",
+                                background:
+                                    "black",
                                 color: "white",
                                 padding: "10px",
-                                borderRadius: "6px",
+                                borderRadius:
+                                    "6px",
                                 cursor: "pointer",
                                 border: "none",
-                                width: "100%"
+                                width: "100%",
                             }}
                         >
-                            {resendLoading ? "Sending..." : "Resend verification email"}
+                            {resendLoading
+                                ? "Sending..."
+                                : "Resend verification email"}
                         </button>
                     </div>
                 )}
 
                 {resendMessage && (
-                    <p style={{ color: "green", marginTop: 10 }}>
+                    <p
+                        style={{
+                            color: "green",
+                            marginTop: 10,
+                        }}
+                    >
                         ✅ {resendMessage}
                     </p>
                 )}
 
                 {error && (
-                    <p style={{ color: "red", marginTop: 10 }}>
+                    <p
+                        style={{
+                            color: "red",
+                            marginTop: 10,
+                        }}
+                    >
                         {error}
                     </p>
                 )}
 
                 {success && (
-                    <p style={{ color: "green", marginTop: 10 }}>
-                        {success}
+                    <p
+                        style={{
+                            color: "green",
+                            marginTop: 10,
+                        }}
+                    >
+                        ✅ {success}
                     </p>
                 )}
             </form>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/useCart";
 import {
     isAdmin,
@@ -8,6 +8,7 @@ import {
 
 export default function Navbar() {
     const { cartItems } = useCart();
+    const navigate = useNavigate();
 
     const cartCount = cartItems.reduce(
         (total, item) => total + item.quantity,
@@ -16,7 +17,7 @@ export default function Navbar() {
 
     const handleLogout = () => {
         logout();
-        window.location.href = "/";
+        navigate("/");
     };
 
     return (
