@@ -9,17 +9,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-
-// =========================
-// ENV DEBUG (STABIL)
-// =========================
-console.log("🔵 ENV CHECK:");
-console.log("EMAIL_USER:", process.env.EMAIL_USER ?? "MISSING ❌");
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "SET ✅" : "MISSING ❌");
-console.log("MONGO_URI:", process.env.MONGO_URI ? "SET ✅" : "MISSING ❌");
-console.log("PORT:", process.env.PORT ?? "5050 (default)");
-console.log("CORS_ORIGIN:", process.env.CORS_ORIGIN ?? "NOT SET ❌");
+import rateLimit from "express-rate-limit"; // ✅ FIX 1 (DU SAKNADE DEN)
 
 // =========================
 // SAFETY CHECK (VIKTIGT)

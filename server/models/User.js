@@ -1,39 +1,153 @@
 import mongoose from "mongoose";
 
+const addressSchema = new mongoose.Schema(
+    {
+        id: {
+            type: Number,
+        },
+        fullName: {
+            type: String,
+            trim: true,
+        },
+        phone: {
+            type: String,
+            trim: true,
+        },
+        street: {
+            type: String,
+            trim: true,
+        },
+        city: {
+            type: String,
+            trim: true,
+        },
+        postalCode: {
+            type: String,
+            trim: true,
+        },
+        country: {
+            type: String,
+            trim: true,
+        },
+    },
+    { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
     {
-        username: { type: String, required: true, unique: true, lowercase: true },
-        firstName: { type: String, required: true },
-        lastName: { type: String, required: true },
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
 
-        email: { type: String, required: true, unique: true, lowercase: true },
-        password: { type: String, required: true },
+        firstName: {
+            type: String,
+            required: true,
+            trim: true,
+        },
 
-        address: { type: String, required: true },
-        postalCode: { type: String, required: true },
-        city: { type: String, required: true },
-        country: { type: String, required: true },
+        lastName: {
+            type: String,
+            required: true,
+            trim: true,
+        },
 
-        isAdmin: { type: Boolean, default: false },
-        isVerified: { type: Boolean, default: false },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
 
-        emailVerificationToken: String,
-        emailVerificationExpire: Date,
+        password: {
+            type: String,
+            required: true,
+        },
 
-        resetPasswordToken: String,
-        resetPasswordExpire: Date,
+        // MAIN ADDRESS (profil)
+        address: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        postalCode: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        city: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        country: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        // MULTIPLE ADDRESSES (AddressBook)
+        addresses: [addressSchema],
+
+        isAdmin: {
+            type: Boolean,
+            default: false,
+        },
+
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
+
+        emailVerificationToken: {
+            type: String,
+            default: undefined,
+        },
+
+        emailVerificationExpire: {
+            type: Date,
+            default: undefined,
+        },
+
+        resetPasswordToken: {
+            type: String,
+            default: undefined,
+        },
+
+        resetPasswordExpire: {
+            type: Date,
+            default: undefined,
+        },
 
         passwordHistory: [
             {
-                password: String,
-                changedAt: { type: Date, default: Date.now },
+                password: {
+                    type: String,
+                    required: true,
+                },
+                changedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
             },
         ],
 
-        // 🔥 REFRESH TOKENS
-        refreshTokens: [String],
+        refreshTokens: [
+            {
+                type: String,
+            },
+        ],
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
 export default mongoose.model("User", userSchema);

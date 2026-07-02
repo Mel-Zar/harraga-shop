@@ -1,28 +1,15 @@
 import express from "express";
-
 import * as controller from "../controllers/authController.js";
 
-// 🔥 FIX: import named exports korrekt
 import {
     registerLimiter,
     loginLimiter,
     forgotPasswordLimiter,
     resetPasswordLimiter,
-    verifyEmailLimiter
+    verifyEmailLimiter,
 } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
-
-// fallback om något saknas (för debug)
-const safeFn = (fn, name) => {
-    if (typeof fn !== "function") {
-        console.log(`❌ Missing: ${name}`);
-        return (req, res) => {
-            res.status(500).json({ message: `${name} is not a function` });
-        };
-    }
-    return fn;
-};
 
 // =========================
 // AUTH
@@ -30,13 +17,13 @@ const safeFn = (fn, name) => {
 router.post(
     "/register",
     registerLimiter,
-    safeFn(controller.register, "register")
+    controller.register
 );
 
 router.post(
     "/login",
     loginLimiter,
-    safeFn(controller.login, "login")
+    controller.login
 );
 
 // =========================
@@ -44,12 +31,12 @@ router.post(
 // =========================
 router.post(
     "/refresh",
-    safeFn(controller.refreshToken, "refreshToken")
+    controller.refreshToken
 );
 
 router.post(
     "/logout",
-    safeFn(controller.logout, "logout")
+    controller.logout
 );
 
 // =========================
@@ -58,13 +45,13 @@ router.post(
 router.post(
     "/forgot-password",
     forgotPasswordLimiter,
-    safeFn(controller.forgotPassword, "forgotPassword")
+    controller.forgotPassword
 );
 
 router.post(
     "/reset-password/:token",
     resetPasswordLimiter,
-    safeFn(controller.resetPassword, "resetPassword")
+    controller.resetPassword
 );
 
 // =========================
@@ -73,13 +60,13 @@ router.post(
 router.get(
     "/verify-email/:userId/:token",
     verifyEmailLimiter,
-    safeFn(controller.verifyEmail, "verifyEmail")
+    controller.verifyEmail
 );
 
 router.post(
     "/resend-verify-email",
     verifyEmailLimiter,
-    safeFn(controller.resendVerifyEmail, "resendVerifyEmail")
+    controller.resendVerifyEmail
 );
 
 export default router;

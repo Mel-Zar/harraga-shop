@@ -1,14 +1,14 @@
+import User from "../models/User.js";
 import { getCountryCode } from "./countryController.js";
 
 // =========================
-// ADDRESS SEARCH
+// ADDRESS SEARCH (EXTERNAL API)
 // =========================
 export const searchAddress = async (req, res) => {
     try {
         const qRaw = req.query?.q;
         const countryRaw = req.query?.country;
 
-        // ✅ Validate required params
         if (typeof qRaw !== "string" || typeof countryRaw !== "string") {
             return res.status(200).json([]);
         }
@@ -20,12 +20,10 @@ export const searchAddress = async (req, res) => {
             return res.status(200).json([]);
         }
 
-        // ✅ Abuse protection
         if (q.length > 150 || country.length > 80) {
             return res.status(200).json([]);
         }
 
-        // 🔥 COUNTRY VALIDATION MOVED TO CONTROLLER
         const countryCodeRaw = getCountryCode(country);
 
         if (!countryCodeRaw || typeof countryCodeRaw !== "string") {
@@ -34,12 +32,8 @@ export const searchAddress = async (req, res) => {
 
         const countryCode = countryCodeRaw.toLowerCase().trim();
 
-        // 🔥 SMART QUERY BOOST
         const smartQuery = `${q}, ${country}`;
 
-        // =========================
-        // Nominatim request
-        // =========================
         const url = new URL("https://nominatim.openstreetmap.org/search");
         url.searchParams.set("format", "jsonv2");
         url.searchParams.set("addressdetails", "1");
@@ -57,15 +51,13 @@ export const searchAddress = async (req, res) => {
             response = await fetch(url.toString(), {
                 method: "GET",
                 headers: {
-                    "User-Agent": "workhub-app/1.0 (contact: dev)",
+                    "User-Agent": "workhub-app/1.0",
                     "Accept": "application/json",
-                    "Accept-Language": "en"
                 },
-                signal: controller.signal
+                signal: controller.signal,
             });
         } catch (err) {
             clearTimeout(timeout);
-            console.error("❌ Fetch error:", err);
             return res.status(200).json([]);
         }
 
@@ -75,31 +67,114 @@ export const searchAddress = async (req, res) => {
             return res.status(200).json([]);
         }
 
-        let data;
+        const data = await response.json();
 
-        try {
-            data = await response.json();
-        } catch {
-            return res.status(200).json([]);
-        }
-
-        if (!Array.isArray(data)) {
-            return res.status(200).json([]);
-        }
-
-        const cleaned = data
-            .filter((item) => item && typeof item === "object" && item.address)
-            .map((item) => ({
-                display_name: item.display_name || "",
-                address: item.address || {}
-            }));
-
-        res.set("Cache-Control", "public, max-age=60");
+        const cleaned = Array.isArray(data)
+            ? data
+                .filter((i) => i?.address)
+                .map((i) => ({
+                    display_name: i.display_name,
+                    address: i.address,
+                }))
+            : [];
 
         return res.status(200).json(cleaned);
-
     } catch (err) {
-        console.error("❌ Address API error:", err);
+        console.error(err);
         return res.status(200).json([]);
+    }
+};
+
+// =========================
+// ADD ADDRESS (MONGODB)
+// =========================
+export const addAddress = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const {
+            id,
+            fullName,
+            phone,
+            street,
+            city,
+            postalCode,
+            country,
+        } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const newAddress = {
+            id: id || Date.now(),
+            fullName,
+            phone,
+            street,
+            city,
+            postalCode,
+            country,
+        };
+
+        user.addresses.push(newAddress);
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Address added",
+            addresses: user.addresses,
+        });
+    } catch (err) {
+        console.error("ADD ADDRESS ERROR:", err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =========================
+// GET ADDRESSES
+// =========================
+export const getAddresses = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json(user.addresses || []);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+// =========================
+// DELETE ADDRESS
+// =========================
+export const deleteAddress = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const id = req.params.id;
+
+        user.addresses = user.addresses.filter(
+            (a) => String(a.id) !== String(id)
+        );
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Address deleted",
+            addresses: user.addresses,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
     }
 };

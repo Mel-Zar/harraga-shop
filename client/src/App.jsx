@@ -12,7 +12,6 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Home from "./pages/Home/Home";
 import CreateProduct from "./pages/Admin/CreateProduct";
 
-
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
 import Navbar from "./components/Navbar/Navbar";
@@ -23,8 +22,13 @@ import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 import Orders from "./pages/Admin/Orders";
 import OrderDetails from "./pages/Admin/OrderDetails";
-import Profile from "./pages/Account/Profile";
 
+// 👤 Account
+import Profile from "./pages/Account/Profile";
+import MyOrders from "./pages/Account/MyOrders";
+import EditProfile from "./pages/Account/EditProfile";
+import ChangePassword from "./pages/Account/ChangePassword";
+import AddressBook from "./pages/Account/AddressBook";
 
 // 🔥 ROUTES
 import AdminRoute from "./routes/AdminRoute";
@@ -40,14 +44,9 @@ function App() {
     if (!token) return;
 
     getProtectedData()
-      .then((data) =>
-        console.log("✅ PROTECTED DATA:", data)
-      )
+      .then((data) => console.log("✅ PROTECTED DATA:", data))
       .catch((err) =>
-        console.log(
-          "❌ PROTECTED ERROR:",
-          err.message
-        )
+        console.log("❌ PROTECTED ERROR:", err.message)
       );
   }, []);
 
@@ -127,13 +126,50 @@ function App() {
           />
 
           {/* =========================
-              👤 Guest
+              👤 ACCOUNT ROUTES
           ========================= */}
+
           <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/orders"
+            element={
+              <ProtectedRoute>
+                <MyOrders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/address"
+            element={
+              <ProtectedRoute>
+                <AddressBook />
               </ProtectedRoute>
             }
           />

@@ -1,20 +1,29 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
+import {
+    getProfile,
+    updateProfile,
+} from "../controllers/userController.js";
+
+import {
+    getAddresses,
+    addAddress,
+    deleteAddress
+} from "../controllers/addressController.js";
 
 const router = express.Router();
 
 // =========================
-// GET PROFILE
+// PROFILE
 // =========================
-router.get("/me", protect, (req, res) => {
-    res.json(req.user);
-});
+router.get("/me", protect, getProfile);
+router.put("/me", protect, updateProfile);
 
 // =========================
-// UPDATE PROFILE
+// ADDRESSES (USER BASED)
 // =========================
-router.put("/me", protect, (req, res) => {
-    res.json({ message: "update user here" });
-});
+router.get("/me/addresses", protect, getAddresses);
+router.post("/me/addresses", protect, addAddress);
+router.delete("/me/addresses/:id", protect, deleteAddress);
 
 export default router;
