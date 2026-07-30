@@ -5,6 +5,15 @@ import User from "../models/User.js";
 // PROTECT ROUTES (REQUIRES LOGIN)
 // =========================
 export const protect = async (req, res, next) => {
+    // =========================
+    // DEBUG
+    // =========================
+    console.log("=================================");
+    console.log("AUTH HEADER:", req.headers.authorization);
+    console.log("COOKIE TOKEN:", req.cookies?.token);
+    console.log("HEADERS:", req.headers);
+    console.log("=================================");
+
     try {
         let token;
 
@@ -44,8 +53,6 @@ export const protect = async (req, res, next) => {
             });
         }
 
-        // 🔥 IMPORTANT FIX:
-        // alltid säkra id format för controllers
         req.user = {
             ...user.toObject(),
             id: user._id.toString(),
@@ -55,6 +62,7 @@ export const protect = async (req, res, next) => {
 
     } catch (err) {
         console.error("AUTH ERROR:", err);
+
         return res.status(500).json({
             message: "Server error in auth middleware",
         });
@@ -84,6 +92,7 @@ export const optionalAuth = async (req, res, next) => {
         }
 
         let decoded;
+
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch {
@@ -120,7 +129,7 @@ export const admin = (req, res, next) => {
 };
 
 // =========================
-// EMAIL VERIFIED GUARD (IMPORTANT FOR SHOP)
+// EMAIL VERIFIED GUARD
 // =========================
 export const requireVerified = (req, res, next) => {
     if (!req.user?.isVerified) {
@@ -128,5 +137,6 @@ export const requireVerified = (req, res, next) => {
             message: "Please verify your email",
         });
     }
+
     next();
 };

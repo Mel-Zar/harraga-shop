@@ -97,7 +97,6 @@ connectDB();
 // =========================
 // ROUTES
 // =========================
-console.log("🔵 Loading routes...");
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";

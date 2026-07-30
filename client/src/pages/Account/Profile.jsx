@@ -4,7 +4,11 @@ import { useMemo } from "react";
 function Profile() {
     const user = useMemo(() => {
         try {
-            return JSON.parse(localStorage.getItem("user"));
+            const storedUser = localStorage.getItem("user");
+
+            if (!storedUser) return null;
+
+            return JSON.parse(storedUser);
         } catch {
             return null;
         }

@@ -6,13 +6,17 @@ import { useCart } from "../../context/useCart";
 
 function Product() {
     const { id } = useParams();
-    const navigate = useNavigate(); // 🔥 FIX
+    const navigate = useNavigate();
 
     const [product, setProduct] = useState(null);
-    const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
 
-    const { addToCart } = useCart();
+    // Quantity för produktsidan
+    const [quantity, setQuantity] = useState(1);
+
+    const {
+        addToCart
+    } = useCart();
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -20,18 +24,21 @@ function Product() {
                 const products = await getProducts();
 
                 const foundProduct = products.find(
-                    (p) => p._id === id
+                    (p) => String(p._id) === String(id)
                 );
 
                 setProduct(foundProduct);
+
             } catch (error) {
                 console.error(error);
+
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProduct();
+
     }, [id]);
 
     if (loading) {
@@ -42,6 +49,55 @@ function Product() {
         return <h2>Product not found</h2>;
     }
 
+    console.log("Product images:", product.images);
+
+    const increaseQuantity = () => {
+
+        if (quantity < product.stock) {
+            setQuantity((prev) => prev + 1);
+        }
+
+    };
+
+    const decreaseQuantity = () => {
+
+        if (quantity > 1) {
+            setQuantity((prev) => prev - 1);
+        }
+
+    };
+
+    const addProductToCart = () => {
+
+        if (product.stock === 0) {
+            return;
+        }
+
+        addToCart(
+            product,
+            quantity
+        );
+
+        // Återställ väljaren efter att produkten lagts till
+        setQuantity(1);
+
+    };
+
+    const buyNow = () => {
+
+        if (product.stock === 0) {
+            return;
+        }
+
+        addToCart(
+            product,
+            quantity
+        );
+
+        navigate("/cart");
+
+    };
+
     return (
         <div
             style={{
@@ -50,6 +106,7 @@ function Product() {
                 padding: "20px",
             }}
         >
+
             <ProductGallery
                 images={product.images}
                 productName={product.name}
@@ -79,7 +136,10 @@ function Product() {
             </p>
 
             <div style={{ marginTop: "20px" }}>
-                <label>Quantity:</label>
+
+                <label>
+                    Quantity:
+                </label>
 
                 <div
                     style={{
@@ -89,50 +149,61 @@ function Product() {
                         marginLeft: "10px",
                     }}
                 >
+
                     <button
-                        onClick={() =>
-                            setQuantity((prev) =>
-                                prev > 1 ? prev - 1 : 1
-                            )
+                        onClick={decreaseQuantity}
+                        disabled={
+                            quantity <= 1 ||
+                            product.stock === 0
                         }
                     >
                         -
                     </button>
 
-                    <span style={{ minWidth: "30px", textAlign: "center" }}>
+                    <span
+                        style={{
+                            minWidth: "30px",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                        }}
+                    >
                         {quantity}
                     </span>
 
                     <button
-                        onClick={() =>
-                            setQuantity((prev) =>
-                                prev < product.stock ? prev + 1 : prev
-                            )
+                        onClick={increaseQuantity}
+                        disabled={
+                            quantity >= product.stock ||
+                            product.stock === 0
                         }
                     >
                         +
                     </button>
+
                 </div>
+
             </div>
 
             <br />
 
             <button
-                onClick={() => addToCart(product, quantity)}
+                onClick={addProductToCart}
+                disabled={product.stock === 0}
             >
-                Add To Cart
+                {product.stock === 0
+                    ? "Out of Stock"
+                    : "Add To Cart"}
             </button>
 
             {" "}
 
             <button
-                onClick={() => {
-                    addToCart(product, quantity);
-                    navigate("/cart"); // 🔥 FIX
-                }}
+                onClick={buyNow}
+                disabled={product.stock === 0}
             >
                 Buy Now
             </button>
+
         </div>
     );
 }

@@ -41,9 +41,15 @@ export const loginUser = async (userData) => {
         throw new Error(data.message || "Login failed");
     }
 
-    // 🔥 FIX: spara token direkt om backend skickar den
-    if (data.token) {
-        localStorage.setItem("token", data.token);
+    // =========================
+    // SAVE TOKEN + USER
+    // =========================
+    if (data.accessToken) {
+        localStorage.setItem("token", data.accessToken);
+    }
+
+    if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
     }
 
     return data;
@@ -74,20 +80,29 @@ export const forgotPassword = async (email) => {
 // =========================
 // 🔴 RESET PASSWORD
 // =========================
-export const resetPassword = async (token, password, confirmPassword) => {
+export const resetPassword = async (
+    token,
+    password,
+    confirmPassword
+) => {
     const res = await fetch(`${API_URL}/reset-password/${token}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ password, confirmPassword }),
+        body: JSON.stringify({
+            password,
+            confirmPassword,
+        }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-        throw new Error(data.message || "Password reset failed");
+        throw new Error(
+            data.message || "Password reset failed"
+        );
     }
 
     return data;
@@ -109,7 +124,10 @@ export const resendVerifyEmail = async (email) => {
     const data = await res.json();
 
     if (!res.ok) {
-        throw new Error(data.message || "Failed to resend verification email");
+        throw new Error(
+            data.message ||
+            "Failed to resend verification email"
+        );
     }
 
     return data;

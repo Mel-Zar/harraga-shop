@@ -1,12 +1,38 @@
+import { useState } from "react";
 import ProductGallery from "../ProductGallery/ProductGallery";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import { useCart } from "../../context/useCart";
 
 function ProductListCard({ product }) {
+
+    const {
+        addToCart
+    } = useCart();
+
     const [quantity, setQuantity] = useState(1);
 
-    const { addToCart } = useCart();
+    const increaseQuantity = () => {
+        if (quantity < product.stock) {
+            setQuantity((prev) => prev + 1);
+        }
+    };
+
+    const decreaseQuantity = () => {
+        if (quantity > 1) {
+            setQuantity((prev) => prev - 1);
+        }
+    };
+
+    const buyProduct = () => {
+        if (product.stock === 0) {
+            return;
+        }
+
+        addToCart(product, quantity);
+
+        // Återställ efter att produkten lagts till
+        setQuantity(1);
+    };
 
     return (
         <div
@@ -16,6 +42,7 @@ function ProductListCard({ product }) {
                 borderRadius: "8px",
             }}
         >
+
             <ProductGallery
                 images={product.images}
                 productName={product.name}
@@ -32,13 +59,11 @@ function ProductListCard({ product }) {
             <p>{product.description}</p>
 
             <p>
-                <strong>Price:</strong>{" "}
-                ${product.price}
+                <strong>Price:</strong> ${product.price}
             </p>
 
             <p>
-                <strong>Stock:</strong>{" "}
-                {product.stock}
+                <strong>Stock:</strong> {product.stock}
             </p>
 
             <div
@@ -49,6 +74,7 @@ function ProductListCard({ product }) {
                     marginTop: "15px",
                 }}
             >
+
                 <div
                     style={{
                         display: "flex",
@@ -56,11 +82,12 @@ function ProductListCard({ product }) {
                         gap: "10px",
                     }}
                 >
+
                     <button
-                        onClick={() =>
-                            setQuantity((prev) =>
-                                prev > 1 ? prev - 1 : 1
-                            )
+                        onClick={decreaseQuantity}
+                        disabled={
+                            quantity <= 1 ||
+                            product.stock === 0
                         }
                     >
                         -
@@ -70,33 +97,31 @@ function ProductListCard({ product }) {
                         style={{
                             minWidth: "30px",
                             textAlign: "center",
+                            fontWeight: "bold",
                         }}
                     >
                         {quantity}
                     </span>
 
                     <button
-                        onClick={() =>
-                            setQuantity((prev) =>
-                                prev < product.stock
-                                    ? prev + 1
-                                    : prev
-                            )
+                        onClick={increaseQuantity}
+                        disabled={
+                            quantity >= product.stock ||
+                            product.stock === 0
                         }
                     >
                         +
                     </button>
+
                 </div>
 
                 <button
-                    onClick={() =>
-                        addToCart(
-                            product,
-                            quantity
-                        )
-                    }
+                    onClick={buyProduct}
+                    disabled={product.stock === 0}
                 >
-                    Buy
+                    {product.stock === 0
+                        ? "Out of Stock"
+                        : "Add To Cart"}
                 </button>
 
                 <Link
@@ -106,7 +131,9 @@ function ProductListCard({ product }) {
                         View Product
                     </button>
                 </Link>
+
             </div>
+
         </div>
     );
 }

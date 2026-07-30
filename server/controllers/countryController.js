@@ -1,4 +1,4 @@
-import countryMap from "../config/countries.json" assert { type: "json" };
+import countryMap from "../config/countries.json" with { type: "json" };
 
 // =========================
 // GET ALL COUNTRIES

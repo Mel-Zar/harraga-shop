@@ -49,9 +49,33 @@ function Cart() {
                     }}
                 >
                     {/* Product info */}
-                    <div>
-                        <h3>{item.name}</h3>
-                        <p>${item.price}</p>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "15px",
+                        }}
+                    >
+                        <img
+                            src={`http://localhost:5050${item.images?.[0]}`}
+                            alt={item.name}
+                            style={{
+                                width: "80px",
+                                height: "80px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                            }}
+                        />
+
+                        <div>
+                            <h3>{item.name}</h3>
+
+                            <p>${item.price}</p>
+
+                            <p>
+                                Stock: {item.stock}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Quantity controls */}
@@ -69,9 +93,7 @@ function Cart() {
                                     -1
                                 )
                             }
-                            disabled={
-                                item.quantity <= 1
-                            }
+                            disabled={false}
                         >
                             -
                         </button>
@@ -82,10 +104,8 @@ function Cart() {
 
                         <button
                             onClick={() =>
-                                addToCart(
-                                    item,
-                                    1
-                                )
+                                item.quantity < item.stock &&
+                                addToCart(item, 1)
                             }
                         >
                             +

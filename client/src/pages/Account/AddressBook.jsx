@@ -21,19 +21,41 @@ function AddressBook() {
     // LOAD FROM BACKEND
     // =========================
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchAddresses = async () => {
             try {
                 const token = localStorage.getItem("token");
 
+                console.log("🔑 TOKEN:", token);
+
+                if (!token) {
+                    console.error("❌ No token in localStorage");
+                    return;
+                }
+
                 const data = await getAddresses(token);
 
-                setAddresses(data || []);
+                console.log("✅ Backend response:", data);
+
+                if (Array.isArray(data)) {
+                    setAddresses(data);
+                } else if (Array.isArray(data.addresses)) {
+                    setAddresses(data.addresses);
+                } else {
+                    setAddresses([]);
+                }
             } catch (err) {
-                console.error("Failed to load addresses:", err);
+                console.error("❌ Failed loading addresses");
+
+                console.log(err);
+
+                if (err.response) {
+                    console.log("Status:", err.response.status);
+                    console.log("Data:", err.response.data);
+                }
             }
         };
 
-        fetchData();
+        fetchAddresses();
     }, []);
 
     // =========================
@@ -45,14 +67,20 @@ function AddressBook() {
         try {
             const token = localStorage.getItem("token");
 
-            const newAddress = {
-                id: Date.now(),
-                ...form,
-            };
+            if (!token) {
+                alert("You are not logged in.");
+                return;
+            }
 
-            const res = await addAddress(token, newAddress);
+            const res = await addAddress(token, form);
 
-            setAddresses(res.addresses || []);
+            console.log("ADD RESPONSE:", res);
+
+            if (Array.isArray(res)) {
+                setAddresses(res);
+            } else if (Array.isArray(res.addresses)) {
+                setAddresses(res.addresses);
+            }
 
             setForm({
                 fullName: "",
@@ -63,7 +91,12 @@ function AddressBook() {
                 country: "",
             });
         } catch (err) {
-            console.error("Failed to add address:", err);
+            console.error(err);
+
+            if (err.response) {
+                console.log(err.response.status);
+                console.log(err.response.data);
+            }
         }
     };
 
@@ -76,9 +109,20 @@ function AddressBook() {
 
             const res = await deleteAddress(token, id);
 
-            setAddresses(res.addresses || []);
+            console.log("DELETE RESPONSE:", res);
+
+            if (Array.isArray(res)) {
+                setAddresses(res);
+            } else if (Array.isArray(res.addresses)) {
+                setAddresses(res.addresses);
+            }
         } catch (err) {
-            console.error("Failed to delete address:", err);
+            console.error(err);
+
+            if (err.response) {
+                console.log(err.response.status);
+                console.log(err.response.data);
+            }
         }
     };
 
@@ -86,10 +130,10 @@ function AddressBook() {
     // FORM CHANGE
     // =========================
     const handleChange = (e) => {
-        setForm({
-            ...form,
+        setForm((prev) => ({
+            ...prev,
             [e.target.name]: e.target.value,
-        });
+        }));
     };
 
     return (
@@ -159,7 +203,9 @@ function AddressBook() {
                     required
                 />
 
-                <button type="submit">Add Address</button>
+                <button type="submit">
+                    Add Address
+                </button>
             </form>
 
             <h2>Saved Addresses</h2>
@@ -169,7 +215,7 @@ function AddressBook() {
             ) : (
                 addresses.map((address) => (
                     <div
-                        key={address.id}
+                        key={address._id || address.id}
                         style={{
                             border: "1px solid #ddd",
                             borderRadius: "10px",
@@ -178,16 +224,24 @@ function AddressBook() {
                         }}
                     >
                         <h3>{address.fullName}</h3>
+
                         <p>{address.phone}</p>
+
                         <p>{address.street}</p>
+
                         <p>
                             {address.postalCode} {address.city}
                         </p>
+
                         <p>{address.country}</p>
 
                         <button
-                            onClick={() => handleDelete(address.id)}
-                            style={{ marginTop: "15px" }}
+                            onClick={() =>
+                                handleDelete(address._id || address.id)
+                            }
+                            style={{
+                                marginTop: "15px",
+                            }}
                         >
                             Delete
                         </button>
