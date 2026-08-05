@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProducts } from "../../services/productService";
+import { getProductById } from "../../services/productService";
 import ProductGallery from "../../components/ProductGallery/ProductGallery";
 import { useCart } from "../../context/useCart";
 
@@ -21,13 +21,9 @@ function Product() {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const products = await getProducts();
+                const product = await getProductById(id);
 
-                const foundProduct = products.find(
-                    (p) => String(p._id) === String(id)
-                );
-
-                setProduct(foundProduct);
+                setProduct(product);
 
             } catch (error) {
                 console.error(error);

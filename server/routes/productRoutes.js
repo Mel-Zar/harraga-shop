@@ -1,5 +1,6 @@
 import express from "express";
 import upload from "../middleware/upload.js";
+
 import {
     protect,
     admin,
@@ -15,11 +16,13 @@ import {
 
 const router = express.Router();
 
-// =======================
-// PRODUCTS ROUTES
-// =======================
 
-// GET ALL + CREATE
+// =====================================
+// PRODUCTS
+// =====================================
+
+// GET    /api/products
+// POST   /api/products
 router
     .route("/")
     .get(getProducts)
@@ -30,7 +33,14 @@ router
         createProduct
     );
 
-// GET ONE + UPDATE + DELETE
+
+// =====================================
+// SINGLE PRODUCT
+// =====================================
+
+// GET    /api/products/:id
+// PUT    /api/products/:id
+// DELETE /api/products/:id
 router
     .route("/:id")
     .get(getProductById)
@@ -45,5 +55,6 @@ router
         admin,
         deleteProduct
     );
+
 
 export default router;

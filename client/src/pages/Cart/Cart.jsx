@@ -19,11 +19,12 @@ function Cart() {
         return (
             <div style={{ padding: "20px" }}>
                 <h1>Your Cart</h1>
+
                 <p>Your cart is empty 🛒</p>
 
                 <Link to="/products">
                     <button>
-                        Go to Products
+                        Continue Shopping
                     </button>
                 </Link>
             </div>
@@ -32,114 +33,149 @@ function Cart() {
 
     return (
         <div style={{ padding: "20px" }}>
+
             <h1>Your Cart 🛒</h1>
 
-            {cartItems.map((item) => (
-                <div
-                    key={item._id}
-                    style={{
-                        display: "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems: "center",
-                        border: "1px solid #ddd",
-                        padding: "10px",
-                        marginBottom: "10px",
-                        borderRadius: "8px",
-                    }}
-                >
-                    {/* Product info */}
+            <p>
+                {cartItems.length} product
+                {cartItems.length !== 1 ? "s" : ""} in your cart
+            </p>
+
+            {cartItems.map((item) => {
+
+                const subtotal =
+                    item.price * item.quantity;
+
+                return (
+
                     <div
+                        key={item._id}
                         style={{
                             display: "flex",
+                            justifyContent: "space-between",
                             alignItems: "center",
-                            gap: "15px",
+                            border: "1px solid #ddd",
+                            padding: "15px",
+                            marginBottom: "15px",
+                            borderRadius: "8px",
                         }}
                     >
-                        <img
-                            src={`http://localhost:5050${item.images?.[0]}`}
-                            alt={item.name}
+
+                        {/* Product */}
+
+                        <div
                             style={{
-                                width: "80px",
-                                height: "80px",
-                                objectFit: "cover",
-                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "15px",
                             }}
-                        />
+                        >
 
-                        <div>
-                            <h3>{item.name}</h3>
+                            <img
+                                src={`http://localhost:5050${item.images?.[0]}`}
+                                alt={item.name}
+                                style={{
+                                    width: "90px",
+                                    height: "90px",
+                                    objectFit: "cover",
+                                    borderRadius: "8px",
+                                }}
+                            />
 
-                            <p>${item.price}</p>
+                            <div>
 
-                            <p>
-                                Stock: {item.stock}
-                            </p>
+                                <h3>{item.name}</h3>
+
+                                <p>
+                                    Price: ${item.price.toFixed(2)}
+                                </p>
+
+                                <p>
+                                    Stock: {item.stock}
+                                </p>
+
+                            </div>
+
                         </div>
-                    </div>
 
-                    {/* Quantity controls */}
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px",
-                        }}
-                    >
+
+                        {/* Quantity */}
+
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                            }}
+                        >
+
+                            <button
+                                onClick={() =>
+                                    addToCart(item, -1)
+                                }
+                                disabled={item.quantity <= 1}
+                            >
+                                -
+                            </button>
+
+                            <span
+                                style={{
+                                    minWidth: "30px",
+                                    textAlign: "center",
+                                    fontWeight: "bold",
+                                }}
+                            >
+                                {item.quantity}
+                            </span>
+
+                            <button
+                                onClick={() =>
+                                    addToCart(item, 1)
+                                }
+                                disabled={
+                                    item.quantity >= item.stock
+                                }
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+
+                        {/* Subtotal */}
+
+                        <div
+                            style={{
+                                minWidth: "120px",
+                                textAlign: "right",
+                            }}
+                        >
+
+                            <strong>
+                                ${subtotal.toFixed(2)}
+                            </strong>
+
+                        </div>
+
+
+                        {/* Remove */}
+
                         <button
                             onClick={() =>
-                                addToCart(
-                                    item,
-                                    -1
-                                )
+                                removeFromCart(item._id)
                             }
-                            disabled={false}
+                            style={{
+                                background: "red",
+                                color: "white",
+                            }}
                         >
-                            -
+                            Remove
                         </button>
 
-                        <span>
-                            {item.quantity}
-                        </span>
-
-                        <button
-                            onClick={() =>
-                                item.quantity < item.stock &&
-                                addToCart(item, 1)
-                            }
-                        >
-                            +
-                        </button>
                     </div>
 
-                    {/* Subtotal */}
-                    <div>
-                        <strong>
-                            $
-                            {(
-                                item.price *
-                                item.quantity
-                            ).toFixed(2)}
-                        </strong>
-                    </div>
-
-                    {/* Remove */}
-                    <button
-                        onClick={() =>
-                            removeFromCart(
-                                item._id
-                            )
-                        }
-                        style={{
-                            background:
-                                "red",
-                            color: "white",
-                        }}
-                    >
-                        Remove
-                    </button>
-                </div>
-            ))}
+                );
+            })}
 
             <hr />
 
@@ -161,14 +197,14 @@ function Cart() {
             <Link to="/checkout">
                 <button
                     style={{
-                        background:
-                            "green",
+                        background: "green",
                         color: "white",
                     }}
                 >
                     Checkout
                 </button>
             </Link>
+
         </div>
     );
 }

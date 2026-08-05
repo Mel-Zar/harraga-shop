@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import CartContext from "./CartContext";
 
 export function CartProvider({ children }) {
-
 
     const [cartItems, setCartItems] = useState(() => {
 
@@ -32,9 +32,7 @@ export function CartProvider({ children }) {
         quantity = 1
     ) => {
 
-
         setCartItems((prev) => {
-
 
             const existing = prev.find(
                 (item) =>
@@ -43,16 +41,19 @@ export function CartProvider({ children }) {
             );
 
 
-
             if (existing) {
 
-
-                const newQuantity =
-                    existing.quantity + quantity;
-
+                const newQuantity = Math.min(
+                    existing.quantity + quantity,
+                    product.stock
+                );
 
 
                 if (newQuantity <= 0) {
+
+                    toast.info(
+                        `🗑️ ${product.name} removed from cart`
+                    );
 
                     return prev.filter(
                         (item) =>
@@ -63,9 +64,7 @@ export function CartProvider({ children }) {
                 }
 
 
-
                 return prev.map((item) => {
-
 
                     if (
                         String(item._id) ===
@@ -74,30 +73,33 @@ export function CartProvider({ children }) {
 
                         return {
                             ...item,
-                            quantity:
-                                newQuantity,
+                            quantity: newQuantity,
                         };
 
                     }
-
 
                     return item;
 
                 });
 
-
             }
 
+
+            toast.success(
+                `🛒 ${product.name} added to cart`
+            );
 
 
             return [
                 ...prev,
                 {
                     ...product,
-                    quantity,
+                    quantity: Math.min(
+                        quantity,
+                        product.stock
+                    ),
                 },
             ];
-
 
         });
 
@@ -105,7 +107,46 @@ export function CartProvider({ children }) {
 
 
 
+    // ➕ Increase quantity
+    const increaseQuantity = (product) => {
+
+        addToCart(
+            product,
+            1
+        );
+
+    };
+
+
+
+    // ➖ Decrease quantity
+    const decreaseQuantity = (product) => {
+
+        addToCart(
+            product,
+            -1
+        );
+
+    };
+
+
+
     const removeFromCart = (productId) => {
+
+        const product = cartItems.find(
+            (item) =>
+                String(item._id) ===
+                String(productId)
+        );
+
+
+        if (product) {
+
+            toast.info(
+                `🗑️ ${product.name} removed from cart`
+            );
+
+        }
 
 
         setCartItems((prev) =>
@@ -115,7 +156,6 @@ export function CartProvider({ children }) {
                     String(productId)
             )
         );
-
 
     };
 
@@ -129,6 +169,10 @@ export function CartProvider({ children }) {
             "cart"
         );
 
+        toast.warning(
+            "🧹 Cart cleared"
+        );
+
     };
 
 
@@ -138,6 +182,8 @@ export function CartProvider({ children }) {
             value={{
                 cartItems,
                 addToCart,
+                increaseQuantity,
+                decreaseQuantity,
                 removeFromCart,
                 clearCart,
             }}
