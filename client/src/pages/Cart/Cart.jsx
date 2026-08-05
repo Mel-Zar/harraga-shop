@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 function Cart() {
     const {
         cartItems,
-        addToCart,
+        updateQuantity,
         removeFromCart,
         clearCart,
     } = useCart();
@@ -98,7 +98,6 @@ function Cart() {
 
                         </div>
 
-
                         {/* Quantity */}
 
                         <div
@@ -111,7 +110,10 @@ function Cart() {
 
                             <button
                                 onClick={() =>
-                                    addToCart(item, -1)
+                                    updateQuantity(
+                                        item,
+                                        item.quantity - 1
+                                    )
                                 }
                                 disabled={item.quantity <= 1}
                             >
@@ -130,7 +132,10 @@ function Cart() {
 
                             <button
                                 onClick={() =>
-                                    addToCart(item, 1)
+                                    updateQuantity(
+                                        item,
+                                        item.quantity + 1
+                                    )
                                 }
                                 disabled={
                                     item.quantity >= item.stock
@@ -140,7 +145,6 @@ function Cart() {
                             </button>
 
                         </div>
-
 
                         {/* Subtotal */}
 
@@ -156,7 +160,6 @@ function Cart() {
                             </strong>
 
                         </div>
-
 
                         {/* Remove */}
 

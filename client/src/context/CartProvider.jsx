@@ -131,6 +131,47 @@ export function CartProvider({ children }) {
 
 
 
+    // 🔢 Update quantity directly
+    const updateQuantity = (
+        product,
+        quantity
+    ) => {
+
+        setCartItems((prev) =>
+
+            prev.map((item) => {
+
+                if (
+                    String(item._id) !==
+                    String(product._id)
+                ) {
+
+                    return item;
+
+                }
+
+                return {
+
+                    ...item,
+
+                    quantity: Math.max(
+                        1,
+                        Math.min(
+                            quantity,
+                            item.stock
+                        )
+                    ),
+
+                };
+
+            })
+
+        );
+
+    };
+
+
+
     const removeFromCart = (productId) => {
 
         const product = cartItems.find(
@@ -184,6 +225,7 @@ export function CartProvider({ children }) {
                 addToCart,
                 increaseQuantity,
                 decreaseQuantity,
+                updateQuantity,
                 removeFromCart,
                 clearCart,
             }}
