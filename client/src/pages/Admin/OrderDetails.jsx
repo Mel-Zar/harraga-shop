@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getOrderById } from "../../services/ordersService";
+import {
+    getOrderById,
+    updateOrderStatus,
+} from "../../services/ordersService";
 
 function OrderDetails() {
     const { id } = useParams();
 
     const [order, setOrder] = useState(null);
+    const [status, setStatus] = useState("");
+    const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -13,6 +18,7 @@ function OrderDetails() {
             try {
                 const data = await getOrderById(id);
                 setOrder(data.order);
+                setStatus(data.order.status);
             } catch (error) {
                 console.error(error);
             } finally {
@@ -22,6 +28,27 @@ function OrderDetails() {
 
         fetchOrder();
     }, [id]);
+
+    const handleStatusUpdate = async () => {
+        try {
+            setSaving(true);
+
+            const data = await updateOrderStatus(
+                order._id,
+                status
+            );
+
+            setOrder(data.order);
+
+            alert("Order status updated!");
+        } catch (error) {
+            console.error(error);
+
+            alert("Failed to update order.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     if (loading) {
         return <h2>Loading order...</h2>;
@@ -158,8 +185,53 @@ function OrderDetails() {
 
             <h2>Order Status</h2>
 
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "20px",
+                }}
+            >
+                <select
+                    value={status}
+                    onChange={(e) =>
+                        setStatus(e.target.value)
+                    }
+                >
+                    <option value="pending">
+                        Pending
+                    </option>
+
+                    <option value="processing">
+                        Processing
+                    </option>
+
+                    <option value="shipped">
+                        Shipped
+                    </option>
+
+                    <option value="delivered">
+                        Delivered
+                    </option>
+
+                    <option value="cancelled">
+                        Cancelled
+                    </option>
+                </select>
+
+                <button
+                    onClick={handleStatusUpdate}
+                    disabled={saving}
+                >
+                    {saving
+                        ? "Saving..."
+                        : "Save Status"}
+                </button>
+            </div>
+
             <p>
-                <strong>Status:</strong>{" "}
+                <strong>Current Status:</strong>{" "}
                 {order.status}
             </p>
 

@@ -11,12 +11,14 @@ export const createOrder = async (orderData) => {
     try {
         const token = localStorage.getItem("token");
 
-        // 🔥 CLEAN payload (NO BREAKING MAPPING)
+        // =========================
+        // CLEAN PAYLOAD
+        // =========================
         const payload = {
             ...orderData,
             items: orderData.items?.map((item) => ({
                 productId: item.productId,
-                name: item.name,          // ✅ FIX
+                name: item.name,
                 price: item.price,
                 quantity: item.quantity || 1,
             })),
@@ -24,28 +26,36 @@ export const createOrder = async (orderData) => {
                 name: orderData.customer?.name,
                 email: orderData.customer?.email,
                 address: orderData.customer?.address,
-                phone: orderData.customer?.phone, // ✅ FIX
+                phone: orderData.customer?.phone,
             },
         };
 
         const headers = {};
 
-        // 🔥 only add token if exists
-        if (token && token !== "null" && token !== "undefined") {
+        if (
+            token &&
+            token !== "null" &&
+            token !== "undefined"
+        ) {
             headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await axios.post(API_URL, payload, {
-            withCredentials: true,
-            headers,
-        });
+        const response = await axios.post(
+            API_URL,
+            payload,
+            {
+                withCredentials: true,
+                headers,
+            }
+        );
 
         return response.data;
 
     } catch (error) {
         console.error(
             "❌ CREATE ORDER ERROR:",
-            error.response?.data || error.message
+            error.response?.data ||
+            error.message
         );
 
         throw error;
@@ -60,19 +70,32 @@ export const getAllOrders = async () => {
         const token = localStorage.getItem("token");
 
         const headers = {};
-        if (token && token !== "null") {
+
+        if (
+            token &&
+            token !== "null" &&
+            token !== "undefined"
+        ) {
             headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await axios.get(API_URL, {
-            withCredentials: true,
-            headers,
-        });
+        const response = await axios.get(
+            API_URL,
+            {
+                withCredentials: true,
+                headers,
+            }
+        );
 
         return response.data;
 
     } catch (error) {
-        console.error("❌ GET ORDERS ERROR:", error.response?.data || error.message);
+        console.error(
+            "❌ GET ORDERS ERROR:",
+            error.response?.data ||
+            error.message
+        );
+
         throw error;
     }
 };
@@ -85,19 +108,76 @@ export const getOrderById = async (id) => {
         const token = localStorage.getItem("token");
 
         const headers = {};
-        if (token && token !== "null") {
+
+        if (
+            token &&
+            token !== "null" &&
+            token !== "undefined"
+        ) {
             headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await axios.get(`${API_URL}/${id}`, {
-            withCredentials: true,
-            headers,
-        });
+        const response = await axios.get(
+            `${API_URL}/${id}`,
+            {
+                withCredentials: true,
+                headers,
+            }
+        );
 
         return response.data;
 
     } catch (error) {
-        console.error("❌ GET ORDER ERROR:", error.response?.data || error.message);
+        console.error(
+            "❌ GET ORDER ERROR:",
+            error.response?.data ||
+            error.message
+        );
+
+        throw error;
+    }
+};
+
+// =========================
+// 📦 UPDATE ORDER STATUS
+// =========================
+export const updateOrderStatus = async (
+    id,
+    status
+) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const headers = {};
+
+        if (
+            token &&
+            token !== "null" &&
+            token !== "undefined"
+        ) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await axios.patch(
+            `${API_URL}/${id}/status`,
+            {
+                status,
+            },
+            {
+                withCredentials: true,
+                headers,
+            }
+        );
+
+        return response.data;
+
+    } catch (error) {
+        console.error(
+            "❌ UPDATE ORDER STATUS ERROR:",
+            error.response?.data ||
+            error.message
+        );
+
         throw error;
     }
 };

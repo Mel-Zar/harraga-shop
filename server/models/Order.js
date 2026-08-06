@@ -9,6 +9,7 @@ const orderSchema = new mongoose.Schema(
             type: String,
             required: true,
             unique: true,
+            trim: true,
         },
 
         // =========================
@@ -27,20 +28,26 @@ const orderSchema = new mongoose.Schema(
         items: [
             {
                 productId: {
-                    type: String,
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Product",
                     required: true,
                 },
 
                 name: {
                     type: String,
                     required: true,
+                    trim: true,
                 },
 
-                image: String,
+                image: {
+                    type: String,
+                    default: "",
+                },
 
                 price: {
                     type: Number,
                     required: true,
+                    min: 0,
                 },
 
                 quantity: {
@@ -63,7 +70,6 @@ const orderSchema = new mongoose.Schema(
 
             email: {
                 type: String,
-                required: false,
                 trim: true,
                 default: "",
             },
@@ -71,16 +77,26 @@ const orderSchema = new mongoose.Schema(
             phone: {
                 type: String,
                 required: true,
+                trim: true,
             },
 
             address: {
                 type: String,
                 required: true,
+                trim: true,
             },
 
-            city: String,
+            city: {
+                type: String,
+                default: "",
+                trim: true,
+            },
 
-            postalCode: String,
+            postalCode: {
+                type: String,
+                default: "",
+                trim: true,
+            },
         },
 
         // =========================
@@ -90,21 +106,25 @@ const orderSchema = new mongoose.Schema(
             subtotal: {
                 type: Number,
                 required: true,
+                min: 0,
             },
 
             tax: {
                 type: Number,
                 default: 0,
+                min: 0,
             },
 
             shipping: {
                 type: Number,
                 default: 0,
+                min: 0,
             },
 
             total: {
                 type: Number,
                 required: true,
+                min: 0,
             },
         },
 

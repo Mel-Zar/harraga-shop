@@ -3,28 +3,25 @@ import {
     createOrder,
     getAllOrders,
     getOrderById,
+    updateOrderStatus,
 } from "../controllers/orderController.js";
 
 import {
     protect,
     admin,
+    optionalAuth,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // =========================
-// OPTIONAL PROTECT (NO CRASH)
-// =========================
-const optionalProtect = (req, res, next) => {
-    protect(req, res, () => {
-        return next();
-    });
-};
-
-// =========================
 // CREATE ORDER
 // =========================
-router.post("/", optionalProtect, createOrder);
+router.post(
+    "/",
+    optionalAuth,
+    createOrder
+);
 
 // =========================
 // GET ALL ORDERS (ADMIN ONLY)
@@ -44,6 +41,16 @@ router.get(
     protect,
     admin,
     getOrderById
+);
+
+// =========================
+// UPDATE ORDER STATUS (ADMIN ONLY)
+// =========================
+router.patch(
+    "/:id/status",
+    protect,
+    admin,
+    updateOrderStatus
 );
 
 export default router;
