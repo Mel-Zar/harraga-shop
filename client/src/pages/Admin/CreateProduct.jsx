@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+import {
+    useSearchParams,
+} from "react-router-dom";
 
 import ProductForm from "../../components/ProductForm/ProductForm";
 import ProductCard from "../../components/ProductCard/ProductCard";
@@ -16,6 +23,11 @@ function CreateProduct() {
     const [products, setProducts] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // =========================
+    // SEARCH
+    // =========================
+    const [search, setSearch] = useState("");
 
     // =========================
     // URL SEARCH PARAMS
@@ -72,6 +84,9 @@ function CreateProduct() {
         setSearchParams,
     ]);
 
+    // =========================
+    // FETCH PRODUCTS
+    // =========================
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -97,6 +112,39 @@ function CreateProduct() {
             setLoading(false);
         }
     };
+
+    // =========================
+    // SEARCH PRODUCTS
+    // =========================
+    const filteredProducts =
+        useMemo(() => {
+            const text =
+                search
+                    .toLowerCase()
+                    .trim();
+
+            if (!text) {
+                return products;
+            }
+
+            return products.filter(
+                (product) =>
+                    product.name
+                        ?.toLowerCase()
+                        .includes(text) ||
+
+                    product.category
+                        ?.toLowerCase()
+                        .includes(text) ||
+
+                    product.description
+                        ?.toLowerCase()
+                        .includes(text)
+            );
+        }, [
+            products,
+            search,
+        ]);
 
     // =========================
     // CREATE PRODUCT
@@ -234,6 +282,21 @@ function CreateProduct() {
     };
 
     // =========================
+    // START EDIT
+    // =========================
+    const handleEdit = (
+        product
+    ) => {
+        setEditingId(
+            product._id
+        );
+
+        setSearchParams({
+            edit: product._id,
+        });
+    };
+
+    // =========================
     // CANCEL EDIT
     // =========================
     const handleCancelEdit = () => {
@@ -250,7 +313,12 @@ function CreateProduct() {
         return (
             <div
                 style={{
-                    padding: "20px",
+                    maxWidth:
+                        "1200px",
+                    margin:
+                        "40px auto",
+                    padding:
+                        "20px",
                 }}
             >
                 <h2>
@@ -261,98 +329,288 @@ function CreateProduct() {
     }
 
     return (
-        <div>
-            <h1>
-                Create Product
-            </h1>
+        <div
+            style={{
+                maxWidth:
+                    "1200px",
+                margin:
+                    "40px auto",
+                padding:
+                    "20px",
+            }}
+        >
+
+            {/* =========================
+                HEADER
+            ========================= */}
+
+            <div
+                style={{
+                    marginBottom:
+                        "30px",
+                }}
+            >
+                <h1>
+                    Create Product
+                </h1>
+
+                <p
+                    style={{
+                        color:
+                            "#666",
+                    }}
+                >
+                    Create new products or
+                    edit existing products.
+                </p>
+            </div>
 
             {/* =========================
                 CREATE PRODUCT FORM
             ========================= */}
+
             <ProductForm
                 onSubmit={
                     handleCreate
                 }
             />
 
-            <hr />
+            <hr
+                style={{
+                    margin:
+                        "40px 0",
+                    border:
+                        "none",
+                    borderTop:
+                        "1px solid #ddd",
+                }}
+            />
 
             {/* =========================
-                EXISTING PRODUCTS
+                EXISTING PRODUCTS HEADER
             ========================= */}
-            <h2>
-                Existing Products
-            </h2>
 
-            {products.length ===
+            <div
+                style={{
+                    display:
+                        "flex",
+                    justifyContent:
+                        "space-between",
+                    alignItems:
+                        "center",
+                    gap:
+                        "20px",
+                    flexWrap:
+                        "wrap",
+                    marginBottom:
+                        "25px",
+                }}
+            >
+                <div>
+
+                    <h2
+                        style={{
+                            margin:
+                                "0 0 6px",
+                        }}
+                    >
+                        Existing Products
+                    </h2>
+
+                    <p
+                        style={{
+                            margin: 0,
+                            color:
+                                "#666",
+                        }}
+                    >
+                        Search for a product
+                        to edit or delete it.
+                    </p>
+
+                </div>
+
+                <div>
+                    <strong>
+                        Total products:
+                    </strong>{" "}
+                    {products.length}
+                </div>
+            </div>
+
+            {/* =========================
+                SEARCH
+            ========================= */}
+
+            <div
+                style={{
+                    marginBottom:
+                        "25px",
+                }}
+            >
+                <input
+                    type="text"
+                    placeholder="Search product name, category or description..."
+                    value={search}
+                    onChange={(event) =>
+                        setSearch(
+                            event.target.value
+                        )
+                    }
+                    style={{
+                        width:
+                            "100%",
+                        maxWidth:
+                            "600px",
+                        padding:
+                            "12px",
+                        border:
+                            "1px solid #ccc",
+                        borderRadius:
+                            "8px",
+                        fontSize:
+                            "16px",
+                        boxSizing:
+                            "border-box",
+                    }}
+                />
+            </div>
+
+            {/* =========================
+                COUNT
+            ========================= */}
+
+            <p>
+                Showing{" "}
+                <strong>
+                    {
+                        filteredProducts.length
+                    }
+                </strong>{" "}
+                of{" "}
+                <strong>
+                    {products.length}
+                </strong>{" "}
+                products
+            </p>
+
+            {/* =========================
+                EMPTY
+            ========================= */}
+
+            {filteredProducts.length ===
                 0 ? (
-                <p>
-                    No products found.
-                </p>
-            ) : (
-                products.map(
-                    (product) => (
-                        <div
-                            key={
-                                product._id
-                            }
-                            style={{
-                                border:
-                                    "1px solid #ddd",
-                                padding:
-                                    "15px",
-                                marginBottom:
-                                    "15px",
-                                borderRadius:
-                                    "8px",
-                            }}
-                        >
-                            {/* =========================
-                                EDIT PRODUCT
-                            ========================= */}
-                            {editingId ===
-                                product._id ? (
-                                <ProductEdit
-                                    product={
-                                        product
-                                    }
-                                    onSave={
-                                        handleSave
-                                    }
-                                    onCancel={
-                                        handleCancelEdit
-                                    }
-                                />
-                            ) : (
-                                /* =========================
-                                    PRODUCT CARD
-                                ========================= */
-                                <ProductCard
-                                    product={
-                                        product
-                                    }
-                                    onEdit={() => {
-                                        setEditingId(
-                                            product._id
-                                        );
 
-                                        setSearchParams(
-                                            {
-                                                edit: product._id,
-                                            }
-                                        );
-                                    }}
-                                    onDelete={() =>
-                                        handleDelete(
-                                            product._id
-                                        )
+                <div
+                    style={{
+                        border:
+                            "1px solid #ddd",
+                        borderRadius:
+                            "10px",
+                        padding:
+                            "30px",
+                        marginTop:
+                            "20px",
+                    }}
+                >
+
+                    <h3>
+                        No products found.
+                    </h3>
+
+                    <p>
+                        {products.length ===
+                            0
+                            ? "You have not created any products yet."
+                            : "Try another search."}
+                    </p>
+
+                </div>
+
+            ) : (
+
+                /* =========================
+                   PRODUCTS
+                ========================= */
+
+                <div>
+
+                    {filteredProducts.map(
+                        (product) => {
+
+                            const isEditing =
+                                editingId ===
+                                product._id;
+
+                            return (
+                                <div
+                                    key={
+                                        product._id
                                     }
-                                />
-                            )}
-                        </div>
-                    )
-                )
+                                    style={{
+                                        border:
+                                            "1px solid #ddd",
+                                        padding:
+                                            "15px",
+                                        marginBottom:
+                                            "15px",
+                                        borderRadius:
+                                            "8px",
+                                        background:
+                                            "#fff",
+                                    }}
+                                >
+
+                                    {/* =========================
+                                        EDIT PRODUCT
+                                    ========================= */}
+
+                                    {isEditing ? (
+
+                                        <ProductEdit
+                                            product={
+                                                product
+                                            }
+                                            onSave={
+                                                handleSave
+                                            }
+                                            onCancel={
+                                                handleCancelEdit
+                                            }
+                                        />
+
+                                    ) : (
+
+                                        /* =========================
+                                            PRODUCT CARD
+                                        ========================= */
+
+                                        <ProductCard
+                                            product={
+                                                product
+                                            }
+                                            onEdit={() =>
+                                                handleEdit(
+                                                    product
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                handleDelete(
+                                                    product._id
+                                                )
+                                            }
+                                        />
+
+                                    )}
+
+                                </div>
+                            );
+                        }
+                    )}
+
+                </div>
             )}
+
         </div>
     );
 }

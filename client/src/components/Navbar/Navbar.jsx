@@ -26,9 +26,6 @@ export default function Navbar() {
         () => getAuthState()
     );
 
-    const [adminMenuOpen, setAdminMenuOpen] =
-        useState(false);
-
     // =====================================================
     // 🔐 REFRESH AUTH STATE
     // =====================================================
@@ -95,8 +92,6 @@ export default function Navbar() {
     const handleLogout = () => {
         logout();
 
-        setAdminMenuOpen(false);
-
         setAuth(getAuthState());
 
         navigate("/", {
@@ -117,20 +112,8 @@ export default function Navbar() {
     };
 
     // =====================================================
-    // ADMIN LINK STYLE
+    // NAVBAR
     // =====================================================
-
-    const adminLinkStyle = {
-        display: "block",
-        width: "100%",
-        boxSizing: "border-box",
-        padding: "11px 14px",
-        textDecoration: "none",
-        color: "#222",
-        fontSize: "14px",
-        fontWeight: "500",
-        borderRadius: "7px",
-    };
 
     return (
         <nav
@@ -176,6 +159,7 @@ export default function Navbar() {
 
             {/* =================================================
                 🌍 PUBLIC
+                ALLA
             ================================================= */}
 
             <Link
@@ -222,155 +206,22 @@ export default function Navbar() {
             )}
 
             {/* =================================================
-                👑 ADMIN MENU
+                👑 ADMIN
+                ONLY DASHBOARD IN NAVBAR
             ================================================= */}
 
             {loggedIn && admin && (
-                <div
-                    style={{
-                        position: "relative",
-                    }}
+                <Link
+                    to="/admin/dashboard"
+                    style={linkStyle}
                 >
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setAdminMenuOpen(
-                                (open) => !open
-                            )
-                        }
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "7px",
-                            background:
-                                adminMenuOpen
-                                    ? "#f3f3f3"
-                                    : "transparent",
-                            border: "none",
-                            borderRadius: "8px",
-                            padding:
-                                "9px 11px",
-                            cursor: "pointer",
-                            fontSize: "15px",
-                            fontWeight: "600",
-                            color: "#222",
-                        }}
-                    >
-                        Admin
-
-                        <span
-                            style={{
-                                fontSize: "11px",
-                                transform:
-                                    adminMenuOpen
-                                        ? "rotate(180deg)"
-                                        : "rotate(0deg)",
-                                transition:
-                                    "transform 0.15s ease",
-                            }}
-                        >
-                            ▼
-                        </span>
-                    </button>
-
-                    {adminMenuOpen && (
-                        <div
-                            style={{
-                                position:
-                                    "absolute",
-                                top: "calc(100% + 8px)",
-                                left: 0,
-                                width: "210px",
-                                padding: "7px",
-                                background: "#fff",
-                                border:
-                                    "1px solid #e5e5e5",
-                                borderRadius:
-                                    "11px",
-                                boxShadow:
-                                    "0 10px 30px rgba(0,0,0,0.10)",
-                            }}
-                        >
-
-                            <Link
-                                to="/admin/dashboard"
-                                style={
-                                    adminLinkStyle
-                                }
-                                onClick={() =>
-                                    setAdminMenuOpen(
-                                        false
-                                    )
-                                }
-                            >
-                                Dashboard
-                            </Link>
-
-                            <Link
-                                to="/admin/users"
-                                style={
-                                    adminLinkStyle
-                                }
-                                onClick={() =>
-                                    setAdminMenuOpen(
-                                        false
-                                    )
-                                }
-                            >
-                                Users
-                            </Link>
-
-                            <Link
-                                to="/admin/products"
-                                style={
-                                    adminLinkStyle
-                                }
-                                onClick={() =>
-                                    setAdminMenuOpen(
-                                        false
-                                    )
-                                }
-                            >
-                                Products
-                            </Link>
-
-                            <Link
-                                to="/admin/create"
-                                style={
-                                    adminLinkStyle
-                                }
-                                onClick={() =>
-                                    setAdminMenuOpen(
-                                        false
-                                    )
-                                }
-                            >
-                                Create Product
-                            </Link>
-
-                            <Link
-                                to="/admin/orders"
-                                style={
-                                    adminLinkStyle
-                                }
-                                onClick={() =>
-                                    setAdminMenuOpen(
-                                        false
-                                    )
-                                }
-                            >
-                                Orders
-                            </Link>
-
-                        </div>
-                    )}
-
-                </div>
+                    Dashboard
+                </Link>
             )}
 
             {/* =================================================
                 🛒 CART
+                ALLA
             ================================================= */}
 
             <Link
