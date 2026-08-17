@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProductGallery from "../ProductGallery/ProductGallery";
 
 function ProductEdit({
@@ -6,200 +6,725 @@ function ProductEdit({
     onSave,
     onCancel,
 }) {
-    const [editData, setEditData] = useState({
-        ...product,
-    });
-
-    const [editImages, setEditImages] = useState([]);
-
-    const [removedImages, setRemovedImages] = useState([]);
-
-    const [newImagePreviews, setNewImagePreviews] = useState([]);
-
-    const handleSave = () => {
-        const formData = new FormData();
-
-        Object.entries(editData).forEach(([key, value]) => {
-            if (key !== "images" && key !== "_id") {
-                formData.append(key, value);
-            }
+    const [editData, setEditData] =
+        useState({
+            ...product,
+            images: Array.isArray(
+                product?.images
+            )
+                ? product.images
+                : product?.image
+                    ? [product.image]
+                    : [],
         });
 
-        formData.append(
-            "removedImages",
-            JSON.stringify(removedImages)
-        );
+    const [editImages, setEditImages] =
+        useState([]);
 
-        editImages.forEach((image) => {
-            formData.append("images", image);
+    const [removedImages, setRemovedImages] =
+        useState([]);
+
+    const [newImagePreviews, setNewImagePreviews] =
+        useState([]);
+
+    const [saving, setSaving] =
+        useState(false);
+
+    // =========================
+    // UPDATE WHEN PRODUCT CHANGES
+    // =========================
+    useEffect(() => {
+        const existingImages =
+            Array.isArray(
+                product?.images
+            )
+                ? product.images
+                : product?.image
+                    ? [product.image]
+                    : [];
+
+        setEditData({
+            ...product,
+            images: existingImages,
         });
 
-        onSave(product._id, formData);
+        setEditImages([]);
+        setRemovedImages([]);
+        setNewImagePreviews([]);
+        setSaving(false);
+    }, [product]);
+
+    // =========================
+    // CHANGE FIELD
+    // =========================
+    const handleChange = (
+        field,
+        value
+    ) => {
+        setEditData((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
     };
 
-    return (
-        <>
-            <h3>
-                <input
-                    value={editData.name || ""}
-                    onChange={(e) =>
-                        setEditData({
-                            ...editData,
-                            name: e.target.value,
-                        })
+    // =========================
+    // REMOVE EXISTING IMAGE
+    // =========================
+    const handleRemoveExistingImage = (
+        img
+    ) => {
+        if (!img) {
+            return;
+        }
+
+        setRemovedImages((prev) => {
+            if (prev.includes(img)) {
+                return prev;
+            }
+
+            return [
+                ...prev,
+                img,
+            ];
+        });
+
+        setEditData((prev) => ({
+            ...prev,
+            images: (
+                prev.images || []
+            ).filter(
+                (image) =>
+                    image !== img
+            ),
+        }));
+    };
+
+    // =========================
+    // ADD NEW IMAGES
+    // =========================
+    const handleNewImages = (e) => {
+        const files = Array.from(
+            e.target.files || []
+        );
+
+        if (files.length === 0) {
+            return;
+        }
+
+        const existingCount =
+            editData.images?.length ||
+            0;
+
+        const newCount =
+            editImages.length;
+
+        const totalAfterUpload =
+            existingCount +
+            newCount +
+            files.length;
+
+        if (
+            totalAfterUpload >
+            4
+        ) {
+            const available =
+                4 -
+                existingCount -
+                newCount;
+
+            alert(
+                available > 0
+                    ? `You can only add ${available} more image${available === 1 ? "" : "s"}. Maximum is 4 images.`
+                    : "You already have 4 images."
+            );
+
+            e.target.value = "";
+
+            return;
+        }
+
+        const newPreviews =
+            files.map((file) => ({
+                file,
+                preview:
+                    URL.createObjectURL(
+                        file
+                    ),
+            }));
+
+        setEditImages((prev) => [
+            ...prev,
+            ...files,
+        ]);
+
+        setNewImagePreviews(
+            (prev) => [
+                ...prev,
+                ...newPreviews,
+            ]
+        );
+
+        e.target.value = "";
+    };
+
+    // =========================
+    // REMOVE NEW IMAGE
+    // =========================
+    const handleRemoveNewImage = (
+        index
+    ) => {
+        const image =
+            newImagePreviews[index];
+
+        if (image?.preview) {
+            URL.revokeObjectURL(
+                image.preview
+            );
+        }
+
+        setNewImagePreviews(
+            (prev) =>
+                prev.filter(
+                    (_, i) =>
+                        i !== index
+                )
+        );
+
+        setEditImages(
+            (prev) =>
+                prev.filter(
+                    (_, i) =>
+                        i !== index
+                )
+        );
+    };
+
+    // =========================
+    // SAVE
+    // =========================
+    const handleSave = async () => {
+        if (!editData.name?.trim()) {
+            alert(
+                "Product name is required."
+            );
+            return;
+        }
+
+        if (
+            !editData.description?.trim()
+        ) {
+            alert(
+                "Description is required."
+            );
+            return;
+        }
+
+        if (
+            !editData.category?.trim()
+        ) {
+            alert(
+                "Category is required."
+            );
+            return;
+        }
+
+        if (
+            editData.price === "" ||
+            Number(editData.price) <
+            0
+        ) {
+            alert(
+                "Please enter a valid price."
+            );
+            return;
+        }
+
+        if (
+            editData.stock === "" ||
+            Number(editData.stock) <
+            0
+        ) {
+            alert(
+                "Please enter a valid stock."
+            );
+            return;
+        }
+
+        const existingImages =
+            editData.images || [];
+
+        const totalImages =
+            existingImages.length +
+            editImages.length;
+
+        if (totalImages > 4) {
+            alert(
+                "A product can have a maximum of 4 images."
+            );
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            const formData =
+                new FormData();
+
+            Object.entries(
+                editData
+            ).forEach(
+                ([key, value]) => {
+                    if (
+                        key !==
+                        "images" &&
+                        key !==
+                        "_id" &&
+                        key !==
+                        "__v" &&
+                        key !==
+                        "createdAt" &&
+                        key !==
+                        "updatedAt"
+                    ) {
+                        formData.append(
+                            key,
+                            value ?? ""
+                        );
                     }
-                />
+                }
+            );
+
+            formData.append(
+                "removedImages",
+                JSON.stringify(
+                    removedImages
+                )
+            );
+
+            editImages.forEach(
+                (image) => {
+                    formData.append(
+                        "images",
+                        image
+                    );
+                }
+            );
+
+            await onSave(
+                product._id,
+                formData
+            );
+        } catch (error) {
+            console.error(
+                "PRODUCT EDIT SAVE ERROR:",
+                error
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // =========================
+    // CLEAN UP PREVIEWS
+    // =========================
+    useEffect(() => {
+        return () => {
+            newImagePreviews.forEach(
+                (image) => {
+                    if (
+                        image?.preview
+                    ) {
+                        URL.revokeObjectURL(
+                            image.preview
+                        );
+                    }
+                }
+            );
+        };
+    }, [newImagePreviews]);
+
+    return (
+        <div
+            style={{
+                padding: "10px",
+            }}
+        >
+            <h3>
+                Edit Product
             </h3>
 
-            <textarea
-                value={editData.description || ""}
-                onChange={(e) =>
-                    setEditData({
-                        ...editData,
-                        description: e.target.value,
-                    })
-                }
-            />
-
+            {/* =========================
+                NAME
+            ========================= */}
             <p>
-                Price:
+                <strong>
+                    Name:
+                </strong>
+
+                <input
+                    type="text"
+                    value={
+                        editData.name ||
+                        ""
+                    }
+                    onChange={(e) =>
+                        handleChange(
+                            "name",
+                            e.target.value
+                        )
+                    }
+                    style={{
+                        display:
+                            "block",
+                        width:
+                            "100%",
+                        padding:
+                            "10px",
+                        marginTop:
+                            "5px",
+                        boxSizing:
+                            "border-box",
+                    }}
+                />
+            </p>
+
+            {/* =========================
+                DESCRIPTION
+            ========================= */}
+            <p>
+                <strong>
+                    Description:
+                </strong>
+
+                <textarea
+                    value={
+                        editData.description ||
+                        ""
+                    }
+                    onChange={(e) =>
+                        handleChange(
+                            "description",
+                            e.target.value
+                        )
+                    }
+                    style={{
+                        display:
+                            "block",
+                        width:
+                            "100%",
+                        minHeight:
+                            "100px",
+                        padding:
+                            "10px",
+                        marginTop:
+                            "5px",
+                        boxSizing:
+                            "border-box",
+                    }}
+                />
+            </p>
+
+            {/* =========================
+                PRICE
+            ========================= */}
+            <p>
+                <strong>
+                    Price:
+                </strong>
+
                 <input
                     type="number"
-                    value={editData.price || ""}
-                    onChange={(e) =>
-                        setEditData({
-                            ...editData,
-                            price: e.target.value,
-                        })
+                    min="0"
+                    step="0.01"
+                    value={
+                        editData.price ??
+                        ""
                     }
+                    onChange={(e) =>
+                        handleChange(
+                            "price",
+                            e.target.value
+                        )
+                    }
+                    style={{
+                        display:
+                            "block",
+                        padding:
+                            "10px",
+                        marginTop:
+                            "5px",
+                    }}
                 />
             </p>
 
+            {/* =========================
+                CATEGORY
+            ========================= */}
             <p>
-                Category:
+                <strong>
+                    Category:
+                </strong>
+
                 <input
-                    value={editData.category || ""}
-                    onChange={(e) =>
-                        setEditData({
-                            ...editData,
-                            category: e.target.value,
-                        })
+                    type="text"
+                    value={
+                        editData.category ||
+                        ""
                     }
+                    onChange={(e) =>
+                        handleChange(
+                            "category",
+                            e.target.value
+                        )
+                    }
+                    style={{
+                        display:
+                            "block",
+                        padding:
+                            "10px",
+                        marginTop:
+                            "5px",
+                    }}
                 />
             </p>
 
+            {/* =========================
+                STOCK
+            ========================= */}
             <p>
-                Stock:
+                <strong>
+                    Stock:
+                </strong>
+
                 <input
                     type="number"
-                    value={editData.stock || 0}
-                    onChange={(e) =>
-                        setEditData({
-                            ...editData,
-                            stock: e.target.value,
-                        })
+                    min="0"
+                    value={
+                        editData.stock ??
+                        0
                     }
+                    onChange={(e) =>
+                        handleChange(
+                            "stock",
+                            e.target.value
+                        )
+                    }
+                    style={{
+                        display:
+                            "block",
+                        padding:
+                            "10px",
+                        marginTop:
+                            "5px",
+                    }}
                 />
             </p>
 
-            {/* BEFINTLIGA BILDER (nu via ProductGallery) */}
-            <ProductGallery
-                images={editData.images}
-                productName={editData.name}
-                onRemove={(img) => {
-                    setRemovedImages((prev) => [...prev, img]);
-
-                    setEditData({
-                        ...editData,
-                        images: editData.images.filter(
-                            (image) => image !== img
-                        ),
-                    });
-                }}
-            />
-
-            {/* NYA BILDER (preview + upload) */}
+            {/* =========================
+                EXISTING IMAGES
+            ========================= */}
             <div
                 style={{
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
+                    marginTop:
+                        "20px",
+                    marginBottom:
+                        "20px",
                 }}
             >
-                {newImagePreviews.map((image, index) => (
-                    <div
-                        key={index}
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                            width: "120px",
-                        }}
-                    >
-                        <img
-                            src={image.preview}
-                            alt=""
-                            style={{
-                                width: "120px",
-                                height: "250px",
-                                objectFit: "cover",
-                            }}
-                        />
+                <h4>
+                    Existing Images (
+                    {
+                        editData.images
+                            ?.length ||
+                        0
+                    }
+                    /4)
+                </h4>
 
-                        <button
-                            type="button"
-                            style={{
-                                marginTop: "10px",
-                                width: "100%",
-                            }}
-                            onClick={() => {
-                                const updated = newImagePreviews.filter(
-                                    (_, i) => i !== index
-                                );
-
-                                setNewImagePreviews(updated);
-
-                                setEditImages(
-                                    updated.map((item) => item.file)
-                                );
-                            }}
-                        >
-                            Remove
-                        </button>
-                    </div>
-                ))}
+                {editData.images
+                    ?.length >
+                    0 ? (
+                    <ProductGallery
+                        images={
+                            editData.images
+                        }
+                        productName={
+                            editData.name
+                        }
+                        onRemove={
+                            handleRemoveExistingImage
+                        }
+                    />
+                ) : (
+                    <p>
+                        No existing
+                        images.
+                    </p>
+                )}
             </div>
 
-            <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => {
-                    const files = Array.from(e.target.files);
-
-                    const newPreviews = files.map((file) => ({
-                        file,
-                        preview: URL.createObjectURL(file),
-                    }));
-
-                    setEditImages((prev) => [...prev, ...files]);
-
-                    setNewImagePreviews((prev) => [
-                        ...prev,
-                        ...newPreviews,
-                    ]);
+            {/* =========================
+                NEW IMAGES
+            ========================= */}
+            <div
+                style={{
+                    marginTop:
+                        "20px",
                 }}
-            />
+            >
+                <h4>
+                    Add New Images
+                </h4>
 
-            <br />
-            <br />
+                <p
+                    style={{
+                        fontSize:
+                            "14px",
+                    }}
+                >
+                    Maximum 4 images
+                    total.
+                </p>
 
-            <button onClick={handleSave}>Save</button>{" "}
+                {newImagePreviews.length >
+                    0 && (
+                        <div
+                            style={{
+                                display:
+                                    "flex",
+                                gap:
+                                    "10px",
+                                flexWrap:
+                                    "wrap",
+                                marginBottom:
+                                    "15px",
+                            }}
+                        >
+                            {newImagePreviews.map(
+                                (
+                                    image,
+                                    index
+                                ) => (
+                                    <div
+                                        key={
+                                            index
+                                        }
+                                        style={{
+                                            display:
+                                                "flex",
+                                            flexDirection:
+                                                "column",
+                                            alignItems:
+                                                "center",
+                                            width:
+                                                "120px",
+                                        }}
+                                    >
+                                        <img
+                                            src={
+                                                image.preview
+                                            }
+                                            alt=""
+                                            style={{
+                                                width:
+                                                    "120px",
+                                                height:
+                                                    "120px",
+                                                objectFit:
+                                                    "cover",
+                                                border:
+                                                    "1px solid #ddd",
+                                                borderRadius:
+                                                    "8px",
+                                            }}
+                                        />
 
-            <button onClick={onCancel}>Cancel</button>
-        </>
+                                        <button
+                                            type="button"
+                                            style={{
+                                                marginTop:
+                                                    "10px",
+                                                width:
+                                                    "100%",
+                                                cursor:
+                                                    "pointer",
+                                            }}
+                                            onClick={() =>
+                                                handleRemoveNewImage(
+                                                    index
+                                                )
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    )}
+
+                <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={
+                        handleNewImages
+                    }
+                />
+            </div>
+
+            {/* =========================
+                ACTIONS
+            ========================= */}
+            <div
+                style={{
+                    display:
+                        "flex",
+                    gap: "10px",
+                    marginTop:
+                        "25px",
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={
+                        handleSave
+                    }
+                    disabled={saving}
+                    style={{
+                        padding:
+                            "10px 18px",
+                        cursor:
+                            saving
+                                ? "not-allowed"
+                                : "pointer",
+                    }}
+                >
+                    {saving
+                        ? "Saving..."
+                        : "Save"}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={
+                        onCancel
+                    }
+                    disabled={saving}
+                    style={{
+                        padding:
+                            "10px 18px",
+                        cursor:
+                            saving
+                                ? "not-allowed"
+                                : "pointer",
+                    }}
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
     );
 }
 
-export default ProductEdit; 
+export default ProductEdit;

@@ -16,19 +16,62 @@ function ProductForm({ onSubmit }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        if (!name.trim()) {
+            alert("Product name is required.");
+            return;
+        }
+
+        if (!description.trim()) {
+            alert("Description is required.");
+            return;
+        }
+
+        if (!category.trim()) {
+            alert("Category is required.");
+            return;
+        }
+
+        if (price === "" || Number(price) < 0) {
+            alert("Please enter a valid price.");
+            return;
+        }
+
+        if (stock === "" || Number(stock) < 0) {
+            alert("Please enter a valid stock.");
+            return;
+        }
+
+        if (images.length > 4) {
+            alert("You can only upload 4 images.");
+            return;
+        }
+
         const formData = new FormData();
 
-        formData.append("name", name);
+        formData.append(
+            "name",
+            name.trim()
+        );
+
         formData.append(
             "description",
-            description
+            description.trim()
         );
-        formData.append("price", price);
+
+        formData.append(
+            "price",
+            price
+        );
+
         formData.append(
             "category",
-            category
+            category.trim()
         );
-        formData.append("stock", stock);
+
+        formData.append(
+            "stock",
+            stock
+        );
 
         images.forEach((image) => {
             formData.append(
@@ -47,6 +90,74 @@ function ProductForm({ onSubmit }) {
 
         setImages([]);
         setImagePreviews([]);
+    };
+
+    const handleImageChange = (e) => {
+        const files = Array.from(
+            e.target.files || []
+        );
+
+        if (files.length === 0) {
+            return;
+        }
+
+        const totalImages =
+            images.length +
+            files.length;
+
+        if (totalImages > 4) {
+            alert(
+                `You can only upload 4 images. You already have ${images.length} selected.`
+            );
+
+            e.target.value = "";
+
+            return;
+        }
+
+        const previews =
+            files.map((file) => ({
+                file,
+                preview:
+                    URL.createObjectURL(
+                        file
+                    ),
+            }));
+
+        setImages((prev) => [
+            ...prev,
+            ...files,
+        ]);
+
+        setImagePreviews((prev) => [
+            ...prev,
+            ...previews,
+        ]);
+
+        e.target.value = "";
+    };
+
+    const handleRemoveImage = (index) => {
+        const previewToRemove =
+            imagePreviews[index];
+
+        if (previewToRemove?.preview) {
+            URL.revokeObjectURL(
+                previewToRemove.preview
+            );
+        }
+
+        setImagePreviews((prev) =>
+            prev.filter(
+                (_, i) => i !== index
+            )
+        );
+
+        setImages((prev) =>
+            prev.filter(
+                (_, i) => i !== index
+            )
+        );
     };
 
     return (
@@ -97,6 +208,8 @@ function ProductForm({ onSubmit }) {
                 type="number"
                 placeholder="Price"
                 value={price}
+                min="0"
+                step="0.01"
                 onChange={(e) =>
                     setPrice(
                         e.target.value
@@ -127,6 +240,7 @@ function ProductForm({ onSubmit }) {
                 type="number"
                 placeholder="Stock"
                 value={stock}
+                min="0"
                 onChange={(e) =>
                     setStock(
                         e.target.value
@@ -151,57 +265,9 @@ function ProductForm({ onSubmit }) {
                 type="file"
                 multiple
                 accept="image/*"
-                onChange={(e) => {
-                    const files =
-                        Array.from(
-                            e.target.files
-                        );
-
-                    const totalImages =
-                        images.length +
-                        files.length;
-
-                    if (
-                        totalImages > 4
-                    ) {
-                        alert(
-                            `You can only upload 4 images.You already have ${images.length} selected.`
-                        );
-
-                        e.target.value =
-                            "";
-
-                        return;
-                    }
-
-                    const previews =
-                        files.map(
-                            (file) => ({
-                                file,
-                                preview:
-                                    URL.createObjectURL(
-                                        file
-                                    ),
-                            })
-                        );
-
-                    setImages(
-                        (prev) => [
-                            ...prev,
-                            ...files,
-                        ]
-                    );
-
-                    setImagePreviews(
-                        (prev) => [
-                            ...prev,
-                            ...previews,
-                        ]
-                    );
-
-                    e.target.value =
-                        "";
-                }}
+                onChange={
+                    handleImageChange
+                }
             />
 
             {imagePreviews.length >
@@ -264,35 +330,11 @@ function ProductForm({ onSubmit }) {
                                             cursor:
                                                 "pointer",
                                         }}
-                                        onClick={() => {
-                                            setImagePreviews(
-                                                (
-                                                    prev
-                                                ) =>
-                                                    prev.filter(
-                                                        (
-                                                            _,
-                                                            i
-                                                        ) =>
-                                                            i !==
-                                                            index
-                                                    )
-                                            );
-
-                                            setImages(
-                                                (
-                                                    prev
-                                                ) =>
-                                                    prev.filter(
-                                                        (
-                                                            _,
-                                                            i
-                                                        ) =>
-                                                            i !==
-                                                            index
-                                                    )
-                                            );
-                                        }}
+                                        onClick={() =>
+                                            handleRemoveImage(
+                                                index
+                                            )
+                                        }
                                     >
                                         Remove
                                     </button>

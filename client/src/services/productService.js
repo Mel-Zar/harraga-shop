@@ -5,15 +5,30 @@ const API_URL = `${import.meta.env.VITE_API_URL}/api/products`;
 console.log("🚀 PRODUCT API:", API_URL);
 
 // =========================
+// 🔐 AUTH CONFIG
+// =========================
+const getAuthConfig = () => {
+    const token = localStorage.getItem("token");
+
+    return {
+        withCredentials: true,
+
+        headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+            }
+            : {},
+    };
+};
+
+// =========================
 // 📦 GET ALL PRODUCTS
 // =========================
 export const getProducts = async () => {
     try {
         const response = await axios.get(
             API_URL,
-            {
-                withCredentials: true,
-            }
+            getAuthConfig()
         );
 
         return response.data;
@@ -37,9 +52,7 @@ export const getProductById = async (
     try {
         const response = await axios.get(
             `${API_URL}/${id}`,
-            {
-                withCredentials: true,
-            }
+            getAuthConfig()
         );
 
         return response.data;
@@ -66,15 +79,19 @@ export const createProduct = async (
             API_URL
         );
 
+        const config = getAuthConfig();
+
         const response = await axios.post(
             API_URL,
             formData,
             {
+                ...config,
+
                 headers: {
+                    ...config.headers,
                     "Content-Type":
                         "multipart/form-data",
                 },
-                withCredentials: true,
             }
         );
 
@@ -98,15 +115,31 @@ export const updateProduct = async (
     formData
 ) => {
     try {
+        console.log(
+            "✏️ UPDATING PRODUCT:",
+            id
+        );
+
+        const config = getAuthConfig();
+
+        console.log(
+            "🔐 TOKEN:",
+            localStorage.getItem("token")
+                ? "FOUND ✅"
+                : "MISSING ❌"
+        );
+
         const response = await axios.put(
             `${API_URL}/${id}`,
             formData,
             {
+                ...config,
+
                 headers: {
+                    ...config.headers,
                     "Content-Type":
                         "multipart/form-data",
                 },
-                withCredentials: true,
             }
         );
 
@@ -131,9 +164,7 @@ export const deleteProduct = async (
     try {
         const response = await axios.delete(
             `${API_URL}/${id}`,
-            {
-                withCredentials: true,
-            }
+            getAuthConfig()
         );
 
         return response.data;
