@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 import {
     getUser,
 } from "../../utils/auth";
@@ -203,7 +204,7 @@ function Dashboard() {
                 </Link>
 
                 <Link
-                    to="/admin/create"
+                    to="/admin/products/create"
                     style={{
                         textDecoration: "none",
                         color: "inherit",
@@ -307,7 +308,7 @@ function Dashboard() {
                     </Link>
 
                     <Link
-                        to="/admin/create"
+                        to="/admin/products/create"
                         style={{
                             padding: "10px 16px",
                             borderRadius: "8px",

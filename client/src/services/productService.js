@@ -1,21 +1,28 @@
 import axios from "axios";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api/products`;
+const API_URL =
+    `${import.meta.env.VITE_API_URL}/api/products`;
 
-console.log("🚀 PRODUCT API:", API_URL);
+console.log(
+    "🚀 PRODUCT API:",
+    API_URL
+);
 
 // =========================
 // 🔐 AUTH CONFIG
 // =========================
+
 const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token =
+        localStorage.getItem("token");
 
     return {
         withCredentials: true,
 
         headers: token
             ? {
-                Authorization: `Bearer ${token}`,
+                Authorization:
+                    `Bearer ${token}`,
             }
             : {},
     };
@@ -24,14 +31,17 @@ const getAuthConfig = () => {
 // =========================
 // 📦 GET ALL PRODUCTS
 // =========================
+
 export const getProducts = async () => {
     try {
-        const response = await axios.get(
-            API_URL,
-            getAuthConfig()
-        );
+        const response =
+            await axios.get(
+                API_URL,
+                getAuthConfig()
+            );
 
         return response.data;
+
     } catch (error) {
         console.error(
             "❌ GET PRODUCTS ERROR:",
@@ -46,16 +56,19 @@ export const getProducts = async () => {
 // =========================
 // 📦 GET SINGLE PRODUCT
 // =========================
+
 export const getProductById = async (
     id
 ) => {
     try {
-        const response = await axios.get(
-            `${API_URL}/${id}`,
-            getAuthConfig()
-        );
+        const response =
+            await axios.get(
+                `${API_URL}/${id}`,
+                getAuthConfig()
+            );
 
         return response.data;
+
     } catch (error) {
         console.error(
             "❌ GET PRODUCT ERROR:",
@@ -70,6 +83,7 @@ export const getProductById = async (
 // =========================
 // ➕ CREATE PRODUCT
 // =========================
+
 export const createProduct = async (
     formData
 ) => {
@@ -79,23 +93,26 @@ export const createProduct = async (
             API_URL
         );
 
-        const config = getAuthConfig();
+        const config =
+            getAuthConfig();
 
-        const response = await axios.post(
-            API_URL,
-            formData,
-            {
-                ...config,
+        const response =
+            await axios.post(
+                API_URL,
+                formData,
+                {
+                    ...config,
 
-                headers: {
-                    ...config.headers,
-                    "Content-Type":
-                        "multipart/form-data",
-                },
-            }
-        );
+                    headers: {
+                        ...config.headers,
+                        "Content-Type":
+                            "multipart/form-data",
+                    },
+                }
+            );
 
         return response.data;
+
     } catch (error) {
         console.error(
             "❌ CREATE PRODUCT ERROR:",
@@ -110,6 +127,7 @@ export const createProduct = async (
 // =========================
 // ✏️ UPDATE PRODUCT
 // =========================
+
 export const updateProduct = async (
     id,
     formData
@@ -120,7 +138,8 @@ export const updateProduct = async (
             id
         );
 
-        const config = getAuthConfig();
+        const config =
+            getAuthConfig();
 
         console.log(
             "🔐 TOKEN:",
@@ -129,21 +148,23 @@ export const updateProduct = async (
                 : "MISSING ❌"
         );
 
-        const response = await axios.put(
-            `${API_URL}/${id}`,
-            formData,
-            {
-                ...config,
+        const response =
+            await axios.put(
+                `${API_URL}/${id}`,
+                formData,
+                {
+                    ...config,
 
-                headers: {
-                    ...config.headers,
-                    "Content-Type":
-                        "multipart/form-data",
-                },
-            }
-        );
+                    headers: {
+                        ...config.headers,
+                        "Content-Type":
+                            "multipart/form-data",
+                    },
+                }
+            );
 
         return response.data;
+
     } catch (error) {
         console.error(
             "❌ UPDATE PRODUCT ERROR:",
@@ -158,16 +179,19 @@ export const updateProduct = async (
 // =========================
 // ❌ DELETE PRODUCT
 // =========================
+
 export const deleteProduct = async (
     id
 ) => {
     try {
-        const response = await axios.delete(
-            `${API_URL}/${id}`,
-            getAuthConfig()
-        );
+        const response =
+            await axios.delete(
+                `${API_URL}/${id}`,
+                getAuthConfig()
+            );
 
         return response.data;
+
     } catch (error) {
         console.error(
             "❌ DELETE PRODUCT ERROR:",

@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
 import { Link } from "react-router-dom";
 
 import {
@@ -15,43 +21,47 @@ function Products() {
     // =========================
     // GET PRODUCTS
     // =========================
+
+    const fetchProducts = useCallback(
+        async () => {
+            try {
+                setLoading(true);
+                setError("");
+
+                const data =
+                    await getProducts();
+
+                setProducts(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+            } catch (error) {
+                console.error(
+                    "PRODUCTS PAGE ERROR:",
+                    error
+                );
+
+                setError(
+                    error.response?.data?.message ||
+                    error.message ||
+                    "Failed to load products."
+                );
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
+    );
+
     useEffect(() => {
         fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            setError("");
-
-            const data = await getProducts();
-
-            setProducts(
-                Array.isArray(data)
-                    ? data
-                    : []
-            );
-
-        } catch (error) {
-            console.error(
-                "PRODUCTS PAGE ERROR:",
-                error
-            );
-
-            setError(
-                error.response?.data?.message ||
-                error.message ||
-                "Failed to load products."
-            );
-
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [fetchProducts]);
 
     // =========================
     // DELETE PRODUCT
     // =========================
+
     const handleDelete = async (id) => {
         const confirmed =
             window.confirm(
@@ -65,13 +75,13 @@ function Products() {
         try {
             await deleteProduct(id);
 
-            setProducts((prev) =>
-                prev.filter(
-                    (product) =>
-                        product._id !== id
-                )
+            setProducts(
+                (prev) =>
+                    prev.filter(
+                        (product) =>
+                            product._id !== id
+                    )
             );
-
         } catch (error) {
             console.error(
                 "DELETE PRODUCT ERROR:",
@@ -89,33 +99,36 @@ function Products() {
     // =========================
     // SEARCH
     // =========================
+
     const filteredProducts =
-        products.filter((product) => {
+        useMemo(() => {
             const searchText =
                 search
                     .toLowerCase()
                     .trim();
 
             if (!searchText) {
-                return true;
+                return products;
             }
 
-            return (
-                product.name
-                    ?.toLowerCase()
-                    .includes(searchText) ||
-                product.category
-                    ?.toLowerCase()
-                    .includes(searchText) ||
-                product.description
-                    ?.toLowerCase()
-                    .includes(searchText)
+            return products.filter(
+                (product) =>
+                    product.name
+                        ?.toLowerCase()
+                        .includes(searchText) ||
+                    product.category
+                        ?.toLowerCase()
+                        .includes(searchText) ||
+                    product.description
+                        ?.toLowerCase()
+                        .includes(searchText)
             );
-        });
+        }, [products, search]);
 
     // =========================
     // LOADING
     // =========================
+
     if (loading) {
         return (
             <div
@@ -137,6 +150,7 @@ function Products() {
     // =========================
     // ERROR
     // =========================
+
     if (error) {
         return (
             <div
@@ -160,6 +174,7 @@ function Products() {
                     </p>
 
                     <button
+                        type="button"
                         onClick={
                             fetchProducts
                         }
@@ -182,6 +197,7 @@ function Products() {
             {/* =========================
                 HEADER
             ========================= */}
+
             <div
                 style={{
                     display: "flex",
@@ -206,7 +222,8 @@ function Products() {
                 <Link
                     to="/admin/products/create"
                     style={{
-                        display: "inline-block",
+                        display:
+                            "inline-block",
                         padding:
                             "10px 18px",
                         borderRadius:
@@ -226,6 +243,7 @@ function Products() {
             {/* =========================
                 SEARCH
             ========================= */}
+
             <div
                 style={{
                     marginBottom: "25px",
@@ -243,14 +261,12 @@ function Products() {
                     style={{
                         width: "100%",
                         maxWidth: "500px",
-                        padding:
-                            "12px",
+                        padding: "12px",
                         border:
                             "1px solid #ccc",
                         borderRadius:
                             "8px",
-                        fontSize:
-                            "16px",
+                        fontSize: "16px",
                         boxSizing:
                             "border-box",
                     }}
@@ -260,6 +276,7 @@ function Products() {
             {/* =========================
                 PRODUCT COUNT
             ========================= */}
+
             <p>
                 <strong>
                     Products:
@@ -270,6 +287,7 @@ function Products() {
             {/* =========================
                 NO PRODUCTS
             ========================= */}
+
             {filteredProducts.length ===
                 0 ? (
                 <div
@@ -299,6 +317,7 @@ function Products() {
                 /* =========================
                    PRODUCTS
                 ========================= */
+
                 <div
                     style={{
                         display:
@@ -330,6 +349,7 @@ function Products() {
                                 {/* =========================
                                     IMAGE
                                 ========================= */}
+
                                 {product.image ? (
                                     <img
                                         src={`${import.meta.env.VITE_API_URL}${product.image}`}
@@ -377,6 +397,7 @@ function Products() {
                                 {/* =========================
                                     NAME
                                 ========================= */}
+
                                 <h2
                                     style={{
                                         marginTop:
@@ -391,6 +412,7 @@ function Products() {
                                 {/* =========================
                                     CATEGORY
                                 ========================= */}
+
                                 <p>
                                     <strong>
                                         Category:
@@ -404,6 +426,7 @@ function Products() {
                                 {/* =========================
                                     PRICE
                                 ========================= */}
+
                                 <p>
                                     <strong>
                                         Price:
@@ -418,6 +441,7 @@ function Products() {
                                 {/* =========================
                                     STOCK
                                 ========================= */}
+
                                 <p>
                                     <strong>
                                         Stock:
@@ -431,6 +455,7 @@ function Products() {
                                 {/* =========================
                                     STATUS
                                 ========================= */}
+
                                 <p>
                                     <strong>
                                         Status:
@@ -443,6 +468,7 @@ function Products() {
                                 {/* =========================
                                     DESCRIPTION
                                 ========================= */}
+
                                 <p>
                                     <strong>
                                         Description:
@@ -457,6 +483,7 @@ function Products() {
                                 {/* =========================
                                     ACTIONS
                                 ========================= */}
+
                                 <div
                                     style={{
                                         display:

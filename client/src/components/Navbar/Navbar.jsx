@@ -26,22 +26,19 @@ export default function Navbar() {
         () => getAuthState()
     );
 
+    const [adminMenuOpen, setAdminMenuOpen] =
+        useState(false);
+
     // =====================================================
     // 🔐 REFRESH AUTH STATE
-    // =====================================================
-    // Auth-state uppdateras när login/logout skickar
-    // "auth-change" och när localStorage ändras från
-    // en annan tab/window.
-    //
-    // Vi använder INTE location.pathname här eftersom
-    // auth-state inte behöver uppdateras manuellt varje
-    // gång användaren byter route.
     // =====================================================
 
     useEffect(() => {
         const refreshAuth = () => {
             setAuth(getAuthState());
         };
+
+        refreshAuth();
 
         window.addEventListener(
             "auth-change",
@@ -98,8 +95,8 @@ export default function Navbar() {
     const handleLogout = () => {
         logout();
 
-        // Uppdatera navbar direkt även om
-        // logout() inte skickar auth-change.
+        setAdminMenuOpen(false);
+
         setAuth(getAuthState());
 
         navigate("/", {
@@ -116,6 +113,23 @@ export default function Navbar() {
         color: "#222",
         fontWeight: "500",
         whiteSpace: "nowrap",
+        fontSize: "15px",
+    };
+
+    // =====================================================
+    // ADMIN LINK STYLE
+    // =====================================================
+
+    const adminLinkStyle = {
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+        padding: "11px 14px",
+        textDecoration: "none",
+        color: "#222",
+        fontSize: "14px",
+        fontWeight: "500",
+        borderRadius: "7px",
     };
 
     return (
@@ -124,7 +138,7 @@ export default function Navbar() {
                 display: "flex",
                 alignItems: "center",
                 gap: "18px",
-                padding: "16px 24px",
+                padding: "14px 24px",
                 flexWrap: "wrap",
                 borderBottom:
                     "1px solid #e5e5e5",
@@ -146,13 +160,14 @@ export default function Navbar() {
                 style={{
                     textDecoration: "none",
                     color: "#111",
-                    marginRight: "10px",
+                    marginRight: "8px",
                 }}
             >
                 <h2
                     style={{
                         margin: 0,
                         fontSize: "22px",
+                        fontWeight: "700",
                     }}
                 >
                     Harraga
@@ -161,7 +176,6 @@ export default function Navbar() {
 
             {/* =================================================
                 🌍 PUBLIC
-                ALLA
             ================================================= */}
 
             <Link
@@ -208,58 +222,163 @@ export default function Navbar() {
             )}
 
             {/* =================================================
-                👑 ADMIN ONLY
+                👑 ADMIN MENU
             ================================================= */}
 
             {loggedIn && admin && (
-                <>
-                    <Link
-                        to="/admin/dashboard"
-                        style={linkStyle}
-                    >
-                        Dashboard
-                    </Link>
+                <div
+                    style={{
+                        position: "relative",
+                    }}
+                >
 
-                    <Link
-                        to="/admin/users"
-                        style={linkStyle}
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setAdminMenuOpen(
+                                (open) => !open
+                            )
+                        }
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "7px",
+                            background:
+                                adminMenuOpen
+                                    ? "#f3f3f3"
+                                    : "transparent",
+                            border: "none",
+                            borderRadius: "8px",
+                            padding:
+                                "9px 11px",
+                            cursor: "pointer",
+                            fontSize: "15px",
+                            fontWeight: "600",
+                            color: "#222",
+                        }}
                     >
-                        Users
-                    </Link>
+                        Admin
 
-                    <Link
-                        to="/admin/products"
-                        style={linkStyle}
-                    >
-                        Products
-                    </Link>
+                        <span
+                            style={{
+                                fontSize: "11px",
+                                transform:
+                                    adminMenuOpen
+                                        ? "rotate(180deg)"
+                                        : "rotate(0deg)",
+                                transition:
+                                    "transform 0.15s ease",
+                            }}
+                        >
+                            ▼
+                        </span>
+                    </button>
 
-                    <Link
-                        to="/admin/create"
-                        style={linkStyle}
-                    >
-                        Create Product
-                    </Link>
+                    {adminMenuOpen && (
+                        <div
+                            style={{
+                                position:
+                                    "absolute",
+                                top: "calc(100% + 8px)",
+                                left: 0,
+                                width: "210px",
+                                padding: "7px",
+                                background: "#fff",
+                                border:
+                                    "1px solid #e5e5e5",
+                                borderRadius:
+                                    "11px",
+                                boxShadow:
+                                    "0 10px 30px rgba(0,0,0,0.10)",
+                            }}
+                        >
 
-                    <Link
-                        to="/admin/orders"
-                        style={linkStyle}
-                    >
-                        Orders
-                    </Link>
-                </>
+                            <Link
+                                to="/admin/dashboard"
+                                style={
+                                    adminLinkStyle
+                                }
+                                onClick={() =>
+                                    setAdminMenuOpen(
+                                        false
+                                    )
+                                }
+                            >
+                                Dashboard
+                            </Link>
+
+                            <Link
+                                to="/admin/users"
+                                style={
+                                    adminLinkStyle
+                                }
+                                onClick={() =>
+                                    setAdminMenuOpen(
+                                        false
+                                    )
+                                }
+                            >
+                                Users
+                            </Link>
+
+                            <Link
+                                to="/admin/products"
+                                style={
+                                    adminLinkStyle
+                                }
+                                onClick={() =>
+                                    setAdminMenuOpen(
+                                        false
+                                    )
+                                }
+                            >
+                                Products
+                            </Link>
+
+                            <Link
+                                to="/admin/create"
+                                style={
+                                    adminLinkStyle
+                                }
+                                onClick={() =>
+                                    setAdminMenuOpen(
+                                        false
+                                    )
+                                }
+                            >
+                                Create Product
+                            </Link>
+
+                            <Link
+                                to="/admin/orders"
+                                style={
+                                    adminLinkStyle
+                                }
+                                onClick={() =>
+                                    setAdminMenuOpen(
+                                        false
+                                    )
+                                }
+                            >
+                                Orders
+                            </Link>
+
+                        </div>
+                    )}
+
+                </div>
             )}
 
             {/* =================================================
                 🛒 CART
-                ALLA
             ================================================= */}
 
             <Link
                 to="/cart"
                 style={{
                     ...linkStyle,
-                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
                 }}
             >
                 Cart
@@ -268,9 +387,11 @@ export default function Navbar() {
                     <span
                         style={{
                             marginLeft: "6px",
-                            background: "#dc2626",
+                            background:
+                                "#dc2626",
                             color: "#fff",
-                            borderRadius: "999px",
+                            borderRadius:
+                                "999px",
                             padding:
                                 "2px 7px",
                             fontSize: "12px",
@@ -325,7 +446,8 @@ export default function Navbar() {
                         style={{
                             fontSize: "14px",
                             color: "#666",
-                            whiteSpace: "nowrap",
+                            whiteSpace:
+                                "nowrap",
                         }}
                     >
                         {admin

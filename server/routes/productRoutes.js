@@ -1,4 +1,5 @@
 import express from "express";
+
 import upload from "../middleware/upload.js";
 
 import {
@@ -14,8 +15,8 @@ import {
     deleteProduct,
 } from "../controllers/productController.js";
 
-const router = express.Router();
-
+const router =
+    express.Router();
 
 // =====================================
 // PRODUCTS
@@ -23,6 +24,7 @@ const router = express.Router();
 
 // GET    /api/products
 // POST   /api/products
+
 router
     .route("/")
     .get(getProducts)
@@ -33,7 +35,6 @@ router
         createProduct
     );
 
-
 // =====================================
 // SINGLE PRODUCT
 // =====================================
@@ -41,6 +42,7 @@ router
 // GET    /api/products/:id
 // PUT    /api/products/:id
 // DELETE /api/products/:id
+
 router
     .route("/:id")
     .get(getProductById)
@@ -55,6 +57,5 @@ router
         admin,
         deleteProduct
     );
-
 
 export default router;

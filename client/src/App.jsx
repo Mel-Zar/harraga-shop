@@ -287,6 +287,11 @@ function App() {
             }
           />
 
+          {/* =================================================
+                        ➕ CREATE PRODUCT
+                        ORIGINAL ROUTE
+                    ================================================= */}
+
           <Route
             path="/admin/create"
             element={
@@ -295,6 +300,25 @@ function App() {
               </AdminRoute>
             }
           />
+
+          {/* =================================================
+                        ➕ CREATE PRODUCT
+                        ALIAS
+                        BEHÅLLER LINKEN FRÅN PRODUCTS
+                    ================================================= */}
+
+          <Route
+            path="/admin/products/create"
+            element={
+              <AdminRoute>
+                <CreateProduct />
+              </AdminRoute>
+            }
+          />
+
+          {/* =================================================
+                        📦 ADMIN ORDERS
+                    ================================================= */}
 
           <Route
             path="/admin/orders"
@@ -314,6 +338,10 @@ function App() {
             }
           />
 
+          {/* =================================================
+                        👥 ADMIN USERS
+                    ================================================= */}
+
           <Route
             path="/admin/users"
             element={
@@ -322,6 +350,10 @@ function App() {
               </AdminRoute>
             }
           />
+
+          {/* =================================================
+                        🛍️ ADMIN PRODUCTS
+                    ================================================= */}
 
           <Route
             path="/admin/products"

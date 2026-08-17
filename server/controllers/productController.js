@@ -4,6 +4,7 @@ import Product from "../models/Product.js";
 // =========================
 // HELPER
 // =========================
+
 const isValidObjectId = (id) => {
     return mongoose.Types.ObjectId.isValid(id);
 };
@@ -11,7 +12,11 @@ const isValidObjectId = (id) => {
 // =========================
 // CREATE PRODUCT
 // =========================
-export const createProduct = async (req, res) => {
+
+export const createProduct = async (
+    req,
+    res
+) => {
     try {
         const {
             name,
@@ -21,133 +26,199 @@ export const createProduct = async (req, res) => {
             stock,
         } = req.body;
 
-        const images = req.files?.length
-            ? req.files
-                .slice(0, 4)
-                .map(
-                    (file) =>
-                        `/uploads/${file.filename}`
-                )
-            : [];
+        const images =
+            req.files?.length
+                ? req.files
+                    .slice(0, 4)
+                    .map(
+                        (file) =>
+                            `/uploads/${file.filename}`
+                    )
+                : [];
 
-        const product = await Product.create({
-            name: name?.trim(),
-            description: description?.trim(),
-            price: Number(price),
-            category: category?.trim(),
-            stock: Number(stock),
-            image: images[0] || "",
-            images,
-        });
+        const product =
+            await Product.create({
+                name:
+                    name?.trim(),
+                description:
+                    description?.trim(),
+                price:
+                    Number(price),
+                category:
+                    category?.trim(),
+                stock:
+                    Number(stock),
+                image:
+                    images[0] || "",
+                images,
+            });
 
-        return res.status(201).json(product);
+        return res
+            .status(201)
+            .json(product);
 
     } catch (error) {
+        console.error(
+            "CREATE PRODUCT ERROR:",
+            error
+        );
 
-        console.error("CREATE PRODUCT ERROR:", error);
-
-        return res.status(500).json({
-            message: "Failed to create product",
-        });
-
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to create product",
+            });
     }
 };
 
 // =========================
 // GET ALL PRODUCTS
 // =========================
-export const getProducts = async (req, res) => {
+
+export const getProducts = async (
+    req,
+    res
+) => {
     try {
+        const products =
+            await Product.find()
+                .select("-__v")
+                .sort({
+                    createdAt: -1,
+                })
+                .lean();
 
-        const products = await Product.find()
-            .select("-__v")
-            .sort({
-                createdAt: -1,
-            })
-            .lean();
-
-        return res.status(200).json(products);
+        return res
+            .status(200)
+            .json(products);
 
     } catch (error) {
+        console.error(
+            "GET PRODUCTS ERROR:",
+            error
+        );
 
-        console.error("GET PRODUCTS ERROR:", error);
-
-        return res.status(500).json({
-            message: "Failed to fetch products",
-        });
-
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to fetch products",
+            });
     }
 };
 
 // =========================
 // GET SINGLE PRODUCT
 // =========================
-export const getProductById = async (req, res) => {
+
+export const getProductById = async (
+    req,
+    res
+) => {
     try {
+        const { id } =
+            req.params;
 
-        const { id } = req.params;
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({
-                message: "Invalid product ID",
-            });
+        if (
+            !isValidObjectId(id)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Invalid product ID",
+                });
         }
 
-        const product = await Product.findById(id)
-            .select("-__v")
-            .lean();
+        const product =
+            await Product.findById(
+                id
+            )
+                .select("-__v")
+                .lean();
 
         if (!product) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "Product not found",
+                });
         }
 
-        return res.status(200).json(product);
+        return res
+            .status(200)
+            .json(product);
 
     } catch (error) {
+        console.error(
+            "GET PRODUCT ERROR:",
+            error
+        );
 
-        console.error("GET PRODUCT ERROR:", error);
-
-        return res.status(500).json({
-            message: "Failed to fetch product",
-        });
-
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to fetch product",
+            });
     }
 };
 
 // =========================
 // UPDATE PRODUCT
 // =========================
-export const updateProduct = async (req, res) => {
+
+export const updateProduct = async (
+    req,
+    res
+) => {
     try {
+        const { id } =
+            req.params;
 
-        const { id } = req.params;
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({
-                message: "Invalid product ID",
-            });
+        if (
+            !isValidObjectId(id)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Invalid product ID",
+                });
         }
 
-        const product = await Product.findById(id);
+        const product =
+            await Product.findById(id);
 
         if (!product) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "Product not found",
+                });
         }
 
+        // =========================
+        // BASIC INFORMATION
+        // =========================
+
         product.name =
-            req.body.name?.trim() ?? product.name;
+            req.body.name?.trim() ??
+            product.name;
 
         product.description =
             req.body.description?.trim() ??
             product.description;
 
         product.price =
-            req.body.price !== undefined
-                ? Number(req.body.price)
+            req.body.price !==
+                undefined
+                ? Number(
+                    req.body.price
+                )
                 : product.price;
 
         product.category =
@@ -155,114 +226,191 @@ export const updateProduct = async (req, res) => {
             product.category;
 
         product.stock =
-            req.body.stock !== undefined
-                ? Number(req.body.stock)
+            req.body.stock !==
+                undefined
+                ? Number(
+                    req.body.stock
+                )
                 : product.stock;
+
+        // =========================
+        // MAKE SURE IMAGES EXISTS
+        // =========================
+
+        let currentImages =
+            Array.isArray(
+                product.images
+            )
+                ? [
+                    ...product.images,
+                ]
+                : [];
+
+        // =========================
+        // SUPPORT OLD PRODUCTS
+        // =========================
+
+        if (
+            currentImages.length ===
+            0 &&
+            product.image
+        ) {
+            currentImages = [
+                product.image,
+            ];
+        }
 
         // =========================
         // REMOVE IMAGES
         // =========================
-        if (req.body.removedImages) {
 
+        if (
+            req.body.removedImages
+        ) {
             let removedImages =
                 req.body.removedImages;
 
-            if (typeof removedImages === "string") {
-
+            if (
+                typeof removedImages ===
+                "string"
+            ) {
                 try {
-
                     removedImages =
-                        JSON.parse(removedImages);
-
+                        JSON.parse(
+                            removedImages
+                        );
                 } catch {
-
-                    removedImages = [];
-
+                    removedImages =
+                        [];
                 }
-
             }
 
-            product.images =
-                product.images.filter(
-                    (img) =>
-                        !removedImages.includes(img)
-                );
-
+            if (
+                Array.isArray(
+                    removedImages
+                )
+            ) {
+                currentImages =
+                    currentImages.filter(
+                        (img) =>
+                            !removedImages.includes(
+                                img
+                            )
+                    );
+            }
         }
 
         // =========================
         // ADD NEW IMAGES
         // =========================
-        if (req.files?.length > 0) {
 
-            const newImages = req.files.map(
-                (file) =>
-                    `/uploads/${file.filename}`
-            );
+        if (
+            req.files?.length > 0
+        ) {
+            const newImages =
+                req.files
+                    .slice(0, 4)
+                    .map(
+                        (file) =>
+                            `/uploads/${file.filename}`
+                    );
 
-            product.images = [
-                ...product.images,
+            currentImages = [
+                ...currentImages,
                 ...newImages,
             ].slice(0, 4);
-
         }
+
+        // =========================
+        // SAVE IMAGES
+        // =========================
+
+        product.images =
+            currentImages;
 
         // =========================
         // MAIN IMAGE
         // =========================
+
         product.image =
-            product.images[0] || "";
+            currentImages[0] || "";
 
         await product.save();
 
-        return res.status(200).json(product);
+        return res
+            .status(200)
+            .json(product);
 
     } catch (error) {
+        console.error(
+            "UPDATE PRODUCT ERROR:",
+            error
+        );
 
-        console.error("UPDATE PRODUCT ERROR:", error);
-
-        return res.status(500).json({
-            message: "Failed to update product",
-        });
-
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to update product",
+            });
     }
 };
 
 // =========================
 // DELETE PRODUCT
 // =========================
-export const deleteProduct = async (req, res) => {
+
+export const deleteProduct = async (
+    req,
+    res
+) => {
     try {
+        const { id } =
+            req.params;
 
-        const { id } = req.params;
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).json({
-                message: "Invalid product ID",
-            });
+        if (
+            !isValidObjectId(id)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Invalid product ID",
+                });
         }
 
         const product =
-            await Product.findByIdAndDelete(id);
+            await Product.findByIdAndDelete(
+                id
+            );
 
         if (!product) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "Product not found",
+                });
         }
 
-        return res.status(200).json({
-            message:
-                "Product deleted successfully",
-        });
+        return res
+            .status(200)
+            .json({
+                message:
+                    "Product deleted successfully",
+            });
 
     } catch (error) {
+        console.error(
+            "DELETE PRODUCT ERROR:",
+            error
+        );
 
-        console.error("DELETE PRODUCT ERROR:", error);
-
-        return res.status(500).json({
-            message: "Failed to delete product",
-        });
-
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to delete product",
+            });
     }
 };
