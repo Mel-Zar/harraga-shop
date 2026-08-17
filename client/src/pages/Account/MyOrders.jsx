@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import {
+    getMyOrders,
+} from "../../services/orderService";
 
 function MyOrders() {
     const [orders, setOrders] = useState([]);
@@ -7,27 +12,47 @@ function MyOrders() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const token =
+                    localStorage.getItem("token");
 
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/orders/my-orders`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                        credentials: "include",
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to load orders");
+                if (
+                    !token ||
+                    token === "null" ||
+                    token === "undefined"
+                ) {
+                    throw new Error(
+                        "You must be logged in to view your orders."
+                    );
                 }
 
-                const data = await response.json();
+                // =========================
+                // GET CUSTOMER ORDERS
+                // =========================
+                const data =
+                    await getMyOrders();
 
-                setOrders(data);
+                // =========================
+                // BACKEND RETURNS:
+                // {
+                //   success: true,
+                //   count: ...,
+                //   orders: [...]
+                // }
+                // =========================
+                setOrders(
+                    Array.isArray(data.orders)
+                        ? data.orders
+                        : []
+                );
+
             } catch (error) {
-                console.error(error);
+                console.error(
+                    "MY ORDERS ERROR:",
+                    error
+                );
+
+                setOrders([]);
+
             } finally {
                 setLoading(false);
             }
@@ -36,6 +61,9 @@ function MyOrders() {
         fetchOrders();
     }, []);
 
+    // =========================
+    // LOADING
+    // =========================
     if (loading) {
         return (
             <div
@@ -45,8 +73,13 @@ function MyOrders() {
                     padding: "20px",
                 }}
             >
-                <h1>My Orders</h1>
-                <p>Loading orders...</p>
+                <h1>
+                    My Orders
+                </h1>
+
+                <p>
+                    Loading orders...
+                </p>
             </div>
         );
     }
@@ -59,7 +92,9 @@ function MyOrders() {
                 padding: "20px",
             }}
         >
-            <h1>My Orders</h1>
+            <h1>
+                My Orders
+            </h1>
 
             {orders.length === 0 ? (
                 <div
@@ -70,8 +105,14 @@ function MyOrders() {
                         borderRadius: "10px",
                     }}
                 >
-                    <h3>No orders yet.</h3>
-                    <p>You haven't placed any orders.</p>
+                    <h3>
+                        No orders yet.
+                    </h3>
+
+                    <p>
+                        You haven't placed any
+                        orders.
+                    </p>
                 </div>
             ) : (
                 orders.map((order) => (
@@ -84,47 +125,108 @@ function MyOrders() {
                             marginBottom: "20px",
                         }}
                     >
+                        {/* =========================
+                            ORDER NUMBER
+                        ========================= */}
                         <h3>
-                            Order #{order._id.slice(-8).toUpperCase()}
+                            Order #
+                            {order.orderNumber ||
+                                order._id
+                                    ?.slice(-8)
+                                    .toUpperCase()}
                         </h3>
 
+                        {/* =========================
+                            DATE
+                        ========================= */}
                         <p>
-                            <strong>Date:</strong>{" "}
-                            {new Date(
-                                order.createdAt
-                            ).toLocaleDateString()}
+                            <strong>
+                                Date:
+                            </strong>{" "}
+                            {order.createdAt
+                                ? new Date(
+                                    order.createdAt
+                                ).toLocaleDateString()
+                                : "-"}
                         </p>
 
+                        {/* =========================
+                            STATUS
+                        ========================= */}
                         <p>
-                            <strong>Status:</strong>{" "}
-                            {order.status}
+                            <strong>
+                                Status:
+                            </strong>{" "}
+                            {order.status ||
+                                "pending"}
                         </p>
 
+                        {/* =========================
+                            TOTAL
+                        ========================= */}
                         <p>
-                            <strong>Total:</strong>{" "}
-                            ${order.totalPrice}
+                            <strong>
+                                Total:
+                            </strong>{" "}
+                            {order.pricing?.total ??
+                                0}{" "}
+                            kr
                         </p>
 
                         <hr />
 
-                        {order.orderItems?.map((item) => (
-                            <div
-                                key={item.product}
-                                style={{
-                                    marginBottom: "12px",
-                                }}
-                            >
-                                <strong>{item.name}</strong>
+                        {/* =========================
+                            PRODUCTS
+                        ========================= */}
+                        {order.items?.map(
+                            (item, index) => (
+                                <div
+                                    key={`${item.productId}-${index}`}
+                                    style={{
+                                        marginBottom:
+                                            "12px",
+                                    }}
+                                >
+                                    <strong>
+                                        {item.name}
+                                    </strong>
 
-                                <br />
+                                    <br />
 
-                                Qty: {item.quantity}
+                                    Qty:{" "}
+                                    {item.quantity}
 
-                                <br />
+                                    <br />
 
-                                Price: ${item.price}
-                            </div>
-                        ))}
+                                    Price:{" "}
+                                    {item.price} kr
+
+                                    <br />
+
+                                    Total:{" "}
+                                    {(
+                                        Number(
+                                            item.price
+                                        ) *
+                                        Number(
+                                            item.quantity
+                                        )
+                                    ).toFixed(2)}{" "}
+                                    kr
+                                </div>
+                            )
+                        )}
+
+                        <hr />
+
+                        {/* =========================
+                            VIEW ORDER
+                        ========================= */}
+                        <Link
+                            to={`/profile/orders/${order._id}`}
+                        >
+                            View Order Details
+                        </Link>
                     </div>
                 ))
             )}

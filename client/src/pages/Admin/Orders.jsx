@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllOrders } from "../../services/ordersService";
+import { getAllOrders } from "../../services/orderService";
 
 function Orders() {
     const [orders, setOrders] = useState([]);

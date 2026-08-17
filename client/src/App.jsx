@@ -1,5 +1,9 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 // pages
 import Login from "./pages/Login/Login";
@@ -14,18 +18,22 @@ import CreateProduct from "./pages/Admin/CreateProduct";
 
 // 🔥 protected test
 import { getProtectedData } from "./services/protectedService";
+
 import Navbar from "./components/Navbar/Navbar";
 import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
 import Footer from "./components/Footer/Footer";
 import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
+
+// 👑 Admin
 import Orders from "./pages/Admin/Orders";
-import OrderDetails from "./pages/Admin/OrderDetails";
+import OrderDetail from "./pages/Admin/OrderDetail";
 
 // 👤 Account
 import Profile from "./pages/Account/Profile";
 import MyOrders from "./pages/Account/MyOrders";
+import OrderDetails from "./pages/Account/OrderDetails";
 import EditProfile from "./pages/Account/EditProfile";
 import ChangePassword from "./pages/Account/ChangePassword";
 import AddressBook from "./pages/Account/AddressBook";
@@ -41,13 +49,27 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (!token) return;
+    if (
+      !token ||
+      token === "null" ||
+      token === "undefined"
+    ) {
+      return;
+    }
 
     getProtectedData()
-      .then((data) => console.log("✅ PROTECTED DATA:", data))
-      .catch((err) =>
-        console.log("❌ PROTECTED ERROR:", err.message)
-      );
+      .then((data) => {
+        console.log(
+          "✅ PROTECTED DATA:",
+          data
+        );
+      })
+      .catch((err) => {
+        console.log(
+          "❌ PROTECTED ERROR:",
+          err.message
+        );
+      });
   }, []);
 
   return (
@@ -63,13 +85,17 @@ function App() {
         ========================= */}
         <Routes>
 
-          {/* HOME */}
+          {/* =========================
+              🏠 HOME
+          ========================= */}
           <Route
             path="/"
             element={<Home />}
           />
 
-          {/* AUTH */}
+          {/* =========================
+              🔐 AUTH
+          ========================= */}
           <Route
             path="/login"
             element={<Login />}
@@ -80,25 +106,33 @@ function App() {
             element={<Register />}
           />
 
-          {/* EMAIL VERIFY */}
+          {/* =========================
+              ✉️ EMAIL VERIFY
+          ========================= */}
           <Route
             path="/verify-email/:userId/:token"
             element={<VerifyEmail />}
           />
 
-          {/* FORGOT PASSWORD */}
+          {/* =========================
+              🔑 FORGOT PASSWORD
+          ========================= */}
           <Route
             path="/forgot-password"
             element={<ForgotPassword />}
           />
 
-          {/* RESET PASSWORD */}
+          {/* =========================
+              🔑 RESET PASSWORD
+          ========================= */}
           <Route
             path="/reset-password/:token"
             element={<ResetPassword />}
           />
 
-          {/* PRODUCTS */}
+          {/* =========================
+              🛍️ PRODUCTS
+          ========================= */}
           <Route
             path="/products"
             element={<Products />}
@@ -109,13 +143,18 @@ function App() {
             element={<Product />}
           />
 
-          {/* CART */}
+          {/* =========================
+              🛒 CART
+          ========================= */}
           <Route
             path="/cart"
             element={<Cart />}
           />
 
-          {/* CHECKOUT */}
+          {/* =========================
+              💳 CHECKOUT
+              LOGIN REQUIRED
+          ========================= */}
           <Route
             path="/checkout"
             element={
@@ -126,9 +165,10 @@ function App() {
           />
 
           {/* =========================
-              👤 ACCOUNT ROUTES
+              👤 ACCOUNT
           ========================= */}
 
+          {/* PROFILE */}
           <Route
             path="/profile"
             element={
@@ -138,6 +178,7 @@ function App() {
             }
           />
 
+          {/* MY ORDERS */}
           <Route
             path="/profile/orders"
             element={
@@ -147,6 +188,17 @@ function App() {
             }
           />
 
+          {/* SINGLE CUSTOMER ORDER */}
+          <Route
+            path="/profile/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* EDIT PROFILE */}
           <Route
             path="/profile/edit"
             element={
@@ -156,6 +208,7 @@ function App() {
             }
           />
 
+          {/* CHANGE PASSWORD */}
           <Route
             path="/profile/password"
             element={
@@ -165,6 +218,7 @@ function App() {
             }
           />
 
+          {/* ADDRESS BOOK */}
           <Route
             path="/profile/address"
             element={
@@ -175,9 +229,10 @@ function App() {
           />
 
           {/* =========================
-              🔥 ADMIN ROUTES
+              👑 ADMIN ROUTES
           ========================= */}
 
+          {/* CREATE PRODUCT */}
           <Route
             path="/admin/create"
             element={
@@ -187,6 +242,7 @@ function App() {
             }
           />
 
+          {/* ALL ORDERS */}
           <Route
             path="/admin/orders"
             element={
@@ -196,17 +252,21 @@ function App() {
             }
           />
 
+          {/* ADMIN ORDER DETAILS */}
           <Route
             path="/admin/orders/:id"
             element={
               <AdminRoute>
-                <OrderDetails />
+                <OrderDetail />
               </AdminRoute>
             }
           />
 
         </Routes>
 
+        {/* =========================
+            🦶 FOOTER
+        ========================= */}
         <Footer />
       </div>
     </Router>

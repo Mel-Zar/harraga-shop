@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 import {
     getOrderById,
     updateOrderStatus,
-} from "../../services/ordersService";
+} from "../../services/orderService";
 
-function OrderDetails() {
+function OrderDetail() {
     const { id } = useParams();
 
     const [order, setOrder] = useState(null);
@@ -248,4 +248,4 @@ function OrderDetails() {
     );
 }
 
-export default OrderDetails;
+export default OrderDetail;

@@ -1,8 +1,11 @@
 import express from "express";
+
 import {
     createOrder,
     getAllOrders,
     getOrderById,
+    getMyOrders,
+    getMyOrderById,
     updateOrderStatus,
 } from "../controllers/orderController.js";
 
@@ -14,14 +17,39 @@ import {
 
 const router = express.Router();
 
+
 // =========================
 // CREATE ORDER
+// GUEST + CUSTOMER
 // =========================
 router.post(
     "/",
     optionalAuth,
     createOrder
 );
+
+
+// =========================
+// GET MY ORDERS
+// CUSTOMER ONLY
+// =========================
+router.get(
+    "/my-orders",
+    protect,
+    getMyOrders
+);
+
+
+// =========================
+// GET MY SINGLE ORDER
+// CUSTOMER ONLY
+// =========================
+router.get(
+    "/my-orders/:id",
+    protect,
+    getMyOrderById
+);
+
 
 // =========================
 // GET ALL ORDERS (ADMIN ONLY)
@@ -33,8 +61,10 @@ router.get(
     getAllOrders
 );
 
+
 // =========================
-// GET SINGLE ORDER (ADMIN ONLY)
+// GET SINGLE ORDER
+// ADMIN ONLY
 // =========================
 router.get(
     "/:id",
@@ -42,6 +72,7 @@ router.get(
     admin,
     getOrderById
 );
+
 
 // =========================
 // UPDATE ORDER STATUS (ADMIN ONLY)
@@ -52,5 +83,6 @@ router.patch(
     admin,
     updateOrderStatus
 );
+
 
 export default router;
