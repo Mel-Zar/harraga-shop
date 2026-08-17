@@ -29,6 +29,7 @@ import Checkout from "./pages/Checkout/Checkout";
 // 👑 Admin
 import Orders from "./pages/Admin/Orders";
 import OrderDetail from "./pages/Admin/OrderDetail";
+import Users from "./pages/Admin/Users";
 
 // 👤 Account
 import Profile from "./pages/Account/Profile";
@@ -258,6 +259,18 @@ function App() {
             element={
               <AdminRoute>
                 <OrderDetail />
+              </AdminRoute>
+            }
+          />
+
+          {/* =========================
+              👥 ADMIN USERS
+          ========================= */}
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <Users />
               </AdminRoute>
             }
           />
