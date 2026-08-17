@@ -12,7 +12,9 @@ import {
 } from "../../services/userService";
 
 function Users() {
-    const [users, setUsers] = useState([]);
+
+    const [users, setUsers] =
+        useState([]);
 
     const [loading, setLoading] =
         useState(true);
@@ -35,14 +37,15 @@ function Users() {
     const [editData, setEditData] =
         useState({});
 
-
     // =====================================================
     // FETCH USERS
     // =====================================================
 
-    const fetchUsers = useCallback(
-        async () => {
+    const fetchUsers =
+        useCallback(async () => {
+
             try {
+
                 setLoading(true);
                 setError("");
 
@@ -51,7 +54,11 @@ function Users() {
                         "token"
                     );
 
-                if (!currentToken) {
+                if (
+                    !currentToken ||
+                    currentToken === "null" ||
+                    currentToken === "undefined"
+                ) {
                     throw new Error(
                         "No authentication token found."
                     );
@@ -67,24 +74,25 @@ function Users() {
                         ? data
                         : []
                 );
+
             } catch (error) {
+
                 console.error(
                     "GET USERS ERROR:",
                     error
                 );
 
                 setError(
-                    error.response?.data
-                        ?.message ||
                     error.message ||
                     "Failed to load users."
                 );
+
             } finally {
+
                 setLoading(false);
             }
-        },
-        []
-    );
+
+        }, []);
 
     // =====================================================
     // LOAD USERS
@@ -100,6 +108,7 @@ function Users() {
 
     const filteredUsers =
         useMemo(() => {
+
             const text =
                 search
                     .toLowerCase()
@@ -114,27 +123,40 @@ function Users() {
                     user.firstName
                         ?.toLowerCase()
                         .includes(text) ||
+
                     user.lastName
                         ?.toLowerCase()
                         .includes(text) ||
+
                     user.username
                         ?.toLowerCase()
                         .includes(text) ||
+
                     user.email
                         ?.toLowerCase()
                         .includes(text) ||
+
                     user.city
                         ?.toLowerCase()
                         .includes(text)
             );
-        }, [users, search]);
+
+        }, [
+            users,
+            search,
+        ]);
 
     // =====================================================
     // START EDIT
     // =====================================================
 
-    const handleEdit = (user) => {
-        setEditingId(user._id);
+    const handleEdit = (
+        user
+    ) => {
+
+        setEditingId(
+            user._id
+        );
 
         setEditData({
             firstName:
@@ -162,10 +184,14 @@ function Users() {
                 user.country || "",
 
             isAdmin:
-                Boolean(user.isAdmin),
+                Boolean(
+                    user.isAdmin
+                ),
 
             isVerified:
-                Boolean(user.isVerified),
+                Boolean(
+                    user.isVerified
+                ),
         });
     };
 
@@ -174,6 +200,7 @@ function Users() {
     // =====================================================
 
     const handleCancel = () => {
+
         setEditingId(null);
         setEditData({});
     };
@@ -185,6 +212,7 @@ function Users() {
     const handleChange = (
         event
     ) => {
+
         const {
             name,
             value,
@@ -195,6 +223,7 @@ function Users() {
         setEditData(
             (prev) => ({
                 ...prev,
+
                 [name]:
                     type ===
                         "checkbox"
@@ -211,15 +240,22 @@ function Users() {
     const handleSave = async (
         id
     ) => {
+
         try {
+
             setSavingId(id);
+            setError("");
 
             const currentToken =
                 localStorage.getItem(
                     "token"
                 );
 
-            if (!currentToken) {
+            if (
+                !currentToken ||
+                currentToken === "null" ||
+                currentToken === "undefined"
+            ) {
                 throw new Error(
                     "No authentication token found."
                 );
@@ -233,7 +269,13 @@ function Users() {
                 );
 
             const updatedUser =
-                response.user;
+                response?.user;
+
+            if (!updatedUser) {
+                throw new Error(
+                    "Server returned no updated user."
+                );
+            }
 
             setUsers(
                 (prev) =>
@@ -247,19 +289,21 @@ function Users() {
 
             setEditingId(null);
             setEditData({});
+
         } catch (error) {
+
             console.error(
                 "UPDATE USER ERROR:",
                 error
             );
 
-            alert(
-                error.response?.data
-                    ?.message ||
+            setError(
                 error.message ||
                 "Failed to update user."
             );
+
         } finally {
+
             setSavingId(null);
         }
     };
@@ -271,9 +315,21 @@ function Users() {
     const handleDelete = async (
         user
     ) => {
+
+        const name =
+            [
+                user.firstName,
+                user.lastName,
+            ]
+                .filter(Boolean)
+                .join(" ") ||
+            user.username ||
+            user.email ||
+            "this user";
+
         const confirmed =
             window.confirm(
-                `Are you sure you want to delete ${user.firstName} ${user.lastName}?`
+                `Are you sure you want to delete ${name}?`
             );
 
         if (!confirmed) {
@@ -281,16 +337,23 @@ function Users() {
         }
 
         try {
+
             setDeletingId(
                 user._id
             );
+
+            setError("");
 
             const currentToken =
                 localStorage.getItem(
                     "token"
                 );
 
-            if (!currentToken) {
+            if (
+                !currentToken ||
+                currentToken === "null" ||
+                currentToken === "undefined"
+            ) {
                 throw new Error(
                     "No authentication token found."
                 );
@@ -317,19 +380,21 @@ function Users() {
                 setEditingId(null);
                 setEditData({});
             }
+
         } catch (error) {
+
             console.error(
                 "DELETE USER ERROR:",
                 error
             );
 
-            alert(
-                error.response?.data
-                    ?.message ||
+            setError(
                 error.message ||
                 "Failed to delete user."
             );
+
         } finally {
+
             setDeletingId(null);
         }
     };
@@ -339,6 +404,7 @@ function Users() {
     // =====================================================
 
     if (loading) {
+
         return (
             <div
                 style={{
@@ -362,53 +428,6 @@ function Users() {
     }
 
     // =====================================================
-    // ERROR
-    // =====================================================
-
-    if (error) {
-        return (
-            <div
-                style={{
-                    maxWidth:
-                        "1200px",
-                    margin:
-                        "40px auto",
-                    padding:
-                        "20px",
-                }}
-            >
-                <h1>
-                    Users
-                </h1>
-
-                <div
-                    style={{
-                        border:
-                            "1px solid #ddd",
-                        borderRadius:
-                            "10px",
-                        padding:
-                            "25px",
-                    }}
-                >
-                    <p>
-                        {error}
-                    </p>
-
-                    <button
-                        type="button"
-                        onClick={
-                            fetchUsers
-                        }
-                    >
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // =====================================================
     // PAGE
     // =====================================================
 
@@ -423,6 +442,7 @@ function Users() {
                     "20px",
             }}
         >
+
             {/* =================================================
                 HEADER
             ================================================= */}
@@ -444,6 +464,7 @@ function Users() {
                 }}
             >
                 <div>
+
                     <h1>
                         Users
                     </h1>
@@ -451,6 +472,7 @@ function Users() {
                     <p>
                         Manage registered users.
                     </p>
+
                 </div>
 
                 <div>
@@ -460,6 +482,34 @@ function Users() {
                     {users.length}
                 </div>
             </div>
+
+            {/* =================================================
+                ERROR
+            ================================================= */}
+
+            {error && (
+                <div
+                    style={{
+                        border:
+                            "1px solid #fca5a5",
+                        background:
+                            "#fef2f2",
+                        color:
+                            "#991b1b",
+                        borderRadius:
+                            "10px",
+                        padding:
+                            "15px",
+                        marginBottom:
+                            "20px",
+                    }}
+                >
+                    <strong>
+                        Error:
+                    </strong>{" "}
+                    {error}
+                </div>
+            )}
 
             {/* =================================================
                 SEARCH
@@ -523,6 +573,7 @@ function Users() {
 
             {filteredUsers.length ===
                 0 ? (
+
                 <div
                     style={{
                         border:
@@ -535,6 +586,7 @@ function Users() {
                             "20px",
                     }}
                 >
+
                     <h3>
                         No users found.
                     </h3>
@@ -545,11 +597,10 @@ function Users() {
                             ? "No registered users found."
                             : "Try another search."}
                     </p>
+
                 </div>
+
             ) : (
-                /* =================================================
-                   USERS
-                ================================================= */
 
                 <div
                     style={{
@@ -563,8 +614,10 @@ function Users() {
                             "20px",
                     }}
                 >
+
                     {filteredUsers.map(
                         (user) => {
+
                             const isEditing =
                                 editingId ===
                                 user._id;
@@ -583,8 +636,11 @@ function Users() {
                                             "20px",
                                         background:
                                             "#fff",
+                                        boxShadow:
+                                            "0 4px 14px rgba(0,0,0,0.04)",
                                     }}
                                 >
+
                                     {/* =================================================
                                         USER HEADER
                                     ================================================= */}
@@ -603,7 +659,9 @@ function Users() {
                                                 "20px",
                                         }}
                                     >
+
                                         <div>
+
                                             <h2
                                                 style={{
                                                     margin:
@@ -631,6 +689,7 @@ function Users() {
                                                     user.username
                                                 }
                                             </p>
+
                                         </div>
 
                                         <div
@@ -645,18 +704,21 @@ function Users() {
                                                     "flex-end",
                                             }}
                                         >
+
                                             <span>
                                                 {user.isAdmin
-                                                    ? "Admin"
-                                                    : "User"}
+                                                    ? "👑 Admin"
+                                                    : "👤 User"}
                                             </span>
 
                                             <span>
                                                 {user.isVerified
-                                                    ? "Verified"
-                                                    : "Not verified"}
+                                                    ? "✅ Verified"
+                                                    : "⚠️ Not verified"}
                                             </span>
+
                                         </div>
+
                                     </div>
 
                                     {/* =================================================
@@ -664,6 +726,7 @@ function Users() {
                                     ================================================= */}
 
                                     {isEditing ? (
+
                                         <div
                                             style={{
                                                 display:
@@ -674,6 +737,7 @@ function Users() {
                                                     "12px",
                                             }}
                                         >
+
                                             <input
                                                 name="firstName"
                                                 placeholder="First name"
@@ -813,6 +877,7 @@ function Users() {
                                                         "10px",
                                                 }}
                                             >
+
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -839,14 +904,18 @@ function Users() {
                                                 >
                                                     Cancel
                                                 </button>
+
                                             </div>
+
                                         </div>
+
                                     ) : (
-                                        /* =================================================
-                                           VIEW MODE
-                                        ================================================= */
 
                                         <>
+                                            {/* =================================================
+                                                VIEW MODE
+                                            ================================================= */}
+
                                             <div
                                                 style={{
                                                     display:
@@ -857,6 +926,7 @@ function Users() {
                                                         "10px",
                                                 }}
                                             >
+
                                                 <p>
                                                     <strong>
                                                         Email:
@@ -917,7 +987,9 @@ function Users() {
                                                             "sv-SE"
                                                         )
                                                         : "-"}
+
                                                 </p>
+
                                             </div>
 
                                             {/* =================================================
@@ -936,12 +1008,19 @@ function Users() {
                                                         "20px",
                                                 }}
                                             >
+
                                                 <button
                                                     type="button"
                                                     onClick={() =>
                                                         handleEdit(
                                                             user
                                                         )
+                                                    }
+                                                    disabled={
+                                                        savingId ===
+                                                        user._id ||
+                                                        deletingId ===
+                                                        user._id
                                                     }
                                                     style={{
                                                         padding:
@@ -977,6 +1056,10 @@ function Users() {
                                                             "8px",
                                                         cursor:
                                                             "pointer",
+                                                        background:
+                                                            "#dc2626",
+                                                        color:
+                                                            "#fff",
                                                     }}
                                                 >
                                                     {deletingId ===
@@ -984,15 +1067,20 @@ function Users() {
                                                         ? "Deleting..."
                                                         : "Delete"}
                                                 </button>
+
                                             </div>
+
                                         </>
                                     )}
+
                                 </div>
                             );
                         }
                     )}
+
                 </div>
             )}
+
         </div>
     );
 }

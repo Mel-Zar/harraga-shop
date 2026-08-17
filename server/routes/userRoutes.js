@@ -23,7 +23,52 @@ import {
 const router = express.Router();
 
 // =====================================================
-// ADMIN USERS
+// 👤 CURRENT USER PROFILE
+// IMPORTANT:
+// /me MUST COME BEFORE /:id
+// =====================================================
+
+// GET /api/users/me
+router.get(
+    "/me",
+    protect,
+    getProfile
+);
+
+// PUT /api/users/me
+router.put(
+    "/me",
+    protect,
+    updateProfile
+);
+
+// =====================================================
+// 📍 CURRENT USER ADDRESSES
+// =====================================================
+
+// GET /api/users/me/addresses
+router.get(
+    "/me/addresses",
+    protect,
+    getAddresses
+);
+
+// POST /api/users/me/addresses
+router.post(
+    "/me/addresses",
+    protect,
+    addAddress
+);
+
+// DELETE /api/users/me/addresses/:id
+router.delete(
+    "/me/addresses/:id",
+    protect,
+    deleteAddress
+);
+
+// =====================================================
+// 👑 ADMIN USERS
 // =====================================================
 
 // GET /api/users
@@ -56,49 +101,6 @@ router.delete(
     protect,
     admin,
     deleteUser
-);
-
-// =====================================================
-// PROFILE
-// =====================================================
-
-// GET /api/users/me
-router.get(
-    "/me",
-    protect,
-    getProfile
-);
-
-// PUT /api/users/me
-router.put(
-    "/me",
-    protect,
-    updateProfile
-);
-
-// =====================================================
-// ADDRESSES
-// =====================================================
-
-// GET /api/users/me/addresses
-router.get(
-    "/me/addresses",
-    protect,
-    getAddresses
-);
-
-// POST /api/users/me/addresses
-router.post(
-    "/me/addresses",
-    protect,
-    addAddress
-);
-
-// DELETE /api/users/me/addresses/:id
-router.delete(
-    "/me/addresses/:id",
-    protect,
-    deleteAddress
 );
 
 export default router;

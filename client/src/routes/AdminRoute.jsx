@@ -1,19 +1,47 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import {
+    getToken,
+    getUser,
+} from "../utils/auth";
 
 function AdminRoute({ children }) {
-    const token = localStorage.getItem("token");
+    const location = useLocation();
 
-    const user = JSON.parse(
-        localStorage.getItem("user")
-    );
+    const token = getToken();
+    const user = getUser();
 
-    if (!token) {
-        return <Navigate to="/login" replace />;
+    // =========================
+    // 🔐 NOT LOGGED IN
+    // =========================
+
+    if (!token || !user) {
+        return (
+            <Navigate
+                to="/login"
+                replace
+                state={{
+                    from: location.pathname,
+                }}
+            />
+        );
     }
 
-    if (!user || !user.isAdmin) {
-        return <Navigate to="/" replace />;
+    // =========================
+    // 👤 NORMAL USER
+    // =========================
+
+    if (user.isAdmin !== true) {
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
     }
+
+    // =========================
+    // 👑 ADMIN
+    // =========================
 
     return children;
 }

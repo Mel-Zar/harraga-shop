@@ -1,15 +1,40 @@
-export const admin = (req, res, next) => {
+// =====================================================
+// 👑 ADMIN ONLY MIDDLEWARE
+// =====================================================
+
+export const admin = (
+    req,
+    res,
+    next
+) => {
+
+    // =============================================
+    // NOT AUTHENTICATED
+    // =============================================
+
     if (!req.user) {
         return res.status(401).json({
-            message: "Not authenticated",
+            message:
+                "Not authenticated",
         });
     }
 
-    if (!req.user.isAdmin) {
+    // =============================================
+    // NOT ADMIN
+    // =============================================
+
+    if (
+        req.user.isAdmin !== true
+    ) {
         return res.status(403).json({
-            message: "Admin access required",
+            message:
+                "Admin access required",
         });
     }
+
+    // =============================================
+    // ADMIN
+    // =============================================
 
     next();
 };

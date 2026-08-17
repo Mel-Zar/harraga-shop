@@ -1,14 +1,25 @@
 import axios from "axios";
 
+// =====================================================
+// 🔗 API URL
+// =====================================================
+
 const API_URL =
     import.meta.env.VITE_API_URL;
 
 // =====================================================
-// AXIOS HELPER
+// 🔐 AUTH HEADERS
 // =====================================================
 
-const authHeaders = (token) => {
-    if (!token) {
+const authHeaders = (
+    token
+) => {
+
+    if (
+        !token ||
+        token === "null" ||
+        token === "undefined"
+    ) {
         throw new Error(
             "No authentication token found."
         );
@@ -18,44 +29,98 @@ const authHeaders = (token) => {
         headers: {
             Authorization:
                 `Bearer ${token}`,
+
             "Content-Type":
                 "application/json",
         },
+
         withCredentials: true,
     };
 };
 
 // =====================================================
-// ADMIN - GET ALL USERS
+// ❌ AXIOS ERROR HELPER
 // =====================================================
 
-export const getUsers = async (token) => {
-    const res = await axios.get(
-        `${API_URL}/api/users`,
-        authHeaders(token)
-    );
+const getErrorMessage = (
+    error,
+    fallback
+) => {
 
-    return res.data;
+    return (
+        error?.response?.data?.message ||
+        error?.message ||
+        fallback
+    );
 };
 
 // =====================================================
-// ADMIN - GET SINGLE USER
+// 👑 ADMIN - GET ALL USERS
+// =====================================================
+
+export const getUsers = async (
+    token
+) => {
+
+    try {
+
+        const res =
+            await axios.get(
+                `${API_URL}/api/users`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to fetch users."
+            )
+        );
+    }
+};
+
+// =====================================================
+// 👑 ADMIN - GET SINGLE USER
 // =====================================================
 
 export const getUserById = async (
     token,
     id
 ) => {
-    const res = await axios.get(
-        `${API_URL}/api/users/${id}`,
-        authHeaders(token)
-    );
 
-    return res.data;
+    if (!id) {
+        throw new Error(
+            "User ID is required."
+        );
+    }
+
+    try {
+
+        const res =
+            await axios.get(
+                `${API_URL}/api/users/${id}`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to fetch user."
+            )
+        );
+    }
 };
 
 // =====================================================
-// ADMIN - UPDATE USER
+// 👑 ADMIN - UPDATE USER
 // =====================================================
 
 export const updateUser = async (
@@ -63,107 +128,223 @@ export const updateUser = async (
     id,
     data
 ) => {
-    const res = await axios.put(
-        `${API_URL}/api/users/${id}`,
-        data,
-        authHeaders(token)
-    );
 
-    return res.data;
+    if (!id) {
+        throw new Error(
+            "User ID is required."
+        );
+    }
+
+    try {
+
+        const res =
+            await axios.put(
+                `${API_URL}/api/users/${id}`,
+                data,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to update user."
+            )
+        );
+    }
 };
 
 // =====================================================
-// ADMIN - DELETE USER
+// 👑 ADMIN - DELETE USER
 // =====================================================
 
 export const deleteUser = async (
     token,
     id
 ) => {
-    const res = await axios.delete(
-        `${API_URL}/api/users/${id}`,
-        authHeaders(token)
-    );
 
-    return res.data;
+    if (!id) {
+        throw new Error(
+            "User ID is required."
+        );
+    }
+
+    try {
+
+        const res =
+            await axios.delete(
+                `${API_URL}/api/users/${id}`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to delete user."
+            )
+        );
+    }
 };
 
 // =====================================================
-// GET PROFILE
+// 👤 GET PROFILE
 // =====================================================
 
 export const getProfile = async (
     token
 ) => {
-    const res = await axios.get(
-        `${API_URL}/api/users/me`,
-        authHeaders(token)
-    );
 
-    return res.data;
+    try {
+
+        const res =
+            await axios.get(
+                `${API_URL}/api/users/me`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to fetch profile."
+            )
+        );
+    }
 };
 
 // =====================================================
-// UPDATE PROFILE
+// 👤 UPDATE PROFILE
 // =====================================================
 
 export const updateProfile = async (
     token,
     data
 ) => {
-    const res = await axios.put(
-        `${API_URL}/api/users/me`,
-        data,
-        authHeaders(token)
-    );
 
-    return res.data;
+    try {
+
+        const res =
+            await axios.put(
+                `${API_URL}/api/users/me`,
+                data,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to update profile."
+            )
+        );
+    }
 };
 
 // =====================================================
-// GET ADDRESSES
+// 📍 GET ADDRESSES
 // =====================================================
 
 export const getAddresses = async (
     token
 ) => {
-    const res = await axios.get(
-        `${API_URL}/api/users/me/addresses`,
-        authHeaders(token)
-    );
 
-    return res.data;
+    try {
+
+        const res =
+            await axios.get(
+                `${API_URL}/api/users/me/addresses`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to fetch addresses."
+            )
+        );
+    }
 };
 
 // =====================================================
-// ADD ADDRESS
+// 📍 ADD ADDRESS
 // =====================================================
 
 export const addAddress = async (
     token,
     data
 ) => {
-    const res = await axios.post(
-        `${API_URL}/api/users/me/addresses`,
-        data,
-        authHeaders(token)
-    );
 
-    return res.data;
+    try {
+
+        const res =
+            await axios.post(
+                `${API_URL}/api/users/me/addresses`,
+                data,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to add address."
+            )
+        );
+    }
 };
 
 // =====================================================
-// DELETE ADDRESS
+// 📍 DELETE ADDRESS
 // =====================================================
 
 export const deleteAddress = async (
     token,
     id
 ) => {
-    const res = await axios.delete(
-        `${API_URL}/api/users/me/addresses/${id}`,
-        authHeaders(token)
-    );
 
-    return res.data;
+    if (!id) {
+        throw new Error(
+            "Address ID is required."
+        );
+    }
+
+    try {
+
+        const res =
+            await axios.delete(
+                `${API_URL}/api/users/me/addresses/${id}`,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to delete address."
+            )
+        );
+    }
 };

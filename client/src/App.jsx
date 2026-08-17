@@ -1,37 +1,50 @@
 import { useEffect } from "react";
+
 import {
   BrowserRouter as Router,
   Routes,
   Route,
 } from "react-router-dom";
 
-// pages
+// =====================================================
+// AUTH PAGES
+// =====================================================
+
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
-// Product pages
+// =====================================================
+// PUBLIC / PRODUCT PAGES
+// =====================================================
+
 import Home from "./pages/Home/Home";
-import CreateProduct from "./pages/Admin/CreateProduct";
-
-// 🔥 protected test
-import { getProtectedData } from "./services/protectedService";
-
-import Navbar from "./components/Navbar/Navbar";
 import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
-import Footer from "./components/Footer/Footer";
+
+// =====================================================
+// CART / CHECKOUT
+// =====================================================
+
 import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 
-// 👑 Admin
+// =====================================================
+// ADMIN
+// =====================================================
+
+import CreateProduct from "./pages/Admin/CreateProduct";
+import Dashboard from "./pages/Admin/Dashboard";
 import Orders from "./pages/Admin/Orders";
 import OrderDetail from "./pages/Admin/OrderDetail";
 import Users from "./pages/Admin/Users";
 
-// 👤 Account
+// =====================================================
+// ACCOUNT
+// =====================================================
+
 import Profile from "./pages/Account/Profile";
 import MyOrders from "./pages/Account/MyOrders";
 import OrderDetails from "./pages/Account/OrderDetails";
@@ -39,16 +52,40 @@ import EditProfile from "./pages/Account/EditProfile";
 import ChangePassword from "./pages/Account/ChangePassword";
 import AddressBook from "./pages/Account/AddressBook";
 
-// 🔥 ROUTES
+// =====================================================
+// COMPONENTS
+// =====================================================
+
+import Navbar from "./components/Navbar/Navbar";
+import Footer from "./components/Footer/Footer";
+
+// =====================================================
+// ROUTES
+// =====================================================
+
 import AdminRoute from "./routes/AdminRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import UserRoute from "./routes/UserRoute";
+
+// =====================================================
+// SERVICES
+// =====================================================
+
+import { getProtectedData } from "./services/protectedService";
+
+// =====================================================
+// APP
+// =====================================================
 
 function App() {
-  // =========================
-  // 🔐 TEST PROTECTED ROUTE
-  // =========================
+
+  // =================================================
+  // 🔐 OPTIONAL PROTECTED CONNECTION TEST
+  // =================================================
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token");
 
     if (
       !token ||
@@ -75,28 +112,33 @@ function App() {
 
   return (
     <Router>
-      <div>
-        {/* =========================
-            🔥 NAVBAR
-        ========================= */}
+      <div className="app">
+
+        {/* =================================================
+                    🔥 NAVBAR
+                ================================================= */}
+
         <Navbar />
 
-        {/* =========================
-            📍 ROUTES
-        ========================= */}
+        {/* =================================================
+                    📍 ROUTES
+                ================================================= */}
+
         <Routes>
 
-          {/* =========================
-              🏠 HOME
-          ========================= */}
+          {/* =================================================
+                        🏠 HOME
+                    ================================================= */}
+
           <Route
             path="/"
             element={<Home />}
           />
 
-          {/* =========================
-              🔐 AUTH
-          ========================= */}
+          {/* =================================================
+                        🔐 AUTH
+                    ================================================= */}
+
           <Route
             path="/login"
             element={<Login />}
@@ -107,33 +149,38 @@ function App() {
             element={<Register />}
           />
 
-          {/* =========================
-              ✉️ EMAIL VERIFY
-          ========================= */}
+          {/* =================================================
+                        ✉️ EMAIL VERIFY
+                    ================================================= */}
+
           <Route
             path="/verify-email/:userId/:token"
             element={<VerifyEmail />}
           />
 
-          {/* =========================
-              🔑 FORGOT PASSWORD
-          ========================= */}
+          {/* =================================================
+                        🔑 FORGOT PASSWORD
+                    ================================================= */}
+
           <Route
             path="/forgot-password"
             element={<ForgotPassword />}
           />
 
-          {/* =========================
-              🔑 RESET PASSWORD
-          ========================= */}
+          {/* =================================================
+                        🔑 RESET PASSWORD
+                    ================================================= */}
+
           <Route
             path="/reset-password/:token"
             element={<ResetPassword />}
           />
 
-          {/* =========================
-              🛍️ PRODUCTS
-          ========================= */}
+          {/* =================================================
+                        🛍️ PRODUCTS
+                        PUBLIC
+                    ================================================= */}
+
           <Route
             path="/products"
             element={<Products />}
@@ -144,18 +191,21 @@ function App() {
             element={<Product />}
           />
 
-          {/* =========================
-              🛒 CART
-          ========================= */}
+          {/* =================================================
+                        🛒 CART
+                        PUBLIC
+                    ================================================= */}
+
           <Route
             path="/cart"
             element={<Cart />}
           />
 
-          {/* =========================
-              💳 CHECKOUT
-              LOGIN REQUIRED
-          ========================= */}
+          {/* =================================================
+                        💳 CHECKOUT
+                        LOGIN REQUIRED
+                    ================================================= */}
+
           <Route
             path="/checkout"
             element={
@@ -165,75 +215,78 @@ function App() {
             }
           />
 
-          {/* =========================
-              👤 ACCOUNT
-          ========================= */}
+          {/* =================================================
+                        👤 USER ACCOUNT
+                        NORMAL USER ONLY
+                    ================================================= */}
 
-          {/* PROFILE */}
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <Profile />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* MY ORDERS */}
           <Route
             path="/profile/orders"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <MyOrders />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* SINGLE CUSTOMER ORDER */}
           <Route
             path="/profile/orders/:id"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <OrderDetails />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* EDIT PROFILE */}
           <Route
             path="/profile/edit"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <EditProfile />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* CHANGE PASSWORD */}
           <Route
             path="/profile/password"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <ChangePassword />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* ADDRESS BOOK */}
           <Route
             path="/profile/address"
             element={
-              <ProtectedRoute>
+              <UserRoute>
                 <AddressBook />
-              </ProtectedRoute>
+              </UserRoute>
             }
           />
 
-          {/* =========================
-              👑 ADMIN ROUTES
-          ========================= */}
+          {/* =================================================
+                        👑 ADMIN
+                    ================================================= */}
 
-          {/* CREATE PRODUCT */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminRoute>
+                <Dashboard />
+              </AdminRoute>
+            }
+          />
+
           <Route
             path="/admin/create"
             element={
@@ -243,7 +296,6 @@ function App() {
             }
           />
 
-          {/* ALL ORDERS */}
           <Route
             path="/admin/orders"
             element={
@@ -253,7 +305,6 @@ function App() {
             }
           />
 
-          {/* ADMIN ORDER DETAILS */}
           <Route
             path="/admin/orders/:id"
             element={
@@ -263,9 +314,6 @@ function App() {
             }
           />
 
-          {/* =========================
-              👥 ADMIN USERS
-          ========================= */}
           <Route
             path="/admin/users"
             element={
@@ -275,12 +323,49 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <Products />
+              </AdminRoute>
+            }
+          />
+
+          {/* =================================================
+                        404
+                    ================================================= */}
+
+          <Route
+            path="*"
+            element={
+              <div
+                style={{
+                  maxWidth: "1200px",
+                  margin: "80px auto",
+                  padding: "20px",
+                  textAlign: "center",
+                }}
+              >
+                <h1>
+                  404
+                </h1>
+
+                <p>
+                  Page not found.
+                </p>
+              </div>
+            }
+          />
+
         </Routes>
 
-        {/* =========================
-            🦶 FOOTER
-        ========================= */}
+        {/* =================================================
+                    🦶 FOOTER
+                ================================================= */}
+
         <Footer />
+
       </div>
     </Router>
   );

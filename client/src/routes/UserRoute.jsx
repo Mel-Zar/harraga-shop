@@ -8,7 +8,7 @@ import {
     getUser,
 } from "../utils/auth";
 
-function ProtectedRoute({ children }) {
+function UserRoute({ children }) {
     const location = useLocation();
 
     const token = getToken();
@@ -32,7 +32,24 @@ function ProtectedRoute({ children }) {
         );
     }
 
+    // =========================
+    // 👑 ADMIN
+    // =========================
+
+    if (user.isAdmin === true) {
+        return (
+            <Navigate
+                to="/admin/dashboard"
+                replace
+            />
+        );
+    }
+
+    // =========================
+    // 👤 NORMAL USER
+    // =========================
+
     return children;
 }
 
-export default ProtectedRoute;
+export default UserRoute;

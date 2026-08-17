@@ -1,125 +1,260 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+
+import {
+    Link,
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
+
 import {
     loginUser,
     resendVerifyEmail,
 } from "../../services/authService";
-import { saveUser } from "../../utils/auth";
+
+import {
+    saveUser,
+} from "../../utils/auth";
 
 export default function Login() {
+
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const [identifier, setIdentifier] = useState("");
-    const [password, setPassword] = useState("");
+    const [identifier, setIdentifier] =
+        useState("");
 
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [verifyMessage, setVerifyMessage] = useState("");
-    const [resendMessage, setResendMessage] = useState("");
+    const [password, setPassword] =
+        useState("");
 
-    const [loading, setLoading] = useState(false);
-    const [resendLoading, setResendLoading] = useState(false);
+    const [error, setError] =
+        useState("");
+
+    const [success, setSuccess] =
+        useState("");
+
+    const [verifyMessage, setVerifyMessage] =
+        useState("");
+
+    const [resendMessage, setResendMessage] =
+        useState("");
+
+    const [loading, setLoading] =
+        useState(false);
+
+    const [resendLoading, setResendLoading] =
+        useState(false);
+
+    // =====================================================
+    // 🔐 LOGIN
+    // =====================================================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (loading || resendLoading) return;
+        if (
+            loading ||
+            resendLoading
+        ) {
+            return;
+        }
 
         setError("");
         setSuccess("");
         setVerifyMessage("");
         setResendMessage("");
-        setLoading(true);
 
-        if (!identifier.trim() || !password.trim()) {
-            setError("All fields are required.");
-            setLoading(false);
+        if (
+            !identifier.trim() ||
+            !password.trim()
+        ) {
+            setError(
+                "All fields are required."
+            );
+
             return;
         }
 
-        try {
-            const data = await loginUser({
-                identifier,
-                password,
-            });
+        setLoading(true);
 
-            // Sparar token + user
+        try {
+            const data =
+                await loginUser({
+                    identifier:
+                        identifier.trim(),
+                    password,
+                });
+
+            // =============================================
+            // SAVE TOKEN + USER
+            // =============================================
+
             saveUser(data);
 
-            setSuccess("Login successful!");
+            setSuccess(
+                "Login successful!"
+            );
 
-            // Vänta lite så användaren ser meddelandet
+            // =============================================
+            // REDIRECT
+            // =============================================
+
+            const user =
+                data?.user;
+
+            const requestedPath =
+                location.state?.from;
+
             setTimeout(() => {
-                navigate("/");
-            }, 500);
+
+                if (
+                    user?.isAdmin === true
+                ) {
+                    navigate(
+                        "/admin/dashboard",
+                        {
+                            replace: true,
+                        }
+                    );
+
+                    return;
+                }
+
+                if (
+                    requestedPath &&
+                    !requestedPath.startsWith(
+                        "/admin"
+                    )
+                ) {
+                    navigate(
+                        requestedPath,
+                        {
+                            replace: true,
+                        }
+                    );
+
+                    return;
+                }
+
+                navigate("/", {
+                    replace: true,
+                });
+
+            }, 300);
 
         } catch (err) {
+
+            const message =
+                err?.message ||
+                "Login failed.";
+
             if (
-                err.message
+                message
                     .toLowerCase()
-                    .includes("verify your email")
+                    .includes(
+                        "verify your email"
+                    )
             ) {
                 setVerifyMessage(
                     "Your account is not verified. Resend verification email?"
                 );
             } else {
-                setError(err.message);
+                setError(message);
             }
+
         } finally {
             setLoading(false);
         }
     };
 
+    // =====================================================
+    // 📩 RESEND VERIFICATION
+    // =====================================================
+
     const handleResend = async () => {
-        if (loading || resendLoading) return;
+
+        if (
+            loading ||
+            resendLoading
+        ) {
+            return;
+        }
 
         setError("");
         setSuccess("");
         setResendMessage("");
 
+        const value =
+            identifier.trim();
+
         if (
-            !identifier.trim() ||
-            !identifier.includes("@")
+            !value ||
+            !value.includes("@")
         ) {
             setError(
                 "Enter your email in the Email/Username field to resend verification."
             );
+
             return;
         }
 
         try {
+
             setResendLoading(true);
 
             const data =
-                await resendVerifyEmail(identifier);
+                await resendVerifyEmail(
+                    value
+                );
 
-            setResendMessage(data.message);
+            setResendMessage(
+                data?.message ||
+                "Verification email sent."
+            );
+
             setVerifyMessage("");
+
         } catch (err) {
-            setError(err.message);
+
+            setError(
+                err?.message ||
+                "Failed to resend verification email."
+            );
+
         } finally {
             setResendLoading(false);
         }
     };
 
+    const disabled =
+        loading ||
+        resendLoading;
+
     return (
         <div className="login">
-            <form onSubmit={handleSubmit}>
-                <h2>Login</h2>
+
+            <form
+                onSubmit={handleSubmit}
+            >
+
+                <h2>
+                    Login
+                </h2>
 
                 <input
                     type="text"
                     placeholder="Email or Username"
                     value={identifier}
                     onChange={(e) => {
-                        setIdentifier(e.target.value);
+                        setIdentifier(
+                            e.target.value
+                        );
+
                         setError("");
                         setVerifyMessage("");
                         setResendMessage("");
                     }}
-                    disabled={
-                        loading || resendLoading
-                    }
+                    disabled={disabled}
+                    autoComplete="username"
                 />
 
                 <input
@@ -127,59 +262,86 @@ export default function Login() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => {
-                        setPassword(e.target.value);
+                        setPassword(
+                            e.target.value
+                        );
+
                         setError("");
                     }}
-                    disabled={
-                        loading || resendLoading
-                    }
+                    disabled={disabled}
+                    autoComplete="current-password"
                 />
 
                 <button
                     type="submit"
-                    disabled={
-                        loading || resendLoading
-                    }
+                    disabled={disabled}
                 >
                     {loading
                         ? "Logging in..."
                         : "Login"}
                 </button>
 
-                <p style={{ marginTop: "10px" }}>
-                    <Link to="/forgot-password">
+                <p
+                    style={{
+                        marginTop: "10px",
+                    }}
+                >
+                    <Link
+                        to="/forgot-password"
+                    >
                         Forgot password?
                     </Link>
                 </p>
 
+                {/* =================================================
+                    VERIFY MESSAGE
+                ================================================= */}
+
                 {verifyMessage && (
-                    <div style={{ marginTop: 15 }}>
+                    <div
+                        style={{
+                            marginTop: 15,
+                        }}
+                    >
                         <p
                             style={{
-                                color: "orange",
-                                fontWeight: "bold",
+                                color:
+                                    "orange",
+                                fontWeight:
+                                    "bold",
                             }}
                         >
-                            ⚠️ {verifyMessage}
+                            ⚠️{" "}
+                            {
+                                verifyMessage
+                            }
                         </p>
 
                         <button
                             type="button"
-                            onClick={handleResend}
+                            onClick={
+                                handleResend
+                            }
                             disabled={
                                 resendLoading
                             }
                             style={{
-                                marginTop: 10,
+                                marginTop:
+                                    10,
                                 background:
                                     "black",
-                                color: "white",
-                                padding: "10px",
+                                color:
+                                    "white",
+                                padding:
+                                    "10px",
                                 borderRadius:
                                     "6px",
-                                cursor: "pointer",
-                                border: "none",
-                                width: "100%",
+                                cursor:
+                                    "pointer",
+                                border:
+                                    "none",
+                                width:
+                                    "100%",
                             }}
                         >
                             {resendLoading
@@ -189,39 +351,63 @@ export default function Login() {
                     </div>
                 )}
 
+                {/* =================================================
+                    RESEND SUCCESS
+                ================================================= */}
+
                 {resendMessage && (
                     <p
                         style={{
-                            color: "green",
-                            marginTop: 10,
+                            color:
+                                "green",
+                            marginTop:
+                                10,
                         }}
                     >
-                        ✅ {resendMessage}
+                        ✅{" "}
+                        {
+                            resendMessage
+                        }
                     </p>
                 )}
+
+                {/* =================================================
+                    ERROR
+                ================================================= */}
 
                 {error && (
                     <p
                         style={{
-                            color: "red",
-                            marginTop: 10,
+                            color:
+                                "red",
+                            marginTop:
+                                10,
                         }}
                     >
                         {error}
                     </p>
                 )}
 
+                {/* =================================================
+                    LOGIN SUCCESS
+                ================================================= */}
+
                 {success && (
                     <p
                         style={{
-                            color: "green",
-                            marginTop: 10,
+                            color:
+                                "green",
+                            marginTop:
+                                10,
                         }}
                     >
-                        ✅ {success}
+                        ✅{" "}
+                        {success}
                     </p>
                 )}
+
             </form>
+
         </div>
     );
 }
