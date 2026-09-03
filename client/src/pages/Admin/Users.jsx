@@ -11,6 +11,8 @@ import {
     deleteUser,
 } from "../../services/userService";
 
+import { toast } from "react-toastify";
+
 function Users() {
 
     const [users, setUsers] =
@@ -83,6 +85,12 @@ function Users() {
                 );
 
                 setError(
+                    error.message ||
+                    "Failed to load users."
+                );
+
+                toast.error(
+                    error.response?.data?.message ||
                     error.message ||
                     "Failed to load users."
                 );
@@ -290,6 +298,10 @@ function Users() {
             setEditingId(null);
             setEditData({});
 
+            toast.success(
+                "User updated successfully!"
+            );
+
         } catch (error) {
 
             console.error(
@@ -298,6 +310,12 @@ function Users() {
             );
 
             setError(
+                error.message ||
+                "Failed to update user."
+            );
+
+            toast.error(
+                error.response?.data?.message ||
                 error.message ||
                 "Failed to update user."
             );
@@ -381,6 +399,10 @@ function Users() {
                 setEditData({});
             }
 
+            toast.success(
+                "User deleted successfully!"
+            );
+
         } catch (error) {
 
             console.error(
@@ -389,6 +411,12 @@ function Users() {
             );
 
             setError(
+                error.message ||
+                "Failed to delete user."
+            );
+
+            toast.error(
+                error.response?.data?.message ||
                 error.message ||
                 "Failed to delete user."
             );

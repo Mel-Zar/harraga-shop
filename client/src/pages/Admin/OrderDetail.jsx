@@ -4,6 +4,7 @@ import {
     getOrderById,
     updateOrderStatus,
 } from "../../services/orderService";
+import { toast } from "react-toastify";
 
 function OrderDetail() {
     const { id } = useParams();
@@ -21,6 +22,12 @@ function OrderDetail() {
                 setStatus(data.order.status);
             } catch (error) {
                 console.error(error);
+
+                toast.error(
+                    error.response?.data?.message ||
+                    error.message ||
+                    "Failed to load order."
+                );
             } finally {
                 setLoading(false);
             }
@@ -40,11 +47,17 @@ function OrderDetail() {
 
             setOrder(data.order);
 
-            alert("Order status updated!");
+            toast.success(
+                "Order status updated!"
+            );
         } catch (error) {
             console.error(error);
 
-            alert("Failed to update order.");
+            toast.error(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update order."
+            );
         } finally {
             setSaving(false);
         }

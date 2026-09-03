@@ -12,6 +12,8 @@ import {
     deleteProduct,
 } from "../../services/productService";
 
+import { toast } from "react-toastify";
+
 function Products() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -82,13 +84,18 @@ function Products() {
                             product._id !== id
                     )
             );
+
+            toast.success(
+                "Product deleted successfully!"
+            );
+
         } catch (error) {
             console.error(
                 "DELETE PRODUCT ERROR:",
                 error
             );
 
-            alert(
+            toast.error(
                 error.response?.data?.message ||
                 error.message ||
                 "Failed to delete product."

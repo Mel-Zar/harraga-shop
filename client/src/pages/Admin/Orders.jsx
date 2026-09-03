@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllOrders } from "../../services/orderService";
+import { toast } from "react-toastify";
 
 function Orders() {
     const [orders, setOrders] = useState([]);
@@ -17,6 +18,12 @@ function Orders() {
                 setOrders(data.orders || []);
             } catch (error) {
                 console.error(error);
+
+                toast.error(
+                    error.response?.data?.message ||
+                    error.message ||
+                    "Failed to load orders."
+                );
             } finally {
                 setLoading(false);
             }

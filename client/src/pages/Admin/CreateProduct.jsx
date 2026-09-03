@@ -19,6 +19,8 @@ import {
     updateProduct,
 } from "../../services/productService";
 
+import { toast } from "react-toastify";
+
 function CreateProduct() {
     const [products, setProducts] = useState([]);
     const [editingId, setEditingId] = useState(null);
@@ -108,6 +110,14 @@ function CreateProduct() {
 
             setProducts([]);
 
+            toast.error(
+                error.response
+                    ?.data
+                    ?.message ||
+                error.message ||
+                "Failed to load products."
+            );
+
         } finally {
             setLoading(false);
         }
@@ -165,13 +175,17 @@ function CreateProduct() {
                 ]
             );
 
+            toast.success(
+                "Product created successfully!"
+            );
+
         } catch (error) {
             console.error(
                 "CREATE PRODUCT ERROR:",
                 error
             );
 
-            alert(
+            toast.error(
                 error.response
                     ?.data
                     ?.message ||
@@ -218,13 +232,17 @@ function CreateProduct() {
                 setSearchParams({});
             }
 
+            toast.success(
+                "Product deleted successfully!"
+            );
+
         } catch (error) {
             console.error(
                 "DELETE PRODUCT ERROR:",
                 error
             );
 
-            alert(
+            toast.error(
                 error.response
                     ?.data
                     ?.message ||
@@ -265,13 +283,17 @@ function CreateProduct() {
             // från URL
             setSearchParams({});
 
+            toast.success(
+                "Product updated successfully!"
+            );
+
         } catch (error) {
             console.error(
                 "UPDATE PRODUCT ERROR:",
                 error
             );
 
-            alert(
+            toast.error(
                 error.response
                     ?.data
                     ?.message ||
