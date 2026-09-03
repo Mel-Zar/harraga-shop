@@ -35,7 +35,14 @@ export const getUser = () => {
     }
 
     try {
-        return JSON.parse(user);
+        const parsedUser = JSON.parse(user);
+
+        if (!parsedUser || typeof parsedUser !== "object") {
+            localStorage.removeItem("user");
+            return null;
+        }
+
+        return parsedUser;
     } catch (error) {
         console.error(
             "GET USER ERROR:",
@@ -68,6 +75,19 @@ export const getToken = () => {
 };
 
 // =========================
+// 👑 CHECK ADMIN VALUE
+// =========================
+
+const checkAdminValue = (value) => {
+    return (
+        value === true ||
+        value === "true" ||
+        value === 1 ||
+        value === "1"
+    );
+};
+
+// =========================
 // 👑 IS ADMIN
 // =========================
 
@@ -76,7 +96,7 @@ export const isAdmin = () => {
 
     return (
         Boolean(user) &&
-        user.isAdmin === true
+        checkAdminValue(user.isAdmin)
     );
 };
 
@@ -112,6 +132,9 @@ export const isUser = () => {
 export const getAuthState = () => {
     const token = getToken();
     const user = getUser();
+    const admin = checkAdminValue(
+        user?.isAdmin
+    );
 
     return {
         token,
@@ -120,14 +143,12 @@ export const getAuthState = () => {
             token &&
             user
         ),
-        admin:
-            Boolean(user) &&
-            user.isAdmin === true,
+        admin,
         normalUser:
             Boolean(
                 token &&
                 user &&
-                user.isAdmin !== true
+                !admin
             ),
     };
 };

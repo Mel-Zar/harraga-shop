@@ -36,7 +36,10 @@ function UserRoute({ children }) {
     // 👑 ADMIN
     // =========================
 
-    if (user.isAdmin === true) {
+    if (
+        user.isAdmin === true ||
+        user.isAdmin === "true"
+    ) {
         return (
             <Navigate
                 to="/admin/dashboard"

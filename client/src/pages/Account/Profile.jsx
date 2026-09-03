@@ -1,15 +1,26 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
+import { toast } from "react-toastify";
 
 function Profile() {
     const user = useMemo(() => {
         try {
             const storedUser = localStorage.getItem("user");
 
-            if (!storedUser) return null;
+            if (!storedUser) {
+                toast.error(
+                    "No user information found."
+                );
+
+                return null;
+            }
 
             return JSON.parse(storedUser);
         } catch {
+            toast.error(
+                "Unable to load user information."
+            );
+
             return null;
         }
     }, []);
@@ -127,12 +138,16 @@ function Profile() {
 
                     <p>
                         <strong>Role:</strong>{" "}
-                        {user.isAdmin ? "Administrator" : "Customer"}
+                        {user.isAdmin
+                            ? "Administrator"
+                            : "Customer"}
                     </p>
 
                     <p>
                         <strong>Email verified:</strong>{" "}
-                        {user.isVerified ? "✅ Verified" : "❌ Not verified"}
+                        {user.isVerified
+                            ? "✅ Verified"
+                            : "❌ Not verified"}
                     </p>
 
                     <div

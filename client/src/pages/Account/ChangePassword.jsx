@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 function ChangePassword() {
     const [currentPassword, setCurrentPassword] = useState("");
@@ -18,18 +19,27 @@ function ChangePassword() {
 
         if (!currentPassword || !newPassword || !confirmPassword) {
             setError("All fields are required.");
+            toast.error("All fields are required.");
             setLoading(false);
             return;
         }
 
         if (newPassword !== confirmPassword) {
             setError("Passwords do not match.");
+            toast.error("Passwords do not match.");
             setLoading(false);
             return;
         }
 
         try {
             const token = localStorage.getItem("token");
+
+            if (!token) {
+                setError("You are not logged in.");
+                toast.error("You are not logged in.");
+                setLoading(false);
+                return;
+            }
 
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/users/change-password`,
@@ -51,16 +61,30 @@ function ChangePassword() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message);
+                throw new Error(
+                    data.message || "Failed to change password."
+                );
             }
 
             setSuccess("Password updated successfully!");
+
+            toast.success(
+                "Password updated successfully!"
+            );
 
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
         } catch (err) {
-            setError(err.message || "Something went wrong.");
+            console.error(err);
+
+            setError(
+                err.message || "Something went wrong."
+            );
+
+            toast.error(
+                err.message || "Something went wrong."
+            );
         } finally {
             setLoading(false);
         }
@@ -139,7 +163,9 @@ function ChangePassword() {
                         cursor: "pointer",
                     }}
                 >
-                    {loading ? "Updating..." : "Change Password"}
+                    {loading
+                        ? "Updating..."
+                        : "Change Password"}
                 </button>
 
                 {success && (

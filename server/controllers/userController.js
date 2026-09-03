@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 
 // =====================================================
 // 🔒 SAFE USER SELECT
@@ -842,6 +843,143 @@ export const updateProfile = async (
         return res.status(500).json({
             message:
                 "Server error",
+        });
+    }
+};
+
+// =====================================================
+// 🔐 CHANGE PASSWORD
+// =====================================================
+
+export const changePassword = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            currentPassword,
+            newPassword,
+            confirmPassword,
+        } = req.body;
+
+        // =================================================
+        // 🔐 VALIDATION
+        // =================================================
+
+        if (
+            !currentPassword ||
+            !newPassword ||
+            !confirmPassword
+        ) {
+            return res.status(400).json({
+                message:
+                    "All fields are required.",
+            });
+        }
+
+        // =================================================
+        // 🔐 CONFIRM PASSWORD
+        // =================================================
+
+        if (
+            newPassword !==
+            confirmPassword
+        ) {
+            return res.status(400).json({
+                message:
+                    "Passwords do not match.",
+            });
+        }
+
+        // =================================================
+        // 🔐 PASSWORD LENGTH
+        // =================================================
+
+        if (
+            newPassword.length < 6
+        ) {
+            return res.status(400).json({
+                message:
+                    "New password must be at least 6 characters.",
+            });
+        }
+
+        // =================================================
+        // 👤 FIND CURRENT USER
+        // =================================================
+
+        const user =
+            await User.findById(
+                req.user.id
+            );
+
+        if (!user) {
+            return res.status(404).json({
+                message:
+                    "User not found.",
+            });
+        }
+
+        // =================================================
+        // 🔐 CHECK CURRENT PASSWORD
+        // =================================================
+
+        const passwordMatches =
+            await bcrypt.compare(
+                currentPassword,
+                user.password
+            );
+
+        if (!passwordMatches) {
+            return res.status(400).json({
+                message:
+                    "Current password is incorrect.",
+            });
+        }
+
+        // =================================================
+        // 🔐 PREVENT SAME PASSWORD
+        // =================================================
+
+        const samePassword =
+            await bcrypt.compare(
+                newPassword,
+                user.password
+            );
+
+        if (samePassword) {
+            return res.status(400).json({
+                message:
+                    "New password must be different from your current password.",
+            });
+        }
+
+        // =================================================
+        // 🔐 UPDATE PASSWORD
+        // =================================================
+
+        user.password =
+            newPassword;
+
+        await user.save();
+
+        return res.status(200).json({
+            message:
+                "Password updated successfully!",
+        });
+
+    } catch (error) {
+
+        console.error(
+            "CHANGE PASSWORD ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Failed to change password.",
         });
     }
 };

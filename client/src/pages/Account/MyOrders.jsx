@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import {
     getMyOrders,
@@ -52,6 +53,11 @@ function MyOrders() {
                 );
 
                 setOrders([]);
+
+                toast.error(
+                    error?.message ||
+                    "Failed to load your orders."
+                );
 
             } finally {
                 setLoading(false);

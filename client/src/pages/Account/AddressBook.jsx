@@ -4,6 +4,7 @@ import {
     addAddress,
     deleteAddress,
 } from "../../services/userService";
+import { toast } from "react-toastify";
 
 function AddressBook() {
     const [addresses, setAddresses] = useState([]);
@@ -29,6 +30,9 @@ function AddressBook() {
 
                 if (!token) {
                     console.error("❌ No token in localStorage");
+
+                    toast.error("You are not logged in.");
+
                     return;
                 }
 
@@ -52,6 +56,12 @@ function AddressBook() {
                     console.log("Status:", err.response.status);
                     console.log("Data:", err.response.data);
                 }
+
+                toast.error(
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Failed to load addresses."
+                );
             }
         };
 
@@ -68,7 +78,7 @@ function AddressBook() {
             const token = localStorage.getItem("token");
 
             if (!token) {
-                alert("You are not logged in.");
+                toast.error("You are not logged in.");
                 return;
             }
 
@@ -90,6 +100,8 @@ function AddressBook() {
                 postalCode: "",
                 country: "",
             });
+
+            toast.success("Address added successfully!");
         } catch (err) {
             console.error(err);
 
@@ -97,6 +109,12 @@ function AddressBook() {
                 console.log(err.response.status);
                 console.log(err.response.data);
             }
+
+            toast.error(
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to add address."
+            );
         }
     };
 
@@ -107,6 +125,11 @@ function AddressBook() {
         try {
             const token = localStorage.getItem("token");
 
+            if (!token) {
+                toast.error("You are not logged in.");
+                return;
+            }
+
             const res = await deleteAddress(token, id);
 
             console.log("DELETE RESPONSE:", res);
@@ -116,6 +139,8 @@ function AddressBook() {
             } else if (Array.isArray(res.addresses)) {
                 setAddresses(res.addresses);
             }
+
+            toast.success("Address deleted successfully!");
         } catch (err) {
             console.error(err);
 
@@ -123,6 +148,12 @@ function AddressBook() {
                 console.log(err.response.status);
                 console.log(err.response.data);
             }
+
+            toast.error(
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to delete address."
+            );
         }
     };
 

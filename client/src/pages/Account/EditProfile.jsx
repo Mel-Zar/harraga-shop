@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 function EditProfile() {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -22,6 +23,13 @@ function EditProfile() {
         try {
             const token = localStorage.getItem("token");
 
+            if (!token) {
+                setError("You are not logged in.");
+                toast.error("You are not logged in.");
+                setLoading(false);
+                return;
+            }
+
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/users/profile`,
                 {
@@ -42,7 +50,10 @@ function EditProfile() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message);
+                throw new Error(
+                    data.message ||
+                    "Failed to update profile."
+                );
             }
 
             localStorage.setItem(
@@ -53,8 +64,20 @@ function EditProfile() {
             window.dispatchEvent(new Event("authChanged"));
 
             setMessage("Profile updated successfully!");
+
+            toast.success(
+                "Profile updated successfully!"
+            );
         } catch (err) {
-            setError(err.message || "Something went wrong");
+            setError(
+                err.message ||
+                "Something went wrong"
+            );
+
+            toast.error(
+                err.message ||
+                "Something went wrong"
+            );
         } finally {
             setLoading(false);
         }

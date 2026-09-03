@@ -254,6 +254,37 @@ export const updateProfile = async (
 };
 
 // =====================================================
+// 🔐 CHANGE PASSWORD
+// =====================================================
+
+export const changePassword = async (
+    token,
+    data
+) => {
+
+    try {
+
+        const res =
+            await axios.put(
+                `${API_URL}/api/users/change-password`,
+                data,
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to change password."
+            )
+        );
+    }
+};
+
+// =====================================================
 // 📍 GET ADDRESSES
 // =====================================================
 
