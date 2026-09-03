@@ -1,26 +1,15 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import { toast } from "react-toastify";
 
 function Profile() {
     const user = useMemo(() => {
         try {
             const storedUser = localStorage.getItem("user");
 
-            if (!storedUser) {
-                toast.error(
-                    "No user information found."
-                );
-
-                return null;
-            }
+            if (!storedUser) return null;
 
             return JSON.parse(storedUser);
         } catch {
-            toast.error(
-                "Unable to load user information."
-            );
-
             return null;
         }
     }, []);

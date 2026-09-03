@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { forgotPassword } from "../../services/authService";
 
 export default function ForgotPassword() {
@@ -17,7 +18,12 @@ export default function ForgotPassword() {
         setSuccess("");
 
         if (!email.trim()) {
-            return setError("Email is required");
+            const message = "Email is required";
+
+            setError(message);
+            toast.error(message);
+
+            return;
         }
 
         try {
@@ -26,10 +32,23 @@ export default function ForgotPassword() {
             const data = await forgotPassword(email);
 
             setSuccess(data.message);
+
+            toast.success(
+                data.message ||
+                "Password reset link sent successfully!"
+            );
+
             setEmail("");
 
         } catch (err) {
-            setError(err.message);
+            const message =
+                err.message ||
+                "Something went wrong.";
+
+            setError(message);
+
+            toast.error(message);
+
         } finally {
             setLoading(false);
         }

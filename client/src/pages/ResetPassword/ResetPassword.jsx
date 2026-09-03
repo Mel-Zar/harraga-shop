@@ -36,34 +36,54 @@ export default function ResetPassword() {
         setSuccess("");
 
         if (!password || !confirmPassword) {
-            return setError("All fields are required");
+            return setError(
+                "All fields are required"
+            );
         }
 
         if (password.length < 8) {
-            return setError("Password must be at least 8 characters");
+            return setError(
+                "Password must be at least 8 characters"
+            );
         }
 
         const hasNumber = /\d/.test(password);
-        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password);
+
+        const hasSpecial =
+            /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
+                password
+            );
 
         if (!hasNumber || !hasSpecial) {
-            return setError("Password must contain at least 1 number and 1 special character");
+            return setError(
+                "Password must contain at least 1 number and 1 special character"
+            );
         }
 
         if (password !== confirmPassword) {
-            return setError("Passwords do not match");
+            return setError(
+                "Passwords do not match"
+            );
         }
 
         try {
             setLoading(true);
 
-            const data = await resetPassword(token, password, confirmPassword);
+            const data = await resetPassword(
+                token,
+                password,
+                confirmPassword
+            );
 
-            // 🔥 så ESLint inte klagar 
-            console.log("Reset password response:", data);
+            // 🔥 så ESLint inte klagar
+            console.log(
+                "Reset password response:",
+                data
+            );
 
-
-            setSuccess("Password has changed");
+            setSuccess(
+                "Password has changed"
+            );
 
             setPassword("");
             setConfirmPassword("");
@@ -72,7 +92,11 @@ export default function ResetPassword() {
             setDone(true);
 
         } catch (err) {
-            setError(err.message);
+            setError(
+                err.message ||
+                "Failed to reset password."
+            );
+
         } finally {
             setLoading(false);
         }
@@ -81,9 +105,22 @@ export default function ResetPassword() {
     // 🔥 om password reset lyckades → visa bara text
     if (done) {
         return (
-            <div style={{ maxWidth: "400px", margin: "auto", marginTop: "50px" }}>
+            <div
+                style={{
+                    maxWidth: "400px",
+                    margin: "auto",
+                    marginTop: "50px",
+                }}
+            >
                 <h2>Reset Password</h2>
-                <p style={{ color: "green", marginTop: "10px", fontWeight: "bold" }}>
+
+                <p
+                    style={{
+                        color: "green",
+                        marginTop: "10px",
+                        fontWeight: "bold",
+                    }}
+                >
                     ✅ Password has changed <br />
                     Redirecting to login...
                 </p>
@@ -92,7 +129,13 @@ export default function ResetPassword() {
     }
 
     return (
-        <div style={{ maxWidth: "400px", margin: "auto", marginTop: "50px" }}>
+        <div
+            style={{
+                maxWidth: "400px",
+                margin: "auto",
+                marginTop: "50px",
+            }}
+        >
             <form onSubmit={handleSubmit}>
                 <h2>Reset Password</h2>
 
@@ -100,14 +143,16 @@ export default function ResetPassword() {
                     type="password"
                     placeholder="New password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) =>
+                        setPassword(e.target.value)
+                    }
                     disabled={loading}
                     style={{
                         width: "100%",
                         padding: "10px",
                         marginTop: "10px",
                         borderRadius: "6px",
-                        border: "1px solid #ccc"
+                        border: "1px solid #ccc",
                     }}
                 />
 
@@ -115,14 +160,18 @@ export default function ResetPassword() {
                     type="password"
                     placeholder="Confirm new password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) =>
+                        setConfirmPassword(
+                            e.target.value
+                        )
+                    }
                     disabled={loading}
                     style={{
                         width: "100%",
                         padding: "10px",
                         marginTop: "10px",
                         borderRadius: "6px",
-                        border: "1px solid #ccc"
+                        border: "1px solid #ccc",
                     }}
                 />
 
@@ -137,20 +186,32 @@ export default function ResetPassword() {
                         color: "white",
                         border: "none",
                         borderRadius: "6px",
-                        cursor: "pointer"
+                        cursor: "pointer",
                     }}
                 >
-                    {loading ? "Resetting..." : "Reset Password"}
+                    {loading
+                        ? "Resetting..."
+                        : "Reset Password"}
                 </button>
 
                 {error && (
-                    <p style={{ color: "red", marginTop: "10px" }}>
+                    <p
+                        style={{
+                            color: "red",
+                            marginTop: "10px",
+                        }}
+                    >
                         {error}
                     </p>
                 )}
 
                 {success && (
-                    <p style={{ color: "green", marginTop: "10px" }}>
+                    <p
+                        style={{
+                            color: "green",
+                            marginTop: "10px",
+                        }}
+                    >
                         ✅ {success}
                     </p>
                 )}

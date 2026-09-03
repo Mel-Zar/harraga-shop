@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
 
 import {
     getMyOrderById,
@@ -35,21 +34,17 @@ function OrderDetails() {
                         token === "null" ||
                         token === "undefined"
                     ) {
-                        const message =
-                            "You must be logged in to view this order.";
-
-                        setError(message);
-                        toast.error(message);
+                        setError(
+                            "You must be logged in to view this order."
+                        );
 
                         return;
                     }
 
                     if (!id) {
-                        const message =
-                            "Order ID is missing.";
-
-                        setError(message);
-                        toast.error(message);
+                        setError(
+                            "Order ID is missing."
+                        );
 
                         return;
                     }
@@ -78,19 +73,12 @@ function OrderDetails() {
                         error
                     );
 
-                    const errorMessage =
+                    setError(
                         error.response
                             ?.data
                             ?.message ||
                         error.message ||
-                        "Failed to load order.";
-
-                    setError(
-                        errorMessage
-                    );
-
-                    toast.error(
-                        errorMessage
+                        "Failed to load order."
                     );
 
                 } finally {
