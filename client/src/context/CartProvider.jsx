@@ -62,18 +62,6 @@ export function CartProvider({ children }) {
 
                 if (newQuantity <= 0) {
 
-                    toast.info(
-                        `🗑️ ${product.name} removed from your cart.`,
-                        {
-                            position: "top-right",
-                            autoClose: 2500,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            theme: "colored",
-                        }
-                    );
-
                     return prev.filter(
                         (item) =>
                             String(item._id) !==
@@ -87,40 +75,15 @@ export function CartProvider({ children }) {
                 // Quantity increased
                 // ------------------------------------------
 
-                if (quantity > 0) {
+                if (
+                    quantity > 0 &&
+                    newQuantity === product.stock &&
+                    existing.quantity < product.stock
+                ) {
 
-                    if (
-                        newQuantity ===
-                        product.stock
-                    ) {
-
-                        toast.warning(
-                            `⚠️ ${product.name}: maximum stock reached (${product.stock}).`,
-                            {
-                                position: "top-right",
-                                autoClose: 3000,
-                                hideProgressBar: false,
-                                closeOnClick: true,
-                                pauseOnHover: true,
-                                theme: "colored",
-                            }
-                        );
-
-                    } else {
-
-                        toast.success(
-                            `🛒 ${product.name} quantity increased to ${newQuantity}.`,
-                            {
-                                position: "top-right",
-                                autoClose: 2000,
-                                hideProgressBar: false,
-                                closeOnClick: true,
-                                pauseOnHover: true,
-                                theme: "colored",
-                            }
-                        );
-
-                    }
+                    toast.warning(
+                        `⚠️ ${product.name}: maximum stock reached (${product.stock}).`
+                    );
 
                 }
 
@@ -131,17 +94,8 @@ export function CartProvider({ children }) {
 
                 if (quantity < 0) {
 
-                    toast.info(
-                        `➖ ${product.name} quantity decreased to ${newQuantity}.`,
-                        {
-                            position: "top-right",
-                            autoClose: 2000,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            theme: "colored",
-                        }
-                    );
+                    // Quantity changes are visible directly
+                    // in the cart UI, so no toast is needed.
 
                 }
 
@@ -184,15 +138,7 @@ export function CartProvider({ children }) {
             if (quantityToAdd <= 0) {
 
                 toast.warning(
-                    `⚠️ ${product.name} is currently out of stock.`,
-                    {
-                        position: "top-right",
-                        autoClose: 3000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        theme: "colored",
-                    }
+                    `⚠️ ${product.name} is currently out of stock.`
                 );
 
                 return prev;
@@ -201,15 +147,7 @@ export function CartProvider({ children }) {
 
 
             toast.success(
-                `🛒 ${product.name} added to your cart.`,
-                {
-                    position: "top-right",
-                    autoClose: 2500,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    theme: "colored",
-                }
+                `🛒 ${product.name} added to your cart.`
             );
 
 
@@ -295,29 +233,7 @@ export function CartProvider({ children }) {
                 ) {
 
                     toast.warning(
-                        `⚠️ ${currentItem.name}: maximum stock reached (${currentItem.stock}).`,
-                        {
-                            position: "top-right",
-                            autoClose: 3000,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            theme: "colored",
-                        }
-                    );
-
-                } else {
-
-                    toast.success(
-                        `➕ ${currentItem.name} quantity increased to ${newQuantity}.`,
-                        {
-                            position: "top-right",
-                            autoClose: 2000,
-                            hideProgressBar: false,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            theme: "colored",
-                        }
+                        `⚠️ ${currentItem.name}: maximum stock reached (${currentItem.stock}).`
                     );
 
                 }
@@ -334,17 +250,8 @@ export function CartProvider({ children }) {
                 currentItem.quantity
             ) {
 
-                toast.info(
-                    `➖ ${currentItem.name} quantity decreased to ${newQuantity}.`,
-                    {
-                        position: "top-right",
-                        autoClose: 2000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        theme: "colored",
-                    }
-                );
+                // Quantity changes are visible directly
+                // in the cart UI, so no toast is needed.
 
             }
 
@@ -387,15 +294,7 @@ export function CartProvider({ children }) {
         if (product) {
 
             toast.success(
-                `🗑️ ${product.name} removed from your cart.`,
-                {
-                    position: "top-right",
-                    autoClose: 2500,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    theme: "colored",
-                }
+                `🗑️ ${product.name} removed from your cart.`
             );
 
         }
@@ -424,15 +323,7 @@ export function CartProvider({ children }) {
 
 
         toast.warning(
-            "🧹 Your cart has been cleared.",
-            {
-                position: "top-right",
-                autoClose: 2500,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                theme: "colored",
-            }
+            "🧹 Your cart has been cleared."
         );
 
     };
