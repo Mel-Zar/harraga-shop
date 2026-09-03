@@ -6,6 +6,8 @@ import {
     useNavigate,
 } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import {
     loginUser,
     resendVerifyEmail,
@@ -67,9 +69,11 @@ export default function Login() {
             !identifier.trim() ||
             !password.trim()
         ) {
-            setError(
-                "All fields are required."
-            );
+            const message =
+                "All fields are required.";
+
+            setError(message);
+            toast.error(message);
 
             return;
         }
@@ -90,9 +94,11 @@ export default function Login() {
 
             saveUser(data);
 
-            setSuccess(
-                "Login successful!"
-            );
+            const message =
+                "Login successful!";
+
+            setSuccess(message);
+            toast.success(message);
 
             // =============================================
             // REDIRECT
@@ -154,11 +160,22 @@ export default function Login() {
                         "verify your email"
                     )
             ) {
+
+                const verifyText =
+                    "Your account is not verified. Resend verification email?";
+
                 setVerifyMessage(
-                    "Your account is not verified. Resend verification email?"
+                    verifyText
                 );
+
+                toast.warning(
+                    verifyText
+                );
+
             } else {
+
                 setError(message);
+                toast.error(message);
             }
 
         } finally {
@@ -190,9 +207,12 @@ export default function Login() {
             !value ||
             !value.includes("@")
         ) {
-            setError(
-                "Enter your email in the Email/Username field to resend verification."
-            );
+
+            const message =
+                "Enter your email in the Email/Username field to resend verification.";
+
+            setError(message);
+            toast.error(message);
 
             return;
         }
@@ -206,19 +226,24 @@ export default function Login() {
                     value
                 );
 
-            setResendMessage(
+            const message =
                 data?.message ||
-                "Verification email sent."
-            );
+                "Verification email sent.";
 
+            setResendMessage(message);
             setVerifyMessage("");
+
+            toast.success(message);
 
         } catch (err) {
 
-            setError(
+            const message =
                 err?.message ||
-                "Failed to resend verification email."
-            );
+                "Failed to resend verification email.";
+
+            setError(message);
+
+            toast.error(message);
 
         } finally {
             setResendLoading(false);

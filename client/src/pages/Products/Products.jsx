@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
 import ProductListCard from "../../components/ProductListCard/ProductListCard";
 import { getProducts } from "../../services/productService";
 
@@ -10,8 +12,14 @@ function Products() {
             try {
                 const data = await getProducts();
                 setProducts(data);
+
             } catch (error) {
                 console.error(error);
+
+                toast.error(
+                    error?.message ||
+                    "Failed to load products. Please try again."
+                );
             }
         };
 
@@ -20,10 +28,14 @@ function Products() {
 
     return (
         <div>
-            <h1>Products</h1>
+            <h1>
+                Products
+            </h1>
 
             {products.length === 0 ? (
-                <p>No products found.</p>
+                <p>
+                    No products found.
+                </p>
             ) : (
                 <div
                     style={{

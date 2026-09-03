@@ -16,6 +16,8 @@ import {
     logout,
 } from "../../utils/auth";
 
+import { toast } from "react-toastify";
+
 export default function Navbar() {
 
     const { cartItems } = useCart();
@@ -93,6 +95,15 @@ export default function Navbar() {
         logout();
 
         setAuth(getAuthState());
+
+        toast.success(
+            "👋 You have been logged out successfully.",
+            {
+                position: "top-right",
+                autoClose: 2500,
+                theme: "colored",
+            }
+        );
 
         navigate("/", {
             replace: true,
@@ -338,3 +349,4 @@ export default function Navbar() {
         </nav>
     );
 }
+
