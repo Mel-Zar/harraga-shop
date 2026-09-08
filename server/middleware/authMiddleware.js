@@ -168,7 +168,11 @@ export const optionalAuth = async (
         const token =
             getTokenFromRequest(req);
 
-        if (!token) {
+        if (
+            !token ||
+            token === "null" ||
+            token === "undefined"
+        ) {
             req.user = null;
             return next();
         }
