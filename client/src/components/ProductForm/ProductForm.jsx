@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 function ProductForm({ onSubmit }) {
     const [name, setName] = useState("");
@@ -7,7 +8,7 @@ function ProductForm({ onSubmit }) {
     const [price, setPrice] = useState("");
     const [category, setCategory] =
         useState("");
-    const [stock, setStock] = useState(0);
+    const [stock, setStock] = useState("");
 
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] =
@@ -16,35 +17,89 @@ function ProductForm({ onSubmit }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        // =========================
+        // REQUIRED FIELDS
+        // =========================
+
         if (!name.trim()) {
-            alert("Product name is required.");
+            toast.error(
+                "Product name is required."
+            );
             return;
         }
 
         if (!description.trim()) {
-            alert("Description is required.");
+            toast.error(
+                "Description is required."
+            );
             return;
         }
 
         if (!category.trim()) {
-            alert("Category is required.");
+            toast.error(
+                "Category is required."
+            );
             return;
         }
 
-        if (price === "" || Number(price) < 0) {
-            alert("Please enter a valid price.");
+        // =========================
+        // PRICE VALIDATION
+        // =========================
+
+        if (
+            price === "" ||
+            !Number.isFinite(
+                Number(price)
+            ) ||
+            Number(price) < 0
+        ) {
+            toast.error(
+                "Please enter a valid price."
+            );
             return;
         }
 
-        if (stock === "" || Number(stock) < 0) {
-            alert("Please enter a valid stock.");
+        // =========================
+        // STOCK VALIDATION
+        // =========================
+
+        if (
+            stock === "" ||
+            !Number.isFinite(
+                Number(stock)
+            ) ||
+            Number(stock) < 0 ||
+            !Number.isInteger(
+                Number(stock)
+            )
+        ) {
+            toast.error(
+                "Please enter a valid stock amount."
+            );
+            return;
+        }
+
+        // =========================
+        // IMAGE VALIDATION
+        // =========================
+
+        if (images.length === 0) {
+            toast.error(
+                "Please upload at least one product image."
+            );
             return;
         }
 
         if (images.length > 4) {
-            alert("You can only upload 4 images.");
+            toast.error(
+                "You can only upload 4 images."
+            );
             return;
         }
+
+        // =========================
+        // CREATE FORM DATA
+        // =========================
 
         const formData = new FormData();
 
@@ -80,13 +135,21 @@ function ProductForm({ onSubmit }) {
             );
         });
 
+        // =========================
+        // SUBMIT
+        // =========================
+
         onSubmit(formData);
+
+        // =========================
+        // RESET FORM
+        // =========================
 
         setName("");
         setDescription("");
         setPrice("");
         setCategory("");
-        setStock(0);
+        setStock("");
 
         setImages([]);
         setImagePreviews([]);
@@ -101,12 +164,38 @@ function ProductForm({ onSubmit }) {
             return;
         }
 
+        // =========================
+        // CHECK IMAGE TYPE
+        // =========================
+
+        const invalidFile =
+            files.find(
+                (file) =>
+                    !file.type.startsWith(
+                        "image/"
+                    )
+            );
+
+        if (invalidFile) {
+            toast.error(
+                "Only image files are allowed."
+            );
+
+            e.target.value = "";
+
+            return;
+        }
+
+        // =========================
+        // CHECK IMAGE COUNT
+        // =========================
+
         const totalImages =
             images.length +
             files.length;
 
         if (totalImages > 4) {
-            alert(
+            toast.error(
                 `You can only upload 4 images. You already have ${images.length} selected.`
             );
 
@@ -114,6 +203,10 @@ function ProductForm({ onSubmit }) {
 
             return;
         }
+
+        // =========================
+        // CREATE PREVIEWS
+        // =========================
 
         const previews =
             files.map((file) => ({
@@ -246,6 +339,7 @@ function ProductForm({ onSubmit }) {
                         e.target.value
                     )
                 }
+                required
                 style={{
                     padding: "10px",
                 }}

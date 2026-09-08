@@ -26,6 +26,80 @@ export const createProduct = async (
             stock,
         } = req.body;
 
+        // =========================
+        // VALIDATE REQUIRED FIELDS
+        // =========================
+
+        if (
+            !name?.trim() ||
+            !description?.trim() ||
+            !category?.trim()
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Name, description and category are required.",
+                });
+        }
+
+        // =========================
+        // VALIDATE PRICE
+        // =========================
+
+        const parsedPrice =
+            Number(price);
+
+        if (
+            price === undefined ||
+            price === null ||
+            price === "" ||
+            !Number.isFinite(
+                parsedPrice
+            ) ||
+            parsedPrice < 0
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Price must be a valid number greater than or equal to 0.",
+                });
+        }
+
+        // =========================
+        // VALIDATE STOCK
+        // =========================
+
+        const parsedStock =
+            Number(stock);
+
+        if (
+            stock !== undefined &&
+            stock !== null &&
+            stock !== "" &&
+            (
+                !Number.isFinite(
+                    parsedStock
+                ) ||
+                parsedStock < 0 ||
+                !Number.isInteger(
+                    parsedStock
+                )
+            )
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Stock must be a whole number greater than or equal to 0.",
+                });
+        }
+
+        // =========================
+        // IMAGES
+        // =========================
+
         const images =
             req.files?.length
                 ? req.files
@@ -36,20 +110,34 @@ export const createProduct = async (
                     )
                 : [];
 
+        // =========================
+        // CREATE PRODUCT
+        // =========================
+
         const product =
             await Product.create({
                 name:
-                    name?.trim(),
+                    name.trim(),
+
                 description:
-                    description?.trim(),
+                    description.trim(),
+
                 price:
-                    Number(price),
+                    parsedPrice,
+
                 category:
-                    category?.trim(),
+                    category.trim(),
+
                 stock:
-                    Number(stock),
+                    stock === undefined ||
+                        stock === null ||
+                        stock === ""
+                        ? 0
+                        : parsedStock,
+
                 image:
                     images[0] || "",
+
                 images,
             });
 
@@ -62,6 +150,29 @@ export const createProduct = async (
             "CREATE PRODUCT ERROR:",
             error
         );
+
+        // =========================
+        // MONGOOSE VALIDATION ERROR
+        // =========================
+
+        if (
+            error.name ===
+            "ValidationError"
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        Object.values(
+                            error.errors
+                        )
+                            .map(
+                                (err) =>
+                                    err.message
+                            )
+                            .join(", "),
+                });
+        }
 
         return res
             .status(500)
@@ -120,6 +231,10 @@ export const getProductById = async (
         const { id } =
             req.params;
 
+        // =========================
+        // VALIDATE PRODUCT ID
+        // =========================
+
         if (
             !isValidObjectId(id)
         ) {
@@ -131,12 +246,20 @@ export const getProductById = async (
                 });
         }
 
+        // =========================
+        // GET PRODUCT
+        // =========================
+
         const product =
             await Product.findById(
                 id
             )
                 .select("-__v")
                 .lean();
+
+        // =========================
+        // PRODUCT NOT FOUND
+        // =========================
 
         if (!product) {
             return res
@@ -146,6 +269,10 @@ export const getProductById = async (
                         "Product not found",
                 });
         }
+
+        // =========================
+        // SUCCESS
+        // =========================
 
         return res
             .status(200)
@@ -178,6 +305,10 @@ export const updateProduct = async (
         const { id } =
             req.params;
 
+        // =========================
+        // VALIDATE PRODUCT ID
+        // =========================
+
         if (
             !isValidObjectId(id)
         ) {
@@ -189,6 +320,10 @@ export const updateProduct = async (
                 });
         }
 
+        // =========================
+        // FIND PRODUCT
+        // =========================
+
         const product =
             await Product.findById(id);
 
@@ -199,6 +334,120 @@ export const updateProduct = async (
                     message:
                         "Product not found",
                 });
+        }
+
+        // =========================
+        // VALIDATE NAME
+        // =========================
+
+        if (
+            req.body.name !==
+            undefined &&
+            !req.body.name?.trim()
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Product name cannot be empty.",
+                });
+        }
+
+        // =========================
+        // VALIDATE DESCRIPTION
+        // =========================
+
+        if (
+            req.body.description !==
+            undefined &&
+            !req.body.description?.trim()
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Product description cannot be empty.",
+                });
+        }
+
+        // =========================
+        // VALIDATE CATEGORY
+        // =========================
+
+        if (
+            req.body.category !==
+            undefined &&
+            !req.body.category?.trim()
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Product category cannot be empty.",
+                });
+        }
+
+        // =========================
+        // VALIDATE PRICE
+        // =========================
+
+        if (
+            req.body.price !==
+            undefined
+        ) {
+            const parsedPrice =
+                Number(
+                    req.body.price
+                );
+
+            if (
+                req.body.price ===
+                "" ||
+                !Number.isFinite(
+                    parsedPrice
+                ) ||
+                parsedPrice < 0
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        message:
+                            "Price must be a valid number greater than or equal to 0.",
+                    });
+            }
+        }
+
+        // =========================
+        // VALIDATE STOCK
+        // =========================
+
+        if (
+            req.body.stock !==
+            undefined
+        ) {
+            const parsedStock =
+                Number(
+                    req.body.stock
+                );
+
+            if (
+                req.body.stock ===
+                "" ||
+                !Number.isFinite(
+                    parsedStock
+                ) ||
+                parsedStock < 0 ||
+                !Number.isInteger(
+                    parsedStock
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        message:
+                            "Stock must be a whole number greater than or equal to 0.",
+                    });
+            }
         }
 
         // =========================
@@ -335,6 +584,10 @@ export const updateProduct = async (
         product.image =
             currentImages[0] || "";
 
+        // =========================
+        // SAVE PRODUCT
+        // =========================
+
         await product.save();
 
         return res
@@ -346,6 +599,29 @@ export const updateProduct = async (
             "UPDATE PRODUCT ERROR:",
             error
         );
+
+        // =========================
+        // MONGOOSE VALIDATION ERROR
+        // =========================
+
+        if (
+            error.name ===
+            "ValidationError"
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message:
+                        Object.values(
+                            error.errors
+                        )
+                            .map(
+                                (err) =>
+                                    err.message
+                            )
+                            .join(", "),
+                });
+        }
 
         return res
             .status(500)
