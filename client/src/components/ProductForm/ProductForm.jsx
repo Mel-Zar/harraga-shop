@@ -256,6 +256,7 @@ function ProductForm({ onSubmit }) {
     return (
         <form
             onSubmit={handleSubmit}
+            noValidate
             style={{
                 display: "flex",
                 flexDirection: "column",

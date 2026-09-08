@@ -125,7 +125,12 @@ function Cart() {
                         >
 
                             <img
-                                src={`http://localhost:5050${item.images?.[0]}`}
+                                src={
+                                    item.images?.[0]
+                                        ?.startsWith("http")
+                                        ? item.images[0]
+                                        : `${import.meta.env.VITE_API_URL}${item.images?.[0] || ""}`
+                                }
                                 alt={item.name}
                                 style={{
                                     width:
@@ -147,9 +152,9 @@ function Cart() {
 
                                 <p>
                                     Price: $
-                                    {item.price.toFixed(
-                                        2
-                                    )}
+                                    {Number(
+                                        item.price
+                                    ).toFixed(2)}
                                 </p>
 
                                 <p>

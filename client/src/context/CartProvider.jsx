@@ -313,7 +313,9 @@ export function CartProvider({ children }) {
 
 
     // 🧹 Clear entire cart
-    const clearCart = () => {
+    const clearCart = (
+        showToast = true
+    ) => {
 
         setCartItems([]);
 
@@ -322,9 +324,13 @@ export function CartProvider({ children }) {
         );
 
 
-        toast.warning(
-            "🧹 Your cart has been cleared."
-        );
+        if (showToast) {
+
+            toast.warning(
+                "🧹 Your cart has been cleared."
+            );
+
+        }
 
     };
 
