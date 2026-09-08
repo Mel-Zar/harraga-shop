@@ -6,6 +6,9 @@ import mongoose from "mongoose";
 // CREATE ORDER
 // =========================
 export const createOrder = async (req, res) => {
+    const session =
+        await mongoose.startSession();
+
     try {
         const {
             items,
@@ -54,7 +57,10 @@ export const createOrder = async (req, res) => {
                     item.productId
                 ) ||
                 !item.quantity ||
-                item.quantity < 1
+                !Number.isInteger(
+                    Number(item.quantity)
+                ) ||
+                Number(item.quantity) < 1
             ) {
                 return res.status(400).json({
                     success: false,
@@ -62,6 +68,29 @@ export const createOrder = async (req, res) => {
                         "Invalid order item",
                 });
             }
+        }
+
+        // =========================
+        // CHECK DUPLICATE PRODUCTS
+        // =========================
+        const productIds =
+            items.map(
+                (item) =>
+                    String(item.productId)
+            );
+
+        const uniqueProductIds =
+            new Set(productIds);
+
+        if (
+            uniqueProductIds.size !==
+            productIds.length
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Duplicate products are not allowed in the order",
+            });
         }
 
         // =========================
@@ -93,7 +122,7 @@ export const createOrder = async (req, res) => {
 
             if (
                 product.stock <
-                item.quantity
+                Number(item.quantity)
             ) {
                 return res.status(400).json({
                     success: false,
@@ -121,7 +150,7 @@ export const createOrder = async (req, res) => {
                     product.price,
 
                 quantity:
-                    item.quantity,
+                    Number(item.quantity),
             });
         }
 
@@ -161,26 +190,33 @@ export const createOrder = async (req, res) => {
         // =========================
         const safeCustomer = {
             name:
-                customer.name,
+                customer.name
+                    .trim(),
 
             email:
-                customer.email || "",
+                customer.email
+                    ?.trim() || "",
 
             address:
-                customer.address,
+                customer.address
+                    .trim(),
 
             phone:
-                customer.phone,
+                customer.phone
+                    .trim(),
 
             city:
-                customer.city || "",
+                customer.city
+                    ?.trim() || "",
 
             postalCode:
-                customer.postalCode || "",
+                customer.postalCode
+                    ?.trim() || "",
         };
 
         // =========================
         // CALCULATE PRICING
+        // BACKEND IS SOURCE OF TRUTH
         // =========================
         const subtotal =
             safeItems.reduce(
@@ -191,23 +227,54 @@ export const createOrder = async (req, res) => {
                 0
             );
 
-        const frontendTax =
-            Number(pricing?.tax) || 0;
+        // =========================
+        // TAX
+        // =========================
+        const tax =
+            Math.round(
+                subtotal * 0.25 * 100
+            ) / 100;
 
-        const frontendShipping =
-            Number(pricing?.shipping) || 0;
+        // =========================
+        // SHIPPING
+        // =========================
+        const shipping =
+            safeItems.length > 0
+                ? 49
+                : 0;
 
+        // =========================
+        // TOTAL
+        // =========================
         const calculatedTotal =
-            subtotal +
-            frontendTax +
-            frontendShipping;
+            Math.round(
+                (
+                    subtotal +
+                    tax +
+                    shipping
+                ) * 100
+            ) / 100;
 
         const safePricing = {
             subtotal,
-            tax: frontendTax,
-            shipping: frontendShipping,
-            total: calculatedTotal,
+            tax,
+            shipping,
+            total:
+                calculatedTotal,
         };
+
+        // =========================
+        // SAFE PAYMENT
+        // =========================
+        const safePayment = {
+            method: "cod",
+            status: "pending",
+        };
+
+        // =========================
+        // START TRANSACTION
+        // =========================
+        session.startTransaction();
 
         // =========================
         // DECREASE STOCK
@@ -218,6 +285,9 @@ export const createOrder = async (req, res) => {
                     {
                         _id:
                             item.productId,
+
+                        isActive:
+                            true,
 
                         stock: {
                             $gte:
@@ -232,10 +302,13 @@ export const createOrder = async (req, res) => {
                     },
                     {
                         new: true,
+                        session,
                     }
                 );
 
             if (!updatedProduct) {
+                await session.abortTransaction();
+
                 return res.status(400).json({
                     success: false,
                     message:
@@ -243,15 +316,6 @@ export const createOrder = async (req, res) => {
                 });
             }
         }
-
-        // =========================
-        // SAFE PAYMENT
-        // =========================
-        const safePayment =
-            payment ?? {
-                method: "cod",
-                status: "pending",
-            };
 
         // =========================
         // CREATE ORDER
@@ -279,7 +343,14 @@ export const createOrder = async (req, res) => {
         });
 
         const savedOrder =
-            await order.save();
+            await order.save({
+                session,
+            });
+
+        // =========================
+        // COMMIT TRANSACTION
+        // =========================
+        await session.commitTransaction();
 
         // =========================
         // SUCCESS
@@ -295,6 +366,15 @@ export const createOrder = async (req, res) => {
         });
 
     } catch (error) {
+        // =========================
+        // ROLLBACK TRANSACTION
+        // =========================
+        if (
+            session.inTransaction()
+        ) {
+            await session.abortTransaction();
+        }
+
         console.error(
             "CREATE ORDER ERROR:",
             error
@@ -306,6 +386,9 @@ export const createOrder = async (req, res) => {
             message:
                 "Server error while creating order",
         });
+
+    } finally {
+        await session.endSession();
     }
 };
 

@@ -37,23 +37,38 @@ const orderSchema = new mongoose.Schema(
                     type: String,
                     required: true,
                     trim: true,
+                    minlength: 1,
+                    maxlength: 200,
                 },
 
                 image: {
                     type: String,
                     default: "",
+                    trim: true,
                 },
 
                 price: {
                     type: Number,
                     required: true,
                     min: 0,
+                    validate: {
+                        validator:
+                            Number.isFinite,
+                        message:
+                            "Price must be a valid number.",
+                    },
                 },
 
                 quantity: {
                     type: Number,
                     required: true,
                     min: 1,
+                    validate: {
+                        validator:
+                            Number.isInteger,
+                        message:
+                            "Quantity must be a whole number.",
+                    },
                 },
             },
         ],
@@ -66,36 +81,45 @@ const orderSchema = new mongoose.Schema(
                 type: String,
                 required: true,
                 trim: true,
+                minlength: 1,
+                maxlength: 200,
             },
 
             email: {
                 type: String,
                 trim: true,
                 default: "",
+                maxlength: 320,
             },
 
             phone: {
                 type: String,
                 required: true,
                 trim: true,
+                minlength: 3,
+                maxlength: 50,
             },
 
             address: {
                 type: String,
                 required: true,
                 trim: true,
+                minlength: 1,
+                maxlength: 500,
             },
 
             city: {
                 type: String,
                 default: "",
                 trim: true,
+                maxlength: 100,
             },
 
             postalCode: {
                 type: String,
                 default: "",
                 trim: true,
+                maxlength: 20,
             },
         },
 
@@ -107,24 +131,48 @@ const orderSchema = new mongoose.Schema(
                 type: Number,
                 required: true,
                 min: 0,
+                validate: {
+                    validator:
+                        Number.isFinite,
+                    message:
+                        "Subtotal must be a valid number.",
+                },
             },
 
             tax: {
                 type: Number,
                 default: 0,
                 min: 0,
+                validate: {
+                    validator:
+                        Number.isFinite,
+                    message:
+                        "Tax must be a valid number.",
+                },
             },
 
             shipping: {
                 type: Number,
                 default: 0,
                 min: 0,
+                validate: {
+                    validator:
+                        Number.isFinite,
+                    message:
+                        "Shipping must be a valid number.",
+                },
             },
 
             total: {
                 type: Number,
                 required: true,
                 min: 0,
+                validate: {
+                    validator:
+                        Number.isFinite,
+                    message:
+                        "Total must be a valid number.",
+                },
             },
         },
 
@@ -134,7 +182,12 @@ const orderSchema = new mongoose.Schema(
         payment: {
             method: {
                 type: String,
-                enum: ["cod", "stripe", "klarna", "swish"],
+                enum: [
+                    "cod",
+                    "stripe",
+                    "klarna",
+                    "swish",
+                ],
                 default: "cod",
             },
 
@@ -170,4 +223,7 @@ const orderSchema = new mongoose.Schema(
     }
 );
 
-export default mongoose.model("Order", orderSchema);
+export default mongoose.model(
+    "Order",
+    orderSchema
+);
