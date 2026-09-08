@@ -15,15 +15,12 @@ import {
     optionalAuth,
 } from "../middleware/authMiddleware.js";
 
-const router = express.Router();
-
+const router =
+    express.Router();
 
 // =========================
-
 // CREATE ORDER
-
 // GUEST + CUSTOMER
-
 // =========================
 
 router.post(
@@ -32,13 +29,9 @@ router.post(
     createOrder
 );
 
-
 // =========================
-
 // GET MY ORDERS
-
 // CUSTOMER ONLY
-
 // =========================
 
 router.get(
@@ -47,13 +40,9 @@ router.get(
     getMyOrders
 );
 
-
 // =========================
-
 // GET MY SINGLE ORDER
-
 // CUSTOMER ONLY
-
 // =========================
 
 router.get(
@@ -62,11 +51,8 @@ router.get(
     getMyOrderById
 );
 
-
 // =========================
-
 // GET ALL ORDERS (ADMIN ONLY)
-
 // =========================
 
 router.get(
@@ -76,13 +62,9 @@ router.get(
     getAllOrders
 );
 
-
 // =========================
-
 // GET SINGLE ORDER
-
 // ADMIN ONLY
-
 // =========================
 
 router.get(
@@ -92,11 +74,8 @@ router.get(
     getOrderById
 );
 
-
 // =========================
-
 // UPDATE ORDER STATUS (ADMIN ONLY)
-
 // =========================
 
 router.patch(
@@ -105,6 +84,5 @@ router.patch(
     admin,
     updateOrderStatus
 );
-
 
 export default router;

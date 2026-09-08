@@ -6,122 +6,198 @@ import { toast } from "react-toastify";
 import { createOrder } from "../../services/orderService";
 
 function Checkout() {
-    const { cartItems, clearCart } = useCart();
-    const navigate = useNavigate();
 
-    const [form, setForm] = useState({
-        name: "",
-        email: "",
-        address: "",
-        phone: "",
-        city: "",
-        postalCode: "",
-    });
+    const {
+        cartItems,
+        clearCart,
+    } = useCart();
+
+    const navigate =
+        useNavigate();
+
+
+    const [form, setForm] =
+        useState({
+            name: "",
+            email: "",
+            address: "",
+            phone: "",
+            city: "",
+            postalCode: "",
+        });
+
 
     const [isSubmitting, setIsSubmitting] =
         useState(false);
+
+
 
     // ============================================
     // 💰 PRICING
     // ============================================
 
-    const subtotal = cartItems.reduce(
-        (total, item) =>
-            total +
-            Number(item.price || 0) *
-            Number(item.quantity || 0),
-        0
-    );
+    const subtotal =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                Number(
+                    item.price || 0
+                ) *
+                Number(
+                    item.quantity || 0
+                ),
+            0
+        );
 
-    const tax = subtotal * 0.25;
+
+    const tax =
+        subtotal * 0.25;
+
 
     const shipping =
-        cartItems.length > 0 ? 49 : 0;
+        cartItems.length > 0
+            ? 49
+            : 0;
+
 
     const totalPrice =
         subtotal +
         tax +
         shipping;
 
+
+
     // ============================================
     // 📦 TOTAL ITEMS
     // ============================================
 
-    const totalItems = cartItems.reduce(
-        (total, item) =>
-            total +
-            Number(item.quantity || 0),
-        0
-    );
+    const totalItems =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                Number(
+                    item.quantity || 0
+                ),
+            0
+        );
+
+
 
     // ============================================
     // 📝 HANDLE FORM CHANGE
     // ============================================
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
+    const handleChange = (
+        e
+    ) => {
 
-        setForm((previousForm) => ({
-            ...previousForm,
-            [name]: value,
-        }));
+        const {
+            name,
+            value,
+        } = e.target;
+
+
+        setForm(
+            (previousForm) => ({
+                ...previousForm,
+                [name]: value,
+            })
+        );
+
     };
+
+
 
     // ============================================
     // 🧹 NORMALIZE FORM
     // ============================================
 
     const normalizedForm = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        address: form.address.trim(),
-        phone: form.phone.trim(),
-        city: form.city.trim(),
-        postalCode: form.postalCode.trim(),
+        name:
+            form.name.trim(),
+
+        email:
+            form.email.trim(),
+
+        address:
+            form.address.trim(),
+
+        phone:
+            form.phone.trim(),
+
+        city:
+            form.city.trim(),
+
+        postalCode:
+            form.postalCode.trim(),
     };
+
+
 
     // ============================================
     // 📧 EMAIL VALIDATION
     // ============================================
 
-    const isValidEmail = (email) => {
+    const isValidEmail = (
+        email
+    ) => {
+
         if (!email) {
             return true;
         }
 
+
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             email
         );
+
     };
+
+
 
     // ============================================
     // 📞 PHONE VALIDATION
     // ============================================
 
-    const isValidPhone = (phone) => {
+    const isValidPhone = (
+        phone
+    ) => {
+
         return /^[0-9+\s()-]{7,20}$/.test(
             phone
         );
+
     };
+
+
 
     // ============================================
     // 🛒 CREATE ORDER
     // ============================================
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (
+        e
+    ) => {
+
         e.preventDefault();
+
 
         // ============================================
         // 🛒 CART VALIDATION
         // ============================================
 
-        if (!cartItems.length) {
+        if (
+            !cartItems.length
+        ) {
+
             toast.warning(
                 "Your cart is empty!"
             );
 
             return;
         }
+
+
 
         // ============================================
         // 📝 REQUIRED FORM VALIDATION
@@ -132,12 +208,15 @@ function Checkout() {
             !normalizedForm.address ||
             !normalizedForm.phone
         ) {
+
             toast.error(
                 "Please fill all required fields."
             );
 
             return;
         }
+
+
 
         // ============================================
         // 📧 EMAIL VALIDATION
@@ -149,12 +228,15 @@ function Checkout() {
                 normalizedForm.email
             )
         ) {
+
             toast.error(
                 "Please enter a valid email address."
             );
 
             return;
         }
+
+
 
         // ============================================
         // 📞 PHONE VALIDATION
@@ -165,6 +247,7 @@ function Checkout() {
                 normalizedForm.phone
             )
         ) {
+
             toast.error(
                 "Please enter a valid phone number."
             );
@@ -172,21 +255,31 @@ function Checkout() {
             return;
         }
 
+
+
         // ============================================
         // 🔒 PREVENT DOUBLE SUBMIT
         // ============================================
 
-        if (isSubmitting) {
+        if (
+            isSubmitting
+        ) {
             return;
         }
 
-        setIsSubmitting(true);
+
+        setIsSubmitting(
+            true
+        );
+
+
 
         // ============================================
         // 📦 CREATE SAFE ORDER PAYLOAD
         // ============================================
 
         const order = {
+
             customer: {
                 name:
                     normalizedForm.name,
@@ -207,54 +300,72 @@ function Checkout() {
                     normalizedForm.postalCode,
             },
 
-            items: cartItems.map(
-                (item) => ({
-                    productId:
-                        item._id,
 
-                    name:
-                        item.name,
+            items:
+                cartItems.map(
+                    (item) => ({
 
-                    image:
-                        item.image || "",
+                        productId:
+                            item._id,
 
-                    price:
-                        Number(
-                            item.price
-                        ),
+                        name:
+                            item.name,
 
-                    quantity:
-                        Number(
-                            item.quantity
-                        ) || 1,
-                })
-            ),
+                        image:
+                            item.images?.[0] ||
+                            item.image ||
+                            "",
+
+                        price:
+                            Number(
+                                item.price
+                            ),
+
+                        quantity:
+                            Number(
+                                item.quantity
+                            ) || 1,
+
+                    })
+                ),
+
 
             pricing: {
                 subtotal,
                 tax,
                 shipping,
-                total: totalPrice,
+                total:
+                    totalPrice,
             },
+
 
             payment: {
                 method: "cod",
                 status: "pending",
             },
+
         };
+
+
 
         // ============================================
         // 🚀 SEND ORDER
         // ============================================
 
         try {
+
             const data =
-                await createOrder(order);
+                await createOrder(
+                    order
+                );
+
 
             console.log(
                 "ORDER CREATED:",
                 data
             );
+
+
 
             // ============================================
             // ❗ VERIFY BACKEND RESPONSE
@@ -264,11 +375,15 @@ function Checkout() {
                 !data ||
                 data.success === false
             ) {
+
                 throw new Error(
                     data?.message ||
                     "Failed to create order."
                 );
+
             }
+
+
 
             // ============================================
             // ✅ SUCCESS
@@ -278,23 +393,35 @@ function Checkout() {
                 "Order placed successfully!"
             );
 
+
+
             // ============================================
             // 🧹 CLEAR CART
             // ============================================
 
-            clearCart(false);
+            clearCart(
+                false
+            );
+
+
 
             // ============================================
             // 🏠 GO HOME
             // ============================================
 
-            navigate("/");
+            navigate(
+                "/"
+            );
 
-        } catch (error) {
+        } catch (
+        error
+        ) {
+
             console.error(
                 "ORDER ERROR:",
                 error
             );
+
 
             const message =
                 error?.response?.data
@@ -302,16 +429,26 @@ function Checkout() {
                 error?.message ||
                 "Failed to place order. Please try again.";
 
-            toast.error(message);
+
+            toast.error(
+                message
+            );
 
         } finally {
+
             // ============================================
             // 🔓 ENABLE SUBMIT AGAIN
             // ============================================
 
-            setIsSubmitting(false);
+            setIsSubmitting(
+                false
+            );
+
         }
+
     };
+
+
 
     // ============================================
     // 🧾 CHECKOUT PAGE
@@ -320,18 +457,27 @@ function Checkout() {
     return (
         <div
             style={{
-                maxWidth: "900px",
-                margin: "0 auto",
-                padding: "20px",
+                maxWidth:
+                    "900px",
+                margin:
+                    "0 auto",
+                padding:
+                    "20px",
             }}
         >
+
             <h1>
                 Checkout 🧾
             </h1>
 
+
             <form
-                onSubmit={handleSubmit}
+                onSubmit={
+                    handleSubmit
+                }
+                noValidate
             >
+
                 {/* ============================================
                     👤 CUSTOMER INFORMATION
                 ============================================ */}
@@ -340,31 +486,47 @@ function Checkout() {
                     Customer Information
                 </h2>
 
+
                 <input
                     name="name"
                     type="text"
                     placeholder="Full Name *"
-                    value={form.name}
-                    onChange={handleChange}
+                    value={
+                        form.name
+                    }
+                    onChange={
+                        handleChange
+                    }
                     required
                 />
+
 
                 <input
                     name="email"
                     type="email"
                     placeholder="Email"
-                    value={form.email}
-                    onChange={handleChange}
+                    value={
+                        form.email
+                    }
+                    onChange={
+                        handleChange
+                    }
                 />
+
 
                 <input
                     name="phone"
                     type="tel"
                     placeholder="Phone *"
-                    value={form.phone}
-                    onChange={handleChange}
+                    value={
+                        form.phone
+                    }
+                    onChange={
+                        handleChange
+                    }
                     required
                 />
+
 
                 {/* ============================================
                     📍 SHIPPING INFORMATION
@@ -374,30 +536,47 @@ function Checkout() {
                     Shipping Information
                 </h2>
 
+
                 <input
                     name="address"
                     type="text"
                     placeholder="Address *"
-                    value={form.address}
-                    onChange={handleChange}
+                    value={
+                        form.address
+                    }
+                    onChange={
+                        handleChange
+                    }
                     required
                 />
+
 
                 <input
                     name="city"
                     type="text"
                     placeholder="City"
-                    value={form.city}
-                    onChange={handleChange}
+                    value={
+                        form.city
+                    }
+                    onChange={
+                        handleChange
+                    }
                 />
+
 
                 <input
                     name="postalCode"
                     type="text"
                     placeholder="Postal Code"
-                    value={form.postalCode}
-                    onChange={handleChange}
+                    value={
+                        form.postalCode
+                    }
+                    onChange={
+                        handleChange
+                    }
                 />
+
+
 
                 {/* ============================================
                     🧾 ORDER SUMMARY
@@ -407,53 +586,86 @@ function Checkout() {
                     Order Summary
                 </h2>
 
+
                 <p>
                     {cartItems.length}{" "}
-                    {cartItems.length === 1
-                        ? "product"
-                        : "products"}{" "}
-                    · {totalItems}{" "}
-                    {totalItems === 1
-                        ? "item"
-                        : "items"}
+                    {
+                        cartItems.length === 1
+                            ? "product"
+                            : "products"
+                    }{" "}
+                    ·{" "}
+                    {totalItems}{" "}
+                    {
+                        totalItems === 1
+                            ? "item"
+                            : "items"
+                    }
                 </p>
 
+
+
                 {!cartItems.length ? (
+
                     <p>
                         Your cart is empty.
                     </p>
+
                 ) : (
+
                     cartItems.map(
                         (item) => {
+
                             const itemPrice =
                                 Number(
-                                    item.price || 0
+                                    item.price ||
+                                    0
                                 );
+
 
                             const itemQuantity =
                                 Number(
-                                    item.quantity || 0
+                                    item.quantity ||
+                                    0
                                 );
+
 
                             const itemTotal =
                                 itemPrice *
                                 itemQuantity;
 
+
+                            const image =
+                                item.images?.[0] ||
+                                item.image ||
+                                "";
+
+
+                            const imageUrl =
+                                image.startsWith(
+                                    "http"
+                                )
+                                    ? image
+                                    : `${import.meta.env.VITE_API_URL}${image}`;
+
+
                             return (
+
                                 <div
                                     key={
                                         item._id
                                     }
                                 >
+
                                     {/* ============================================
                                         🖼️ PRODUCT
                                     ============================================ */}
-                                    {item.image ? (
+
+                                    {image ? (
+
                                         <img
                                             src={
-                                                item.image.startsWith("http")
-                                                    ? item.image
-                                                    : `${import.meta.env.VITE_API_URL}${item.image}`
+                                                imageUrl
                                             }
                                             alt={
                                                 item.name
@@ -461,11 +673,16 @@ function Checkout() {
                                             width="100"
                                             height="100"
                                         />
+
                                     ) : (
+
                                         <div>
                                             No image
                                         </div>
+
                                     )}
+
+
 
                                     {/* ============================================
                                         📦 PRODUCT INFORMATION
@@ -477,12 +694,14 @@ function Checkout() {
                                         }
                                     </h3>
 
+
                                     <p>
                                         Price per item: $
                                         {itemPrice.toFixed(
                                             2
                                         )}
                                     </p>
+
 
                                     <p>
                                         Quantity:{" "}
@@ -491,6 +710,7 @@ function Checkout() {
                                         }
                                     </p>
 
+
                                     <p>
                                         Product total: $
                                         {itemTotal.toFixed(
@@ -498,12 +718,19 @@ function Checkout() {
                                         )}
                                     </p>
 
+
                                     <hr />
+
                                 </div>
+
                             );
+
                         }
                     )
+
                 )}
+
+
 
                 {/* ============================================
                     💰 PRICE BREAKDOWN
@@ -513,27 +740,42 @@ function Checkout() {
                     Price Summary
                 </h2>
 
+
                 <p>
                     Subtotal: $
-                    {subtotal.toFixed(2)}
+                    {subtotal.toFixed(
+                        2
+                    )}
                 </p>
+
 
                 <p>
                     Tax (25%): $
-                    {tax.toFixed(2)}
+                    {tax.toFixed(
+                        2
+                    )}
                 </p>
+
 
                 <p>
                     Shipping: $
-                    {shipping.toFixed(2)}
+                    {shipping.toFixed(
+                        2
+                    )}
                 </p>
+
 
                 <hr />
 
+
                 <h2>
                     Total: $
-                    {totalPrice.toFixed(2)}
+                    {totalPrice.toFixed(
+                        2
+                    )}
                 </h2>
+
+
 
                 {/* ============================================
                     📍 DELIVERY SUMMARY
@@ -543,11 +785,13 @@ function Checkout() {
                     Delivery Information
                 </h2>
 
+
                 <p>
                     Name:{" "}
                     {normalizedForm.name ||
                         "Not provided"}
                 </p>
+
 
                 <p>
                     Phone:{" "}
@@ -555,11 +799,13 @@ function Checkout() {
                         "Not provided"}
                 </p>
 
+
                 <p>
                     Address:{" "}
                     {normalizedForm.address ||
                         "Not provided"}
                 </p>
+
 
                 <p>
                     City:{" "}
@@ -567,11 +813,14 @@ function Checkout() {
                         "Not provided"}
                 </p>
 
+
                 <p>
                     Postal Code:{" "}
                     {normalizedForm.postalCode ||
                         "Not provided"}
                 </p>
+
+
 
                 {/* ============================================
                     💳 PAYMENT
@@ -581,17 +830,21 @@ function Checkout() {
                     Payment
                 </h2>
 
+
                 <p>
                     Payment method:
                     {" "}
                     Cash on Delivery
                 </p>
 
+
                 <p>
                     Payment status:
                     {" "}
                     Pending
                 </p>
+
+
 
                 {/* ============================================
                     🚀 PLACE ORDER
@@ -608,7 +861,9 @@ function Checkout() {
                         ? "Placing Order..."
                         : "Place Order"}
                 </button>
+
             </form>
+
         </div>
     );
 }

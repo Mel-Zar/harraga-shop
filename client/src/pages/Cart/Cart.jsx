@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function Cart() {
+
     const {
         cartItems,
         updateQuantity,
@@ -10,52 +11,111 @@ function Cart() {
         clearCart,
     } = useCart();
 
-    const totalPrice = cartItems.reduce(
-        (total, item) =>
-            total + item.price * item.quantity,
-        0
-    );
 
-    const handleIncreaseQuantity = (item) => {
-        if (item.quantity >= item.stock) {
-            toast.warning(
-                `Only ${item.stock} unit${item.stock !== 1 ? "s" : ""} of "${item.name}" available in stock.`
+    const totalPrice =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                Number(
+                    item.price || 0
+                ) *
+                Number(
+                    item.quantity || 0
+                ),
+            0
+        );
+
+
+    const handleIncreaseQuantity =
+        (item) => {
+
+            if (
+                Number(
+                    item.quantity
+                ) >=
+                Number(
+                    item.stock
+                )
+            ) {
+
+                toast.warning(
+                    `Only ${item.stock} unit${item.stock !== 1 ? "s" : ""} of "${item.name}" available in stock.`
+                );
+
+                return;
+            }
+
+
+            updateQuantity(
+                item,
+                Number(
+                    item.quantity
+                ) + 1
             );
-            return;
-        }
 
-        updateQuantity(
-            item,
-            item.quantity + 1
-        );
-    };
+        };
 
-    const handleDecreaseQuantity = (item) => {
-        if (item.quantity <= 1) {
-            return;
-        }
 
-        updateQuantity(
-            item,
-            item.quantity - 1
-        );
-    };
+    const handleDecreaseQuantity =
+        (item) => {
 
-    const handleRemove = (item) => {
-        removeFromCart(item._id);
-    };
+            if (
+                Number(
+                    item.quantity
+                ) <= 1
+            ) {
 
-    const handleClearCart = () => {
-        clearCart();
-    };
+                return;
+            }
 
-    const handleCheckout = () => {
-        // Checkout navigation remains unchanged
-    };
 
-    if (cartItems.length === 0) {
+            updateQuantity(
+                item,
+                Number(
+                    item.quantity
+                ) - 1
+            );
+
+        };
+
+
+    const handleRemove =
+        (item) => {
+
+            removeFromCart(
+                item._id
+            );
+
+        };
+
+
+    const handleClearCart =
+        () => {
+
+            clearCart();
+
+        };
+
+
+    const handleCheckout =
+        () => {
+
+            // Checkout navigation remains unchanged
+
+        };
+
+
+    if (
+        cartItems.length === 0
+    ) {
+
         return (
-            <div style={{ padding: "20px" }}>
+            <div
+                style={{
+                    padding: "20px",
+                }}
+            >
+
                 <h1>
                     Your Cart
                 </h1>
@@ -69,16 +129,24 @@ function Cart() {
                         Continue Shopping
                     </button>
                 </Link>
+
             </div>
         );
+
     }
 
+
     return (
-        <div style={{ padding: "20px" }}>
+        <div
+            style={{
+                padding: "20px",
+            }}
+        >
 
             <h1>
                 Your Cart 🛒
             </h1>
+
 
             <p>
                 {cartItems.length} product
@@ -87,190 +155,265 @@ function Cart() {
                     : ""} in your cart
             </p>
 
-            {cartItems.map((item) => {
 
-                const subtotal =
-                    item.price *
-                    item.quantity;
+            {cartItems.map(
+                (item) => {
 
-                return (
-                    <div
-                        key={item._id}
-                        style={{
-                            display: "flex",
-                            justifyContent:
-                                "space-between",
-                            alignItems:
-                                "center",
-                            border:
-                                "1px solid #ddd",
-                            padding: "15px",
-                            marginBottom:
-                                "15px",
-                            borderRadius:
-                                "8px",
-                        }}
-                    >
+                    const subtotal =
+                        Number(
+                            item.price || 0
+                        ) *
+                        Number(
+                            item.quantity || 0
+                        );
 
-                        {/* Product */}
 
+                    const image =
+                        item.images?.[0] ||
+                        item.image ||
+                        "";
+
+
+                    const imageUrl =
+                        image.startsWith(
+                            "http"
+                        )
+                            ? image
+                            : `${import.meta.env.VITE_API_URL}${image}`;
+
+
+                    return (
                         <div
+                            key={
+                                item._id
+                            }
                             style={{
                                 display:
                                     "flex",
+                                justifyContent:
+                                    "space-between",
                                 alignItems:
                                     "center",
-                                gap: "15px",
+                                border:
+                                    "1px solid #ddd",
+                                padding:
+                                    "15px",
+                                marginBottom:
+                                    "15px",
+                                borderRadius:
+                                    "8px",
                             }}
                         >
 
-                            <img
-                                src={
-                                    item.images?.[0]
-                                        ?.startsWith("http")
-                                        ? item.images[0]
-                                        : `${import.meta.env.VITE_API_URL}${item.images?.[0] || ""}`
-                                }
-                                alt={item.name}
+                            {/* Product */}
+
+                            <div
                                 style={{
-                                    width:
-                                        "90px",
-                                    height:
-                                        "90px",
-                                    objectFit:
-                                        "cover",
-                                    borderRadius:
-                                        "8px",
+                                    display:
+                                        "flex",
+                                    alignItems:
+                                        "center",
+                                    gap:
+                                        "15px",
                                 }}
-                            />
+                            >
 
-                            <div>
+                                {image ? (
+                                    <img
+                                        src={
+                                            imageUrl
+                                        }
+                                        alt={
+                                            item.name
+                                        }
+                                        style={{
+                                            width:
+                                                "90px",
+                                            height:
+                                                "90px",
+                                            objectFit:
+                                                "cover",
+                                            borderRadius:
+                                                "8px",
+                                        }}
+                                    />
+                                ) : (
+                                    <div
+                                        style={{
+                                            width:
+                                                "90px",
+                                            height:
+                                                "90px",
+                                            display:
+                                                "flex",
+                                            alignItems:
+                                                "center",
+                                            justifyContent:
+                                                "center",
+                                            border:
+                                                "1px solid #ddd",
+                                            borderRadius:
+                                                "8px",
+                                        }}
+                                    >
+                                        No image
+                                    </div>
+                                )}
 
-                                <h3>
-                                    {item.name}
-                                </h3>
 
-                                <p>
-                                    Price: $
-                                    {Number(
-                                        item.price
-                                    ).toFixed(2)}
-                                </p>
+                                <div>
 
-                                <p>
-                                    Stock:{" "}
-                                    {item.stock}
-                                </p>
+                                    <h3>
+                                        {
+                                            item.name
+                                        }
+                                    </h3>
+
+                                    <p>
+                                        Price: $
+                                        {Number(
+                                            item.price ||
+                                            0
+                                        ).toFixed(
+                                            2
+                                        )}
+                                    </p>
+
+                                    <p>
+                                        Stock:{" "}
+                                        {
+                                            item.stock
+                                        }
+                                    </p>
+
+                                </div>
 
                             </div>
 
-                        </div>
 
-                        {/* Quantity */}
+                            {/* Quantity */}
 
-                        <div
-                            style={{
-                                display:
-                                    "flex",
-                                alignItems:
-                                    "center",
-                                gap: "10px",
-                            }}
-                        >
-
-                            <button
-                                onClick={() =>
-                                    handleDecreaseQuantity(
-                                        item
-                                    )
-                                }
-                                disabled={
-                                    item.quantity <=
-                                    1
-                                }
-                            >
-                                -
-                            </button>
-
-                            <span
+                            <div
                                 style={{
-                                    minWidth:
-                                        "30px",
-                                    textAlign:
+                                    display:
+                                        "flex",
+                                    alignItems:
                                         "center",
-                                    fontWeight:
-                                        "bold",
+                                    gap:
+                                        "10px",
                                 }}
                             >
-                                {
-                                    item.quantity
-                                }
-                            </span>
+
+                                <button
+                                    onClick={() =>
+                                        handleDecreaseQuantity(
+                                            item
+                                        )
+                                    }
+                                    disabled={
+                                        Number(
+                                            item.quantity
+                                        ) <=
+                                        1
+                                    }
+                                >
+                                    -
+                                </button>
+
+
+                                <span
+                                    style={{
+                                        minWidth:
+                                            "30px",
+                                        textAlign:
+                                            "center",
+                                        fontWeight:
+                                            "bold",
+                                    }}
+                                >
+                                    {
+                                        item.quantity
+                                    }
+                                </span>
+
+
+                                <button
+                                    onClick={() =>
+                                        handleIncreaseQuantity(
+                                            item
+                                        )
+                                    }
+                                    disabled={
+                                        Number(
+                                            item.quantity
+                                        ) >=
+                                        Number(
+                                            item.stock
+                                        )
+                                    }
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+
+                            {/* Subtotal */}
+
+                            <div
+                                style={{
+                                    minWidth:
+                                        "120px",
+                                    textAlign:
+                                        "right",
+                                }}
+                            >
+
+                                <strong>
+                                    $
+                                    {subtotal.toFixed(
+                                        2
+                                    )}
+                                </strong>
+
+                            </div>
+
+
+                            {/* Remove */}
 
                             <button
                                 onClick={() =>
-                                    handleIncreaseQuantity(
+                                    handleRemove(
                                         item
                                     )
                                 }
-                                disabled={
-                                    item.quantity >=
-                                    item.stock
-                                }
+                                style={{
+                                    background:
+                                        "red",
+                                    color:
+                                        "white",
+                                }}
                             >
-                                +
+                                Remove
                             </button>
 
                         </div>
+                    );
 
-                        {/* Subtotal */}
+                }
+            )}
 
-                        <div
-                            style={{
-                                minWidth:
-                                    "120px",
-                                textAlign:
-                                    "right",
-                            }}
-                        >
-
-                            <strong>
-                                $
-                                {subtotal.toFixed(
-                                    2
-                                )}
-                            </strong>
-
-                        </div>
-
-                        {/* Remove */}
-
-                        <button
-                            onClick={() =>
-                                handleRemove(
-                                    item
-                                )
-                            }
-                            style={{
-                                background:
-                                    "red",
-                                color:
-                                    "white",
-                            }}
-                        >
-                            Remove
-                        </button>
-
-                    </div>
-                );
-            })}
 
             <hr />
 
+
             <h2>
                 Total: $
-                {totalPrice.toFixed(2)}
+                {totalPrice.toFixed(
+                    2
+                )}
             </h2>
+
 
             <button
                 onClick={
@@ -287,6 +430,7 @@ function Cart() {
             >
                 Clear Cart
             </button>
+
 
             <Link to="/checkout">
                 <button
