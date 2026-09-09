@@ -2,6 +2,172 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import mongoose from "mongoose";
 
+import {
+    sendOrderConfirmationEmail,
+    sendOrderProcessingEmail,
+    sendOrderShippedEmail,
+    sendOrderDeliveredEmail,
+    sendOrderCancelledEmail,
+} from "../utils/mailer.js";
+
+// =========================
+// EMAIL VALIDATION
+// =========================
+const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// =========================
+// ORDER STATUS FLOW
+// =========================
+const allowedStatuses = [
+    "pending",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+];
+
+// =========================
+// VALID STATUS TRANSITIONS
+// =========================
+const allowedTransitions = {
+    pending: [
+        "processing",
+        "cancelled",
+    ],
+
+    processing: [
+        "shipped",
+        "cancelled",
+    ],
+
+    shipped: [
+        "delivered",
+    ],
+
+    delivered: [],
+
+    cancelled: [],
+};
+
+// =========================
+// ORDER STATUS EMAIL MAP
+// =========================
+const statusEmailMap = {
+    processing:
+        sendOrderProcessingEmail,
+
+    shipped:
+        sendOrderShippedEmail,
+
+    delivered:
+        sendOrderDeliveredEmail,
+
+    cancelled:
+        sendOrderCancelledEmail,
+};
+
+// =========================
+// SEND STATUS EMAIL
+// =========================
+const sendStatusEmail = async (
+    order,
+    status
+) => {
+
+    if (
+        !order?.customer?.email
+    ) {
+
+        console.log(
+            `ℹ️ No customer email. ${status} notification skipped for ${order?.orderNumber || "order"}.`
+        );
+
+        return false;
+    }
+
+    const emailFunction =
+        statusEmailMap[status];
+
+    if (!emailFunction) {
+        return false;
+    }
+
+    // =========================
+    // PREVENT DUPLICATE EMAILS
+    // =========================
+    const alreadySent =
+        Array.isArray(
+            order.statusEmailNotifications
+        ) &&
+        order.statusEmailNotifications.some(
+            (notification) =>
+                notification.status ===
+                status
+        );
+
+    if (alreadySent) {
+
+        console.log(
+            `ℹ️ ${status} email already sent for ${order.orderNumber}.`
+        );
+
+        return false;
+    }
+
+    try {
+
+        await emailFunction(
+            order.customer.email,
+            order
+        );
+
+        // =========================
+        // MAKE SURE ARRAY EXISTS
+        // =========================
+        if (
+            !Array.isArray(
+                order.statusEmailNotifications
+            )
+        ) {
+            order.statusEmailNotifications = [];
+        }
+
+        // =========================
+        // ONLY MARK AS SENT AFTER
+        // SUCCESSFUL EMAIL
+        // =========================
+        order.statusEmailNotifications.push({
+            status,
+            sentAt:
+                new Date(),
+        });
+
+        await order.save();
+
+        console.log(
+            `✅ ${status} notification email sent:`,
+            order.orderNumber
+        );
+
+        return true;
+
+    } catch (emailError) {
+
+        console.error(
+            `❌ ${status} notification email failed:`,
+            emailError?.message ||
+            emailError
+        );
+
+        // =========================
+        // EMAIL FAILURE MUST NOT
+        // BREAK ORDER
+        // =========================
+        return false;
+    }
+};
+
 // =========================
 // CREATE ORDER
 // =========================
@@ -18,16 +184,23 @@ export const createOrder = async (
         const {
             items,
             customer,
-            pricing,
-            payment,
         } = req.body;
 
-
         console.log(
-            "ORDER BODY:",
-            req.body
-        );
+            "CREATE ORDER:",
+            {
+                itemCount:
+                    Array.isArray(items)
+                        ? items.length
+                        : 0,
 
+                customerEmail:
+                    customer?.email || "none",
+
+                authenticated:
+                    Boolean(req.user),
+            }
+        );
 
         // =========================
         // VALIDATE CART
@@ -44,6 +217,18 @@ export const createOrder = async (
 
         }
 
+        // =========================
+        // PROTECTION AGAINST HUGE ORDERS
+        // =========================
+        if (items.length > 50) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Too many different products in one order",
+            });
+
+        }
 
         // =========================
         // VALIDATE CUSTOMER
@@ -61,7 +246,6 @@ export const createOrder = async (
             });
 
         }
-
 
         // =========================
         // VALIDATE ITEMS
@@ -90,8 +274,22 @@ export const createOrder = async (
 
             }
 
-        }
+            // =========================
+            // MAX QUANTITY PER PRODUCT
+            // =========================
+            if (
+                Number(item.quantity) > 100
+            ) {
 
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Maximum quantity per product is 100",
+                });
+
+            }
+
+        }
 
         // =========================
         // CHECK DUPLICATE PRODUCTS
@@ -104,12 +302,10 @@ export const createOrder = async (
                     )
             );
 
-
         const uniqueProductIds =
             new Set(
                 productIds
             );
-
 
         if (
             uniqueProductIds.size !==
@@ -124,94 +320,6 @@ export const createOrder = async (
 
         }
 
-
-        // =========================
-        // GET PRODUCTS + VALIDATE STOCK
-        // =========================
-        const safeItems = [];
-
-
-        for (
-            const item of items
-        ) {
-
-            const product =
-                await Product.findById(
-                    item.productId
-                ).session(
-                    session
-                );
-
-
-            if (!product) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        `Product not found: ${item.name || item.productId}`,
-                });
-
-            }
-
-
-            if (
-                !product.isActive
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        `${product.name} is unavailable`,
-                });
-
-            }
-
-
-            if (
-                product.stock <
-                Number(
-                    item.quantity
-                )
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        `Not enough stock for ${product.name}. Available: ${product.stock}`,
-                });
-
-            }
-
-
-            // =========================
-            // USE DATABASE PRODUCT DATA
-            // =========================
-            safeItems.push({
-
-                productId:
-                    product._id,
-
-                name:
-                    product.name,
-
-                image:
-                    product.images?.[0] ||
-                    product.image ||
-                    "",
-
-                price:
-                    product.price,
-
-                quantity:
-                    Number(
-                        item.quantity
-                    ),
-
-            });
-
-        }
-
-
         // =========================
         // SAFE CUSTOMER
         // =========================
@@ -225,7 +333,9 @@ export const createOrder = async (
             email:
                 String(
                     customer.email || ""
-                ).trim(),
+                )
+                    .trim()
+                    .toLowerCase(),
 
             address:
                 String(
@@ -249,7 +359,6 @@ export const createOrder = async (
 
         };
 
-
         // =========================
         // VALIDATE CUSTOMER AFTER TRIM
         // =========================
@@ -267,6 +376,119 @@ export const createOrder = async (
 
         }
 
+        // =========================
+        // VALIDATE EMAIL IF PROVIDED
+        // =========================
+        if (
+            safeCustomer.email &&
+            !emailRegex.test(
+                safeCustomer.email
+            )
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid email format",
+            });
+
+        }
+
+        // =========================
+        // START TRANSACTION
+        // =========================
+        session.startTransaction();
+
+        // =========================
+        // GET PRODUCTS + VALIDATE STOCK
+        // =========================
+        const safeItems = [];
+
+        for (
+            const item of items
+        ) {
+
+            const product =
+                await Product.findById(
+                    item.productId
+                ).session(
+                    session
+                );
+
+            if (!product) {
+
+                await session.abortTransaction();
+
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        `Product not found: ${item.name ||
+                        item.productId
+                        }`,
+                });
+
+            }
+
+            if (
+                !product.isActive
+            ) {
+
+                await session.abortTransaction();
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        `${product.name} is unavailable`,
+                });
+
+            }
+
+            if (
+                product.stock <
+                Number(
+                    item.quantity
+                )
+            ) {
+
+                await session.abortTransaction();
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        `Not enough stock for ${product.name}. Available: ${product.stock}`,
+                });
+
+            }
+
+            // =========================
+            // USE DATABASE PRODUCT DATA
+            // =========================
+            safeItems.push({
+
+                productId:
+                    product._id,
+
+                name:
+                    product.name,
+
+                image:
+                    product.images?.[0] ||
+                    product.image ||
+                    "",
+
+                price:
+                    Number(
+                        product.price
+                    ),
+
+                quantity:
+                    Number(
+                        item.quantity
+                    ),
+
+            });
+
+        }
 
         // =========================
         // CALCULATE PRICING
@@ -290,7 +512,6 @@ export const createOrder = async (
                 ) * 100
             ) / 100;
 
-
         // =========================
         // TAX
         // =========================
@@ -301,7 +522,6 @@ export const createOrder = async (
                 100
             ) / 100;
 
-
         // =========================
         // SHIPPING
         // =========================
@@ -309,7 +529,6 @@ export const createOrder = async (
             safeItems.length > 0
                 ? 49
                 : 0;
-
 
         // =========================
         // TOTAL
@@ -322,7 +541,6 @@ export const createOrder = async (
                     shipping
                 ) * 100
             ) / 100;
-
 
         const safePricing = {
 
@@ -337,7 +555,6 @@ export const createOrder = async (
 
         };
 
-
         // =========================
         // SAFE PAYMENT
         // =========================
@@ -350,13 +567,6 @@ export const createOrder = async (
                 "pending",
 
         };
-
-
-        // =========================
-        // START TRANSACTION
-        // =========================
-        session.startTransaction();
-
 
         // =========================
         // DECREASE STOCK
@@ -394,7 +604,6 @@ export const createOrder = async (
                     }
                 );
 
-
             if (
                 !updatedProduct
             ) {
@@ -411,7 +620,6 @@ export const createOrder = async (
 
         }
 
-
         // =========================
         // GENERATE ORDER NUMBER
         // =========================
@@ -424,9 +632,7 @@ export const createOrder = async (
                     session
                 );
 
-
         let nextNumber = 1;
-
 
         if (
             lastOrder?.orderNumber
@@ -441,7 +647,6 @@ export const createOrder = async (
                     10
                 );
 
-
             if (
                 !isNaN(
                     currentNumber
@@ -455,7 +660,6 @@ export const createOrder = async (
 
         }
 
-
         const orderNumber =
             `HARRAGA-${String(
                 nextNumber
@@ -464,6 +668,22 @@ export const createOrder = async (
                 "0"
             )}`;
 
+        // =========================
+        // INITIAL STATUS HISTORY
+        // =========================
+        const initialStatusHistory = [
+            {
+                status:
+                    "pending",
+
+                changedAt:
+                    new Date(),
+
+                changedBy:
+                    req.user?._id ||
+                    null,
+            },
+        ];
 
         // =========================
         // CREATE ORDER
@@ -492,20 +712,89 @@ export const createOrder = async (
                 status:
                     "pending",
 
-            });
+                statusHistory:
+                    initialStatusHistory,
 
+                statusEmailNotifications:
+                    [],
+
+            });
 
         const savedOrder =
             await order.save({
                 session,
             });
 
-
         // =========================
         // COMMIT TRANSACTION
         // =========================
         await session.commitTransaction();
 
+        // =========================
+        // SEND ORDER CONFIRMATION
+        // EMAIL FAILURE MUST NOT
+        // CANCEL THE ORDER
+        // =========================
+        if (
+            safeCustomer.email
+        ) {
+
+            try {
+
+                await sendOrderConfirmationEmail(
+                    safeCustomer.email,
+                    savedOrder
+                );
+
+                // =========================
+                // TRACK CONFIRMATION EMAIL
+                // =========================
+                if (
+                    !Array.isArray(
+                        savedOrder.statusEmailNotifications
+                    )
+                ) {
+                    savedOrder.statusEmailNotifications = [];
+                }
+
+                savedOrder.statusEmailNotifications.push({
+                    status:
+                        "pending",
+
+                    type:
+                        "confirmation",
+
+                    sentAt:
+                        new Date(),
+                });
+
+                await savedOrder.save();
+
+                console.log(
+                    "✅ Order confirmation email sent:",
+                    savedOrder.orderNumber
+                );
+
+            } catch (emailError) {
+
+                console.error(
+                    "❌ Order confirmation email failed:",
+                    emailError?.message ||
+                    emailError
+                );
+
+                // =========================
+                // DO NOT FAIL THE ORDER
+                // =========================
+            }
+
+        } else {
+
+            console.log(
+                "ℹ️ No customer email provided. Order confirmation email skipped."
+            );
+
+        }
 
         // =========================
         // SUCCESS
@@ -523,7 +812,6 @@ export const createOrder = async (
 
         });
 
-
     } catch (
     error
     ) {
@@ -539,12 +827,29 @@ export const createOrder = async (
 
         }
 
-
         console.error(
             "CREATE ORDER ERROR:",
             error
         );
 
+        // =========================
+        // DUPLICATE ORDER NUMBER
+        // =========================
+        if (
+            error?.code === 11000
+        ) {
+
+            return res.status(409).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order number conflict. Please try again.",
+
+            });
+
+        }
 
         return res.status(500).json({
 
@@ -564,7 +869,6 @@ export const createOrder = async (
 
 };
 
-
 // =========================
 // GET ALL ORDERS
 // ADMIN ONLY
@@ -581,7 +885,6 @@ export const getAllOrders = async (
                 .sort({
                     createdAt: -1,
                 });
-
 
         return res.json({
 
@@ -604,7 +907,6 @@ export const getAllOrders = async (
             error
         );
 
-
         return res.status(500).json({
 
             success:
@@ -618,7 +920,6 @@ export const getAllOrders = async (
     }
 
 };
-
 
 // =========================
 // GET MY ORDERS
@@ -650,7 +951,6 @@ export const getMyOrders = async (
 
         }
 
-
         // =========================
         // FIND CUSTOMER ORDERS
         // =========================
@@ -664,7 +964,6 @@ export const getMyOrders = async (
                 .sort({
                     createdAt: -1,
                 });
-
 
         // =========================
         // SUCCESS
@@ -690,7 +989,6 @@ export const getMyOrders = async (
             error
         );
 
-
         return res.status(500).json({
 
             success:
@@ -704,7 +1002,6 @@ export const getMyOrders = async (
     }
 
 };
-
 
 // =========================
 // GET MY SINGLE ORDER
@@ -720,7 +1017,6 @@ export const getMyOrderById = async (
         const {
             id
         } = req.params;
-
 
         // =========================
         // CHECK AUTHENTICATION
@@ -740,7 +1036,6 @@ export const getMyOrderById = async (
             });
 
         }
-
 
         // =========================
         // VALIDATE ID
@@ -763,7 +1058,6 @@ export const getMyOrderById = async (
 
         }
 
-
         // =========================
         // FIND CUSTOMER ORDER
         // =========================
@@ -777,7 +1071,6 @@ export const getMyOrderById = async (
                     req.user._id,
 
             });
-
 
         // =========================
         // ORDER NOT FOUND
@@ -797,7 +1090,6 @@ export const getMyOrderById = async (
             });
 
         }
-
 
         // =========================
         // SUCCESS
@@ -820,7 +1112,6 @@ export const getMyOrderById = async (
             error
         );
 
-
         return res.status(500).json({
 
             success:
@@ -834,7 +1125,6 @@ export const getMyOrderById = async (
     }
 
 };
-
 
 // =========================
 // GET SINGLE ORDER
@@ -850,7 +1140,6 @@ export const getOrderById = async (
         const {
             id
         } = req.params;
-
 
         // =========================
         // VALIDATE ID
@@ -873,7 +1162,6 @@ export const getOrderById = async (
 
         }
 
-
         // =========================
         // FIND ORDER
         // =========================
@@ -881,7 +1169,6 @@ export const getOrderById = async (
             await Order.findById(
                 id
             );
-
 
         if (
             !order
@@ -898,7 +1185,6 @@ export const getOrderById = async (
             });
 
         }
-
 
         // =========================
         // ADMIN
@@ -917,7 +1203,6 @@ export const getOrderById = async (
             });
 
         }
-
 
         // =========================
         // CUSTOMER
@@ -939,7 +1224,6 @@ export const getOrderById = async (
 
         }
 
-
         if (
             !order.user
         ) {
@@ -955,7 +1239,6 @@ export const getOrderById = async (
             });
 
         }
-
 
         if (
             order.user.toString() !==
@@ -973,7 +1256,6 @@ export const getOrderById = async (
             });
 
         }
-
 
         // =========================
         // CUSTOMER SUCCESS
@@ -996,7 +1278,6 @@ export const getOrderById = async (
             error
         );
 
-
         return res.status(500).json({
 
             success:
@@ -1010,7 +1291,6 @@ export const getOrderById = async (
     }
 
 };
-
 
 // =========================
 // UPDATE ORDER STATUS
@@ -1027,11 +1307,9 @@ export const updateOrderStatus = async (
             id
         } = req.params;
 
-
         const {
             status
         } = req.body;
-
 
         // =========================
         // VALIDATE ID
@@ -1054,25 +1332,6 @@ export const updateOrderStatus = async (
 
         }
 
-
-        // =========================
-        // ALLOWED STATUSES
-        // =========================
-        const allowedStatuses = [
-
-            "pending",
-
-            "processing",
-
-            "shipped",
-
-            "delivered",
-
-            "cancelled",
-
-        ];
-
-
         // =========================
         // VALIDATE STATUS
         // =========================
@@ -1094,7 +1353,6 @@ export const updateOrderStatus = async (
 
         }
 
-
         // =========================
         // FIND ORDER
         // =========================
@@ -1102,7 +1360,6 @@ export const updateOrderStatus = async (
             await Order.findById(
                 id
             );
-
 
         if (
             !order
@@ -1120,6 +1377,191 @@ export const updateOrderStatus = async (
 
         }
 
+        // =========================
+        // CHECK WHETHER STATUS CHANGED
+        // =========================
+        const previousStatus =
+            order.status ||
+            "pending";
+
+        const statusChanged =
+            previousStatus !==
+            status;
+
+        // =========================
+        // SAME STATUS
+        // DO NOTHING
+        // =========================
+        if (!statusChanged) {
+
+            return res.status(200).json({
+
+                success:
+                    true,
+
+                message:
+                    "Order status is already set to this status",
+
+                order,
+
+            });
+
+        }
+
+        // =========================
+        // CHECK STATUS TRANSITION
+        // =========================
+        const possibleTransitions =
+            allowedTransitions[
+            previousStatus
+            ] || [];
+
+        if (
+            !possibleTransitions.includes(
+                status
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    `Invalid status transition from ${previousStatus} to ${status}`,
+
+            });
+
+        }
+
+        // =========================
+        // RESTORE STOCK ON CANCEL
+        // =========================
+        if (
+            status === "cancelled"
+        ) {
+
+            // =========================
+            // MAKE SURE ORDER ITEMS EXIST
+            // =========================
+            if (
+                !Array.isArray(
+                    order.items
+                ) ||
+                order.items.length === 0
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Cannot cancel an order without items",
+
+                });
+
+            }
+
+            // =========================
+            // RESTORE EACH PRODUCT
+            // =========================
+            for (
+                const item of order.items
+            ) {
+
+                if (
+                    !item.productId ||
+                    !mongoose.Types.ObjectId.isValid(
+                        item.productId
+                    )
+                ) {
+
+                    console.error(
+                        "INVALID PRODUCT ID IN ORDER:",
+                        item.productId
+                    );
+
+                    return res.status(400).json({
+
+                        success:
+                            false,
+
+                        message:
+                            "Order contains an invalid product",
+
+                    });
+
+                }
+
+                const quantity =
+                    Number(
+                        item.quantity
+                    );
+
+                if (
+                    !Number.isInteger(
+                        quantity
+                    ) ||
+                    quantity < 1
+                ) {
+
+                    return res.status(400).json({
+
+                        success:
+                            false,
+
+                        message:
+                            "Order contains an invalid quantity",
+
+                    });
+
+                }
+
+                const product =
+                    await Product.findById(
+                        item.productId
+                    );
+
+                if (
+                    !product
+                ) {
+
+                    console.error(
+                        "PRODUCT NOT FOUND WHEN RESTORING STOCK:",
+                        item.productId
+                    );
+
+                    return res.status(404).json({
+
+                        success:
+                            false,
+
+                        message:
+                            `Product not found while restoring stock: ${item.name || item.productId}`,
+
+                    });
+
+                }
+
+                // =========================
+                // INCREASE STOCK
+                // =========================
+                product.stock =
+                    Number(
+                        product.stock
+                    ) +
+                    quantity;
+
+                await product.save();
+
+                console.log(
+                    `✅ Stock restored: ${product.name} +${quantity}`
+                );
+
+            }
+
+        }
 
         // =========================
         // UPDATE STATUS
@@ -1127,9 +1569,56 @@ export const updateOrderStatus = async (
         order.status =
             status;
 
+        // =========================
+        // MAKE SURE STATUS HISTORY EXISTS
+        // =========================
+        if (
+            !Array.isArray(
+                order.statusHistory
+            )
+        ) {
+
+            order.statusHistory = [
+                {
+                    status:
+                        previousStatus,
+
+                    changedAt:
+                        order.createdAt ||
+                        new Date(),
+
+                    changedBy:
+                        null,
+                },
+            ];
+
+        }
+
+        // =========================
+        // ADD STATUS HISTORY
+        // =========================
+        order.statusHistory.push({
+
+            status,
+
+            changedAt:
+                new Date(),
+
+            changedBy:
+                req.user?._id ||
+                null,
+
+        });
 
         await order.save();
 
+        // =========================
+        // SEND STATUS EMAIL
+        // =========================
+        await sendStatusEmail(
+            order,
+            status
+        );
 
         // =========================
         // SUCCESS
@@ -1140,7 +1629,7 @@ export const updateOrderStatus = async (
                 true,
 
             message:
-                "Order status updated successfully",
+                `Order status changed from ${previousStatus} to ${status}`,
 
             order,
 
@@ -1154,7 +1643,6 @@ export const updateOrderStatus = async (
             "UPDATE ORDER STATUS ERROR:",
             error
         );
-
 
         return res.status(500).json({
 

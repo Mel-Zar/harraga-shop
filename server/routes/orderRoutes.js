@@ -1,18 +1,29 @@
 import express from "express";
 
 import {
+
     createOrder,
+
     getAllOrders,
+
     getOrderById,
+
     getMyOrders,
+
     getMyOrderById,
+
     updateOrderStatus,
+
 } from "../controllers/orderController.js";
 
 import {
+
     protect,
+
     admin,
+
     optionalAuth,
+
 } from "../middleware/authMiddleware.js";
 
 const router =
@@ -22,7 +33,6 @@ const router =
 // CREATE ORDER
 // GUEST + CUSTOMER
 // =========================
-
 router.post(
     "/",
     optionalAuth,
@@ -33,7 +43,6 @@ router.post(
 // GET MY ORDERS
 // CUSTOMER ONLY
 // =========================
-
 router.get(
     "/my-orders",
     protect,
@@ -44,7 +53,6 @@ router.get(
 // GET MY SINGLE ORDER
 // CUSTOMER ONLY
 // =========================
-
 router.get(
     "/my-orders/:id",
     protect,
@@ -52,9 +60,9 @@ router.get(
 );
 
 // =========================
-// GET ALL ORDERS (ADMIN ONLY)
+// GET ALL ORDERS
+// ADMIN ONLY
 // =========================
-
 router.get(
     "/",
     protect,
@@ -66,7 +74,6 @@ router.get(
 // GET SINGLE ORDER
 // ADMIN ONLY
 // =========================
-
 router.get(
     "/:id",
     protect,
@@ -75,9 +82,9 @@ router.get(
 );
 
 // =========================
-// UPDATE ORDER STATUS (ADMIN ONLY)
+// UPDATE ORDER STATUS
+// ADMIN ONLY
 // =========================
-
 router.patch(
     "/:id/status",
     protect,

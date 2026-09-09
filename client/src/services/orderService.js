@@ -1,15 +1,22 @@
 import axios from "axios";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api/orders`;
+const API_URL =
+    `${import.meta.env.VITE_API_URL}/api/orders`;
 
-console.log("🚀 ORDER API:", API_URL);
+console.log(
+    "🚀 ORDER API:",
+    API_URL
+);
 
 // =========================
 // 🔐 GET AUTH HEADERS
 // =========================
 const getAuthHeaders = () => {
+
     const token =
-        localStorage.getItem("token");
+        localStorage.getItem(
+            "token"
+        );
 
     const headers = {};
 
@@ -18,8 +25,10 @@ const getAuthHeaders = () => {
         token !== "null" &&
         token !== "undefined"
     ) {
+
         headers.Authorization =
             `Bearer ${token}`;
+
     }
 
     return headers;
@@ -31,23 +40,30 @@ const getAuthHeaders = () => {
 export const createOrder = async (
     orderData
 ) => {
+
     try {
+
         const token =
-            localStorage.getItem("token");
+            localStorage.getItem(
+                "token"
+            );
 
         // =========================
         // VALIDATE ORDER DATA
         // =========================
         if (!orderData) {
+
             throw new Error(
                 "Order data is required"
             );
+
         }
 
         // =========================
         // CLEAN PAYLOAD
         // =========================
         const payload = {
+
             ...orderData,
 
             items:
@@ -63,7 +79,9 @@ export const createOrder = async (
                                 item.name,
 
                             price:
-                                item.price,
+                                Number(
+                                    item.price
+                                ) || 0,
 
                             quantity:
                                 Number(
@@ -72,12 +90,14 @@ export const createOrder = async (
 
                             image:
                                 item.image ||
+                                item.images?.[0] ||
                                 "",
                         })
                     )
                     : [],
 
             customer: {
+
                 name:
                     orderData.customer
                         ?.name || "",
@@ -101,7 +121,9 @@ export const createOrder = async (
                 postalCode:
                     orderData.customer
                         ?.postalCode || "",
+
             },
+
         };
 
         // =========================
@@ -114,8 +136,10 @@ export const createOrder = async (
             token !== "null" &&
             token !== "undefined"
         ) {
+
             headers.Authorization =
                 `Bearer ${token}`;
+
         }
 
         // =========================
@@ -126,7 +150,9 @@ export const createOrder = async (
                 API_URL,
                 payload,
                 {
-                    withCredentials: true,
+                    withCredentials:
+                        true,
+
                     headers,
                 }
             );
@@ -134,6 +160,7 @@ export const createOrder = async (
         return response.data;
 
     } catch (error) {
+
         console.error(
             "❌ CREATE ORDER ERROR:",
             error.response?.data ||
@@ -150,7 +177,9 @@ export const createOrder = async (
 // =========================
 export const getAllOrders =
     async () => {
+
         try {
+
             const response =
                 await axios.get(
                     API_URL,
@@ -166,6 +195,7 @@ export const getAllOrders =
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "❌ GET ALL ORDERS ERROR:",
                 error.response?.data ||
@@ -182,7 +212,9 @@ export const getAllOrders =
 // =========================
 export const getMyOrders =
     async () => {
+
         try {
+
             const response =
                 await axios.get(
                     `${API_URL}/my-orders`,
@@ -198,6 +230,7 @@ export const getMyOrders =
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "❌ GET MY ORDERS ERROR:",
                 error.response?.data ||
@@ -214,11 +247,15 @@ export const getMyOrders =
 // =========================
 export const getMyOrderById =
     async (id) => {
+
         try {
+
             if (!id) {
+
                 throw new Error(
                     "Order ID is required"
                 );
+
             }
 
             const response =
@@ -236,6 +273,7 @@ export const getMyOrderById =
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "❌ GET MY ORDER ERROR:",
                 error.response?.data ||
@@ -252,11 +290,15 @@ export const getMyOrderById =
 // =========================
 export const getOrderById =
     async (id) => {
+
         try {
+
             if (!id) {
+
                 throw new Error(
                     "Order ID is required"
                 );
+
             }
 
             const response =
@@ -274,6 +316,7 @@ export const getOrderById =
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "❌ GET ORDER ERROR:",
                 error.response?.data ||
@@ -293,17 +336,43 @@ export const updateOrderStatus =
         id,
         status
     ) => {
+
         try {
+
             if (!id) {
+
                 throw new Error(
                     "Order ID is required"
                 );
+
             }
 
             if (!status) {
+
                 throw new Error(
                     "Order status is required"
                 );
+
+            }
+
+            const allowedStatuses = [
+                "pending",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled",
+            ];
+
+            if (
+                !allowedStatuses.includes(
+                    status
+                )
+            ) {
+
+                throw new Error(
+                    "Invalid order status"
+                );
+
             }
 
             const response =
@@ -324,6 +393,7 @@ export const updateOrderStatus =
             return response.data;
 
         } catch (error) {
+
             console.error(
                 "❌ UPDATE ORDER STATUS ERROR:",
                 error.response?.data ||

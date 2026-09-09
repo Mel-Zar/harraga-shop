@@ -7,10 +7,20 @@ const orderSchema =
             // ORDER NUMBER
             // =========================
             orderNumber: {
-                type: String,
-                required: true,
-                unique: true,
-                trim: true,
+                type:
+                    String,
+
+                required:
+                    true,
+
+                unique:
+                    true,
+
+                trim:
+                    true,
+
+                maxlength:
+                    50,
             },
 
 
@@ -78,6 +88,9 @@ const orderSchema =
 
                         trim:
                             true,
+
+                        maxlength:
+                            2000,
                     },
 
 
@@ -153,6 +166,9 @@ const orderSchema =
                         String,
 
                     trim:
+                        true,
+
+                    lowercase:
                         true,
 
                     default:
@@ -376,6 +392,112 @@ const orderSchema =
                     "pending",
             },
 
+
+            // =========================
+            // STATUS HISTORY
+            // =========================
+            statusHistory: [
+
+                {
+
+                    status: {
+                        type:
+                            String,
+
+                        enum: [
+                            "pending",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled",
+                        ],
+
+                        required:
+                            true,
+                    },
+
+
+                    changedAt: {
+                        type:
+                            Date,
+
+                        default:
+                            Date.now,
+
+                        required:
+                            true,
+                    },
+
+
+                    changedBy: {
+                        type:
+                            mongoose.Schema.Types.ObjectId,
+
+                        ref:
+                            "User",
+
+                        default:
+                            null,
+                    },
+
+                },
+
+            ],
+
+
+            // =========================
+            // STATUS EMAIL TRACKING
+            // =========================
+            statusEmailNotifications: [
+
+                {
+
+                    status: {
+                        type:
+                            String,
+
+                        enum: [
+                            "pending",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled",
+                        ],
+
+                        required:
+                            true,
+                    },
+
+
+                    type: {
+                        type:
+                            String,
+
+                        enum: [
+                            "confirmation",
+                            "status",
+                        ],
+
+                        default:
+                            "status",
+                    },
+
+
+                    sentAt: {
+                        type:
+                            Date,
+
+                        default:
+                            Date.now,
+
+                        required:
+                            true,
+                    },
+
+                },
+
+            ],
+
         },
 
         {
@@ -385,6 +507,28 @@ const orderSchema =
     );
 
 
+// =========================
+// INDEXES
+// =========================
+orderSchema.index({
+    user: 1,
+    createdAt: -1,
+});
+
+orderSchema.index({
+    "customer.email": 1,
+    createdAt: -1,
+});
+
+orderSchema.index({
+    status: 1,
+    createdAt: -1,
+});
+
+
+// =========================
+// ORDER MODEL
+// =========================
 export default mongoose.model(
     "Order",
     orderSchema
