@@ -14,6 +14,8 @@ import {
 
     updateOrderStatus,
 
+    cancelMyOrder,
+
 } from "../controllers/orderController.js";
 
 import {
@@ -57,6 +59,16 @@ router.get(
     "/my-orders/:id",
     protect,
     getMyOrderById
+);
+
+// =========================
+// CANCEL MY ORDER
+// CUSTOMER ONLY
+// =========================
+router.patch(
+    "/my-orders/:id/cancel",
+    protect,
+    cancelMyOrder
 );
 
 // =========================

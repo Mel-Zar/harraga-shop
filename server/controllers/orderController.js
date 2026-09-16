@@ -1657,3 +1657,338 @@ export const updateOrderStatus = async (
     }
 
 };
+
+// =========================
+// CANCEL MY ORDER
+// CUSTOMER ONLY
+// =========================
+export const cancelMyOrder = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            id
+        } = req.params;
+
+        // =========================
+        // CHECK AUTHENTICATION
+        // =========================
+        if (
+            !req.user?._id
+        ) {
+
+            return res.status(401).json({
+
+                success:
+                    false,
+
+                message:
+                    "Authentication required",
+
+            });
+
+        }
+
+        // =========================
+        // VALIDATE ORDER ID
+        // =========================
+        if (
+            !mongoose.Types.ObjectId.isValid(
+                id
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Invalid order ID",
+
+            });
+
+        }
+
+        // =========================
+        // FIND CUSTOMER ORDER
+        // =========================
+        const order =
+            await Order.findOne({
+
+                _id:
+                    id,
+
+                user:
+                    req.user._id,
+
+            });
+
+        // =========================
+        // ORDER NOT FOUND
+        // =========================
+        if (
+            !order
+        ) {
+
+            return res.status(404).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order not found",
+
+            });
+
+        }
+
+        // =========================
+        // ALREADY CANCELLED
+        // =========================
+        if (
+            order.status ===
+            "cancelled"
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order is already cancelled",
+
+            });
+
+        }
+
+        // =========================
+        // ONLY PENDING ORDERS
+        // CAN BE CANCELLED BY CUSTOMER
+        // =========================
+        if (
+            order.status !==
+            "pending"
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    `Order cannot be cancelled because its current status is ${order.status}`,
+
+            });
+
+        }
+
+        // =========================
+        // MAKE SURE ORDER ITEMS EXIST
+        // =========================
+        if (
+            !Array.isArray(
+                order.items
+            ) ||
+            order.items.length === 0
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Cannot cancel an order without items",
+
+            });
+
+        }
+
+        // =========================
+        // RESTORE STOCK
+        // =========================
+        for (
+            const item of order.items
+        ) {
+
+            if (
+                !item.productId ||
+                !mongoose.Types.ObjectId.isValid(
+                    item.productId
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Order contains an invalid product",
+
+                });
+
+            }
+
+            const quantity =
+                Number(
+                    item.quantity
+                );
+
+            if (
+                !Number.isInteger(
+                    quantity
+                ) ||
+                quantity < 1
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Order contains an invalid quantity",
+
+                });
+
+            }
+
+            const product =
+                await Product.findById(
+                    item.productId
+                );
+
+            if (
+                !product
+            ) {
+
+                return res.status(404).json({
+
+                    success:
+                        false,
+
+                    message:
+                        `Product not found while restoring stock: ${item.name || item.productId}`,
+
+                });
+
+            }
+
+            // =========================
+            // INCREASE STOCK
+            // =========================
+            product.stock =
+                Number(
+                    product.stock
+                ) +
+                quantity;
+
+            await product.save();
+
+            console.log(
+                `✅ Customer cancellation - stock restored: ${product.name} +${quantity}`
+            );
+
+        }
+
+        // =========================
+        // UPDATE STATUS
+        // =========================
+        order.status =
+            "cancelled";
+
+        // =========================
+        // MAKE SURE STATUS HISTORY EXISTS
+        // =========================
+        if (
+            !Array.isArray(
+                order.statusHistory
+            )
+        ) {
+
+            order.statusHistory = [
+                {
+                    status:
+                        "pending",
+
+                    changedAt:
+                        order.createdAt ||
+                        new Date(),
+
+                    changedBy:
+                        null,
+                },
+            ];
+
+        }
+
+        // =========================
+        // ADD CANCELLED HISTORY
+        // =========================
+        order.statusHistory.push({
+
+            status:
+                "cancelled",
+
+            changedAt:
+                new Date(),
+
+            changedBy:
+                req.user._id,
+
+        });
+
+        await order.save();
+
+        // =========================
+        // SEND CANCELLED EMAIL
+        // =========================
+        await sendStatusEmail(
+            order,
+            "cancelled"
+        );
+
+        // =========================
+        // SUCCESS
+        // =========================
+        return res.status(200).json({
+
+            success:
+                true,
+
+            message:
+                "Order cancelled successfully",
+
+            order,
+
+        });
+
+    } catch (
+    error
+    ) {
+
+        console.error(
+            "CANCEL MY ORDER ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+
+            success:
+                false,
+
+            message:
+                "Failed to cancel order",
+
+        });
+
+    }
+
+};
+

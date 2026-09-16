@@ -49,6 +49,12 @@ function OrderDetail() {
                 setLoading(true);
                 setError("");
 
+                if (!id) {
+                    throw new Error(
+                        "Order ID is required."
+                    );
+                }
+
                 const data =
                     await getOrderById(id);
 
@@ -58,9 +64,7 @@ function OrderDetail() {
                     );
                 }
 
-                setOrder(
-                    data.order
-                );
+                setOrder(data.order);
 
                 setStatus(
                     data.order.status ||
@@ -74,42 +78,29 @@ function OrderDetail() {
                 );
 
                 const message =
-                    error.response
-                        ?.data
-                        ?.message ||
+                    error.response?.data?.message ||
                     error.message ||
                     "Failed to load order.";
 
                 setError(message);
 
-                toast.error(
-                    message
-                );
+                toast.error(message);
 
             } finally {
                 setLoading(false);
             }
         };
 
-        if (id) {
-            fetchOrder();
-        }
+        fetchOrder();
     }, [id]);
 
     // =========================
     // FORMAT PRICE
     // =========================
-    const formatPrice = (
-        value
-    ) => {
-        const number =
-            Number(value);
+    const formatPrice = (value) => {
+        const number = Number(value);
 
-        if (
-            !Number.isFinite(
-                number
-            )
-        ) {
+        if (!Number.isFinite(number)) {
             return "0.00";
         }
 
@@ -119,385 +110,289 @@ function OrderDetail() {
     // =========================
     // FORMAT STATUS
     // =========================
-    const formatStatus =
-        (value) => {
+    const formatStatus = (value) => {
+        if (!value) {
+            return "Pending";
+        }
 
-            if (!value) {
-                return "Pending";
-            }
-
-            return (
-                value
-                    .charAt(0)
-                    .toUpperCase() +
-                value.slice(1)
-            );
-        };
+        return (
+            value.charAt(0).toUpperCase() +
+            value.slice(1)
+        );
+    };
 
     // =========================
     // STATUS STYLE
     // =========================
-    const getStatusStyle =
-        (value) => {
+    const getStatusStyle = (value) => {
+        switch (value) {
+            case "pending":
+                return {
+                    background: "#fff3cd",
+                    color: "#856404",
+                    border: "1px solid #ffe69c",
+                };
 
-            switch (value) {
+            case "processing":
+                return {
+                    background: "#cff4fc",
+                    color: "#055160",
+                    border: "1px solid #9eeaf9",
+                };
 
-                case "pending":
-                    return {
-                        background:
-                            "#fff3cd",
-                        color:
-                            "#856404",
-                        border:
-                            "1px solid #ffe69c",
-                    };
+            case "shipped":
+                return {
+                    background: "#cfe2ff",
+                    color: "#084298",
+                    border: "1px solid #9ec5fe",
+                };
 
-                case "processing":
-                    return {
-                        background:
-                            "#cff4fc",
-                        color:
-                            "#055160",
-                        border:
-                            "1px solid #9eeaf9",
-                    };
+            case "delivered":
+                return {
+                    background: "#d1e7dd",
+                    color: "#0f5132",
+                    border: "1px solid #a3cfbb",
+                };
 
-                case "shipped":
-                    return {
-                        background:
-                            "#cfe2ff",
-                        color:
-                            "#084298",
-                        border:
-                            "1px solid #9ec5fe",
-                    };
+            case "cancelled":
+                return {
+                    background: "#f8d7da",
+                    color: "#842029",
+                    border: "1px solid #f1aeb5",
+                };
 
-                case "delivered":
-                    return {
-                        background:
-                            "#d1e7dd",
-                        color:
-                            "#0f5132",
-                        border:
-                            "1px solid #a3cfbb",
-                    };
-
-                case "cancelled":
-                    return {
-                        background:
-                            "#f8d7da",
-                        color:
-                            "#842029",
-                        border:
-                            "1px solid #f1aeb5",
-                    };
-
-                default:
-                    return {
-                        background:
-                            "#f8f9fa",
-                        color:
-                            "#212529",
-                        border:
-                            "1px solid #dee2e6",
-                    };
-            }
-        };
+            default:
+                return {
+                    background: "#f8f9fa",
+                    color: "#212529",
+                    border: "1px solid #dee2e6",
+                };
+        }
+    };
 
     // =========================
     // PAYMENT STYLE
     // =========================
-    const getPaymentStyle =
-        (value) => {
+    const getPaymentStyle = (value) => {
+        switch (value) {
+            case "paid":
+                return {
+                    background: "#d1e7dd",
+                    color: "#0f5132",
+                    border: "1px solid #a3cfbb",
+                };
 
-            switch (value) {
+            case "failed":
+                return {
+                    background: "#f8d7da",
+                    color: "#842029",
+                    border: "1px solid #f1aeb5",
+                };
 
-                case "paid":
-                    return {
-                        background:
-                            "#d1e7dd",
-                        color:
-                            "#0f5132",
-                        border:
-                            "1px solid #a3cfbb",
-                    };
+            case "refunded":
+                return {
+                    background: "#e2e3e5",
+                    color: "#41464b",
+                    border: "1px solid #d3d6d8",
+                };
 
-                case "failed":
-                    return {
-                        background:
-                            "#f8d7da",
-                        color:
-                            "#842029",
-                        border:
-                            "1px solid #f1aeb5",
-                    };
-
-                case "refunded":
-                    return {
-                        background:
-                            "#e2e3e5",
-                        color:
-                            "#41464b",
-                        border:
-                            "1px solid #d3d6d8",
-                    };
-
-                default:
-                    return {
-                        background:
-                            "#fff3cd",
-                        color:
-                            "#856404",
-                        border:
-                            "1px solid #ffe69c",
-                    };
-            }
-        };
+            default:
+                return {
+                    background: "#fff3cd",
+                    color: "#856404",
+                    border: "1px solid #ffe69c",
+                };
+        }
+    };
 
     // =========================
     // IMAGE URL
     // =========================
-    const getImageUrl =
-        (image) => {
+    const getImageUrl = (image) => {
+        if (!image) {
+            return "";
+        }
 
-            if (!image) {
-                return "";
-            }
+        if (
+            image.startsWith("http://") ||
+            image.startsWith("https://") ||
+            image.startsWith("data:")
+        ) {
+            return image;
+        }
 
-            if (
-                image.startsWith(
-                    "http://"
-                ) ||
-                image.startsWith(
-                    "https://"
-                )
-            ) {
-                return image;
-            }
+        const apiUrl =
+            import.meta.env.VITE_API_URL || "";
 
-            const apiUrl =
-                import.meta.env
-                    .VITE_API_URL || "";
-
-            return `${apiUrl}${image.startsWith("/")
-                ? ""
-                : "/"
-                }${image}`;
-        };
+        return `${apiUrl}${image.startsWith("/")
+            ? ""
+            : "/"
+            }${image}`;
+    };
 
     // =========================
     // AVAILABLE STATUS OPTIONS
     // =========================
-    const getAvailableStatuses =
-        () => {
+    const getAvailableStatuses = () => {
+        const currentStatus =
+            order?.status || "pending";
 
-            const currentStatus =
-                order?.status ||
-                "pending";
+        const nextStatuses =
+            allowedTransitions[
+            currentStatus
+            ] || [];
 
-            const nextStatuses =
-                allowedTransitions[
-                currentStatus
-                ] || [];
-
-            return [
-                currentStatus,
-                ...nextStatuses.filter(
-                    (nextStatus) =>
-                        nextStatus !==
-                        currentStatus
-                ),
-            ];
-        };
+        return [
+            currentStatus,
+            ...nextStatuses.filter(
+                (nextStatus) =>
+                    nextStatus !== currentStatus
+            ),
+        ];
+    };
 
     // =========================
     // STATUS UPDATE
     // =========================
-    const handleStatusUpdate =
-        async () => {
+    const handleStatusUpdate = async () => {
+        if (!order) {
+            return;
+        }
 
-            if (!order) {
-                return;
-            }
+        const previousStatus =
+            order.status || "pending";
 
-            const previousStatus =
-                order.status ||
-                "pending";
+        // =========================
+        // NO CHANGE
+        // =========================
+        if (status === previousStatus) {
+            toast.info(
+                "Order status is already set to this status."
+            );
 
-            // =========================
-            // NO CHANGE
-            // =========================
-            if (
-                status ===
-                previousStatus
-            ) {
+            return;
+        }
 
-                toast.info(
-                    "Order status is already set to this status."
+        // =========================
+        // CHECK FRONTEND TRANSITION
+        // BACKEND ALSO VALIDATES THIS
+        // =========================
+        const possibleTransitions =
+            allowedTransitions[
+            previousStatus
+            ] || [];
+
+        if (
+            !possibleTransitions.includes(
+                status
+            )
+        ) {
+            toast.error(
+                `Invalid status transition from ${formatStatus(
+                    previousStatus
+                )} to ${formatStatus(status)}.`
+            );
+
+            setStatus(previousStatus);
+
+            return;
+        }
+
+        // =========================
+        // CONFIRM CANCELLATION
+        // =========================
+        if (status === "cancelled") {
+            const confirmed =
+                window.confirm(
+                    `Are you sure you want to cancel order #${order.orderNumber ||
+                    order._id
+                    }?\n\nThe products will be returned to stock.`
                 );
 
+            if (!confirmed) {
+                setStatus(previousStatus);
                 return;
             }
+        }
 
-            // =========================
-            // CHECK FRONTEND TRANSITION
-            // BACKEND ALSO VALIDATES THIS
-            // =========================
-            const possibleTransitions =
-                allowedTransitions[
-                previousStatus
-                ] || [];
+        try {
+            setSaving(true);
 
-            if (
-                !possibleTransitions.includes(
+            const data =
+                await updateOrderStatus(
+                    order._id,
                     status
-                )
-            ) {
+                );
 
-                toast.error(
-                    `Invalid status transition from ${formatStatus(
-                        previousStatus
-                    )} to ${formatStatus(
+            if (!data?.order) {
+                throw new Error(
+                    "Order status update failed."
+                );
+            }
+
+            setOrder(data.order);
+
+            setStatus(
+                data.order.status ||
+                status
+            );
+
+            // =========================
+            // SUCCESS MESSAGE
+            // =========================
+            if (status === "cancelled") {
+                toast.success(
+                    "Order cancelled successfully. Stock has been restored."
+                );
+            } else {
+                toast.success(
+                    `Order status changed to ${formatStatus(
                         status
                     )}.`
                 );
-
-                setStatus(
-                    previousStatus
-                );
-
-                return;
             }
+
+        } catch (error) {
+            console.error(
+                "UPDATE ORDER STATUS ERROR:",
+                error
+            );
+
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update order status.";
+
+            toast.error(message);
 
             // =========================
-            // CONFIRM CANCELLATION
+            // RESTORE CURRENT STATUS
             // =========================
-            if (
-                status ===
-                "cancelled"
-            ) {
+            setStatus(previousStatus);
 
-                const confirmed =
-                    window.confirm(
-                        `Are you sure you want to cancel order #${order.orderNumber ||
-                        order._id
-                        }?\n\nThe products will be returned to stock.`
-                    );
-
-                if (!confirmed) {
-
-                    setStatus(
-                        previousStatus
-                    );
-
-                    return;
-                }
-            }
-
-            try {
-
-                setSaving(true);
-
-                const data =
-                    await updateOrderStatus(
-                        order._id,
-                        status
-                    );
-
-                if (!data?.order) {
-                    throw new Error(
-                        "Order status update failed."
-                    );
-                }
-
-                setOrder(
-                    data.order
-                );
-
-                setStatus(
-                    data.order.status ||
-                    status
-                );
-
-                // =========================
-                // SUCCESS MESSAGE
-                // =========================
-                if (
-                    status ===
-                    "cancelled"
-                ) {
-
-                    toast.success(
-                        "Order cancelled successfully. Stock has been restored."
-                    );
-
-                } else {
-
-                    toast.success(
-                        `Order status changed to ${formatStatus(
-                            status
-                        )}.`
-                    );
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "UPDATE ORDER STATUS ERROR:",
-                    error
-                );
-
-                const message =
-                    error.response
-                        ?.data
-                        ?.message ||
-                    error.message ||
-                    "Failed to update order status.";
-
-                toast.error(
-                    message
-                );
-
-                // =========================
-                // RESTORE CURRENT STATUS
-                // =========================
-                setStatus(
-                    previousStatus
-                );
-
-            } finally {
-
-                setSaving(false);
-
-            }
-        };
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // =========================
     // LOADING
     // =========================
     if (loading) {
-
         return (
             <div
                 style={{
-                    maxWidth:
-                        "1200px",
-                    margin:
-                        "40px auto",
-                    padding:
-                        "20px",
+                    maxWidth: "1200px",
+                    margin: "40px auto",
+                    padding: "20px",
                 }}
             >
                 <div
                     style={{
-                        border:
-                            "1px solid #ddd",
-                        borderRadius:
-                            "12px",
-                        padding:
-                            "30px",
-                        background:
-                            "#fff",
+                        border: "1px solid #ddd",
+                        borderRadius: "12px",
+                        padding: "30px",
+                        background: "#fff",
                     }}
                 >
                     <h2>
@@ -506,10 +401,8 @@ function OrderDetail() {
 
                     <p
                         style={{
-                            color:
-                                "#666",
-                            marginBottom:
-                                0,
+                            color: "#666",
+                            marginBottom: 0,
                         }}
                     >
                         Please wait while the order is being loaded.
@@ -523,36 +416,26 @@ function OrderDetail() {
     // ERROR
     // =========================
     if (error) {
-
         return (
             <div
                 style={{
-                    maxWidth:
-                        "1200px",
-                    margin:
-                        "40px auto",
-                    padding:
-                        "20px",
+                    maxWidth: "1200px",
+                    margin: "40px auto",
+                    padding: "20px",
                 }}
             >
                 <div
                     style={{
-                        border:
-                            "1px solid #f1aeb5",
-                        background:
-                            "#f8d7da",
-                        color:
-                            "#842029",
-                        borderRadius:
-                            "12px",
-                        padding:
-                            "30px",
+                        border: "1px solid #f1aeb5",
+                        background: "#f8d7da",
+                        color: "#842029",
+                        borderRadius: "12px",
+                        padding: "30px",
                     }}
                 >
                     <h2
                         style={{
-                            marginTop:
-                                0,
+                            marginTop: 0,
                         }}
                     >
                         Failed to load order
@@ -560,8 +443,7 @@ function OrderDetail() {
 
                     <p
                         style={{
-                            marginBottom:
-                                0,
+                            marginBottom: 0,
                         }}
                     >
                         {error}
@@ -575,16 +457,12 @@ function OrderDetail() {
     // ORDER NOT FOUND
     // =========================
     if (!order) {
-
         return (
             <div
                 style={{
-                    maxWidth:
-                        "1200px",
-                    margin:
-                        "40px auto",
-                    padding:
-                        "20px",
+                    maxWidth: "1200px",
+                    margin: "40px auto",
+                    padding: "20px",
                 }}
             >
                 <h2>
@@ -598,38 +476,29 @@ function OrderDetail() {
     // CURRENT STATUS
     // =========================
     const currentStatus =
-        order.status ||
-        "pending";
+        order.status || "pending";
 
     const availableStatuses =
         getAvailableStatuses();
 
     const isFinalStatus =
-        currentStatus ===
-        "delivered" ||
-        currentStatus ===
-        "cancelled";
+        currentStatus === "delivered" ||
+        currentStatus === "cancelled";
 
     const hasStatusChanged =
-        status !==
-        currentStatus;
+        status !== currentStatus;
 
     const statusHistory =
-        Array.isArray(
-            order.statusHistory
-        )
+        Array.isArray(order.statusHistory)
             ? order.statusHistory
             : [];
 
     return (
         <div
             style={{
-                maxWidth:
-                    "1200px",
-                margin:
-                    "0 auto",
-                padding:
-                    "20px",
+                maxWidth: "1200px",
+                margin: "0 auto",
+                padding: "20px",
             }}
         >
 
@@ -638,26 +507,18 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    display:
-                        "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems:
-                        "center",
-                    gap:
-                        "20px",
-                    flexWrap:
-                        "wrap",
-                    marginBottom:
-                        "25px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "20px",
+                    flexWrap: "wrap",
+                    marginBottom: "25px",
                 }}
             >
                 <div>
-
                     <h1
                         style={{
-                            margin:
-                                "0 0 10px",
+                            margin: "0 0 10px",
                         }}
                     >
                         Order #
@@ -667,15 +528,12 @@ function OrderDetail() {
 
                     <p
                         style={{
-                            margin:
-                                0,
-                            color:
-                                "#666",
+                            margin: 0,
+                            color: "#666",
                         }}
                     >
                         Order management
                     </p>
-
                 </div>
 
                 <span
@@ -683,23 +541,17 @@ function OrderDetail() {
                         ...getStatusStyle(
                             currentStatus
                         ),
-                        display:
-                            "inline-block",
-                        padding:
-                            "9px 16px",
-                        borderRadius:
-                            "999px",
-                        fontWeight:
-                            "700",
-                        fontSize:
-                            "14px",
+                        display: "inline-block",
+                        padding: "9px 16px",
+                        borderRadius: "999px",
+                        fontWeight: "700",
+                        fontSize: "14px",
                     }}
                 >
                     {formatStatus(
                         currentStatus
                     )}
                 </span>
-
             </div>
 
             {/* =========================
@@ -707,23 +559,16 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Customer Information
@@ -779,12 +624,10 @@ function OrderDetail() {
                             City:
                         </strong>{" "}
                         {
-                            order.customer
-                                .city
+                            order.customer.city
                         }
                     </p>
                 )}
-
             </div>
 
             {/* =========================
@@ -792,110 +635,83 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Products
                 </h2>
 
                 {order.items?.length ? (
-
                     <div
                         style={{
-                            display:
-                                "flex",
-                            flexDirection:
-                                "column",
-                            gap:
-                                "15px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "15px",
                         }}
                     >
-
                         {order.items.map(
-                            (
-                                item,
-                                index
-                            ) => {
-
+                            (item, index) => {
                                 const image =
                                     item.image ||
                                     item.images?.[0] ||
                                     "";
 
-                                const itemTotal =
+                                const price =
                                     Number(
                                         item.price
-                                    ) *
+                                    ) || 0;
+
+                                const quantity =
                                     Number(
                                         item.quantity
-                                    );
+                                    ) || 0;
+
+                                const itemTotal =
+                                    price *
+                                    quantity;
 
                                 return (
                                     <div
                                         key={`${item.productId}-${index}`}
                                         style={{
-                                            border:
-                                                "1px solid #eee",
-                                            borderRadius:
-                                                "10px",
-                                            padding:
-                                                "15px",
-                                            background:
-                                                "#fafafa",
+                                            border: "1px solid #eee",
+                                            borderRadius: "10px",
+                                            padding: "15px",
+                                            background: "#fafafa",
                                         }}
                                     >
-
                                         <div
                                             style={{
-                                                display:
-                                                    "flex",
-                                                gap:
-                                                    "20px",
-                                                alignItems:
-                                                    "center",
-                                                flexWrap:
-                                                    "wrap",
+                                                display: "flex",
+                                                gap: "20px",
+                                                alignItems: "center",
+                                                flexWrap: "wrap",
                                             }}
                                         >
-
                                             {image && (
                                                 <img
-                                                    src={
-                                                        getImageUrl(
-                                                            image
-                                                        )
-                                                    }
+                                                    src={getImageUrl(
+                                                        image
+                                                    )}
                                                     alt={
                                                         item.name ||
                                                         "Product"
                                                     }
                                                     style={{
-                                                        width:
-                                                            "80px",
-                                                        height:
-                                                            "80px",
-                                                        objectFit:
-                                                            "cover",
-                                                        borderRadius:
-                                                            "8px",
-                                                        border:
-                                                            "1px solid #ddd",
+                                                        width: "80px",
+                                                        height: "80px",
+                                                        objectFit: "cover",
+                                                        borderRadius: "8px",
+                                                        border: "1px solid #ddd",
                                                     }}
                                                     onError={(
                                                         event
@@ -908,13 +724,10 @@ function OrderDetail() {
 
                                             <div
                                                 style={{
-                                                    flex:
-                                                        1,
-                                                    minWidth:
-                                                        "220px",
+                                                    flex: 1,
+                                                    minWidth: "220px",
                                                 }}
                                             >
-
                                                 <p>
                                                     <strong>
                                                         Product:
@@ -927,7 +740,7 @@ function OrderDetail() {
                                                     <strong>
                                                         Quantity:
                                                     </strong>{" "}
-                                                    {item.quantity}
+                                                    {quantity}
                                                 </p>
 
                                                 <p>
@@ -935,15 +748,14 @@ function OrderDetail() {
                                                         Price:
                                                     </strong>{" "}
                                                     {formatPrice(
-                                                        item.price
+                                                        price
                                                     )}{" "}
                                                     kr
                                                 </p>
 
                                                 <p
                                                     style={{
-                                                        marginBottom:
-                                                            0,
+                                                        marginBottom: 0,
                                                     }}
                                                 >
                                                     <strong>
@@ -954,26 +766,18 @@ function OrderDetail() {
                                                     )}{" "}
                                                     kr
                                                 </p>
-
                                             </div>
-
                                         </div>
-
                                     </div>
                                 );
                             }
                         )}
-
                     </div>
-
                 ) : (
-
                     <p>
                         No products found.
                     </p>
-
                 )}
-
             </div>
 
             {/* =========================
@@ -981,23 +785,16 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Pricing
@@ -1005,12 +802,9 @@ function OrderDetail() {
 
                 <div
                     style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        padding:
-                            "8px 0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
                     }}
                 >
                     <span>
@@ -1019,8 +813,7 @@ function OrderDetail() {
 
                     <strong>
                         {formatPrice(
-                            order.pricing
-                                ?.subtotal
+                            order.pricing?.subtotal
                         )}{" "}
                         kr
                     </strong>
@@ -1028,12 +821,9 @@ function OrderDetail() {
 
                 <div
                     style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        padding:
-                            "8px 0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
                     }}
                 >
                     <span>
@@ -1042,8 +832,7 @@ function OrderDetail() {
 
                     <strong>
                         {formatPrice(
-                            order.pricing
-                                ?.tax
+                            order.pricing?.tax
                         )}{" "}
                         kr
                     </strong>
@@ -1051,12 +840,9 @@ function OrderDetail() {
 
                 <div
                     style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        padding:
-                            "8px 0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "8px 0",
                     }}
                 >
                     <span>
@@ -1065,8 +851,7 @@ function OrderDetail() {
 
                     <strong>
                         {formatPrice(
-                            order.pricing
-                                ?.shipping
+                            order.pricing?.shipping
                         )}{" "}
                         kr
                     </strong>
@@ -1074,18 +859,12 @@ function OrderDetail() {
 
                 <div
                     style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        borderTop:
-                            "2px solid #222",
-                        marginTop:
-                            "10px",
-                        paddingTop:
-                            "15px",
-                        fontSize:
-                            "20px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        borderTop: "2px solid #222",
+                        marginTop: "10px",
+                        paddingTop: "15px",
+                        fontSize: "20px",
                     }}
                 >
                     <strong>
@@ -1094,13 +873,11 @@ function OrderDetail() {
 
                     <strong>
                         {formatPrice(
-                            order.pricing
-                                ?.total
+                            order.pricing?.total
                         )}{" "}
                         kr
                     </strong>
                 </div>
-
             </div>
 
             {/* =========================
@@ -1108,23 +885,16 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Payment
@@ -1134,19 +904,16 @@ function OrderDetail() {
                     <strong>
                         Method:
                     </strong>{" "}
-                    {order.payment
-                        ?.method ===
+                    {order.payment?.method ===
                         "cod"
                         ? "Cash on Delivery"
-                        : order.payment
-                            ?.method ||
+                        : order.payment?.method ||
                         "-"}
                 </p>
 
                 <p
                     style={{
-                        marginBottom:
-                            0,
+                        marginBottom: 0,
                     }}
                 >
                     <strong>
@@ -1156,29 +923,21 @@ function OrderDetail() {
                     <span
                         style={{
                             ...getPaymentStyle(
-                                order.payment
-                                    ?.status
+                                order.payment?.status
                             ),
-                            display:
-                                "inline-block",
-                            padding:
-                                "5px 10px",
-                            borderRadius:
-                                "999px",
-                            fontWeight:
-                                "600",
-                            fontSize:
-                                "13px",
+                            display: "inline-block",
+                            padding: "5px 10px",
+                            borderRadius: "999px",
+                            fontWeight: "600",
+                            fontSize: "13px",
                         }}
                     >
                         {formatStatus(
-                            order.payment
-                                ?.status ||
+                            order.payment?.status ||
                             "pending"
                         )}
                     </span>
                 </p>
-
             </div>
 
             {/* =========================
@@ -1186,42 +945,27 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <div
                     style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "space-between",
-                        alignItems:
-                            "center",
-                        gap:
-                            "20px",
-                        flexWrap:
-                            "wrap",
-                        marginBottom:
-                            "20px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "20px",
+                        flexWrap: "wrap",
+                        marginBottom: "20px",
                     }}
                 >
-
                     <div>
-
                         <h2
                             style={{
-                                margin:
-                                    "0 0 8px",
+                                margin: "0 0 8px",
                             }}
                         >
                             Order Status
@@ -1229,15 +973,12 @@ function OrderDetail() {
 
                         <p
                             style={{
-                                margin:
-                                    0,
-                                color:
-                                    "#666",
+                                margin: 0,
+                                color: "#666",
                             }}
                         >
                             Manage the current order status.
                         </p>
-
                     </div>
 
                     <span
@@ -1245,21 +986,16 @@ function OrderDetail() {
                             ...getStatusStyle(
                                 currentStatus
                             ),
-                            display:
-                                "inline-block",
-                            padding:
-                                "8px 14px",
-                            borderRadius:
-                                "999px",
-                            fontWeight:
-                                "600",
+                            display: "inline-block",
+                            padding: "8px 14px",
+                            borderRadius: "999px",
+                            fontWeight: "600",
                         }}
                     >
                         {formatStatus(
                             currentStatus
                         )}
                     </span>
-
                 </div>
 
                 {/* =========================
@@ -1267,24 +1003,15 @@ function OrderDetail() {
                 ========================= */}
                 <div
                     style={{
-                        display:
-                            "flex",
-                        alignItems:
-                            "center",
-                        gap:
-                            "12px",
-                        flexWrap:
-                            "wrap",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        flexWrap: "wrap",
                     }}
                 >
-
                     <select
-                        value={
-                            status
-                        }
-                        onChange={(
-                            event
-                        ) =>
+                        value={status}
+                        onChange={(event) =>
                             setStatus(
                                 event.target.value
                             )
@@ -1294,14 +1021,10 @@ function OrderDetail() {
                             isFinalStatus
                         }
                         style={{
-                            minWidth:
-                                "220px",
-                            padding:
-                                "10px 12px",
-                            border:
-                                "1px solid #ccc",
-                            borderRadius:
-                                "8px",
+                            minWidth: "220px",
+                            padding: "10px 12px",
+                            border: "1px solid #ccc",
+                            borderRadius: "8px",
                             background:
                                 isFinalStatus
                                     ? "#f5f5f5"
@@ -1312,12 +1035,8 @@ function OrderDetail() {
                                     : "pointer",
                         }}
                     >
-
                         {availableStatuses.map(
-                            (
-                                availableStatus
-                            ) => (
-
+                            (availableStatus) => (
                                 <option
                                     key={
                                         availableStatus
@@ -1330,10 +1049,8 @@ function OrderDetail() {
                                         availableStatus
                                     )}
                                 </option>
-
                             )
                         )}
-
                     </select>
 
                     <button
@@ -1347,22 +1064,17 @@ function OrderDetail() {
                             isFinalStatus
                         }
                         style={{
-                            padding:
-                                "10px 18px",
-                            border:
-                                "none",
-                            borderRadius:
-                                "8px",
+                            padding: "10px 18px",
+                            border: "none",
+                            borderRadius: "8px",
                             background:
                                 saving ||
                                     !hasStatusChanged ||
                                     isFinalStatus
                                     ? "#aaa"
                                     : "#222",
-                            color:
-                                "#fff",
-                            fontWeight:
-                                "600",
+                            color: "#fff",
+                            fontWeight: "600",
                             cursor:
                                 saving ||
                                     !hasStatusChanged ||
@@ -1375,7 +1087,6 @@ function OrderDetail() {
                             ? "Saving..."
                             : "Save Status"}
                     </button>
-
                 </div>
 
                 {/* =========================
@@ -1384,18 +1095,12 @@ function OrderDetail() {
                 {isFinalStatus && (
                     <div
                         style={{
-                            marginTop:
-                                "15px",
-                            padding:
-                                "12px 15px",
-                            borderRadius:
-                                "8px",
-                            background:
-                                "#f8f9fa",
-                            border:
-                                "1px solid #ddd",
-                            color:
-                                "#555",
+                            marginTop: "15px",
+                            padding: "12px 15px",
+                            borderRadius: "8px",
+                            background: "#f8f9fa",
+                            border: "1px solid #ddd",
+                            color: "#555",
                         }}
                     >
                         {currentStatus ===
@@ -1404,7 +1109,6 @@ function OrderDetail() {
                             : "This order has been delivered and cannot be moved to another status."}
                     </div>
                 )}
-
             </div>
 
             {/* =========================
@@ -1412,49 +1116,32 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    marginBottom:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    marginBottom: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Order Progress
                 </h2>
 
                 {statusHistory.length > 0 ? (
-
                     <div>
-
                         {statusHistory.map(
-                            (
-                                history,
-                                index
-                            ) => (
-
+                            (history, index) => (
                                 <div
                                     key={`${history.status}-${history.changedAt}-${index}`}
                                     style={{
-                                        display:
-                                            "flex",
-                                        alignItems:
-                                            "flex-start",
-                                        gap:
-                                            "15px",
-                                        padding:
-                                            "14px 0",
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        gap: "15px",
+                                        padding: "14px 0",
                                         borderBottom:
                                             index <
                                                 statusHistory.length -
@@ -1463,31 +1150,22 @@ function OrderDetail() {
                                                 : "none",
                                     }}
                                 >
-
                                     <div
                                         style={{
-                                            width:
-                                                "12px",
-                                            height:
-                                                "12px",
-                                            borderRadius:
-                                                "50%",
-                                            background:
-                                                "#222",
-                                            marginTop:
-                                                "5px",
-                                            flexShrink:
-                                                0,
+                                            width: "12px",
+                                            height: "12px",
+                                            borderRadius: "50%",
+                                            background: "#222",
+                                            marginTop: "5px",
+                                            flexShrink: 0,
                                         }}
                                     />
 
                                     <div
                                         style={{
-                                            flex:
-                                                1,
+                                            flex: 1,
                                         }}
                                     >
-
                                         <strong>
                                             {formatStatus(
                                                 history.status
@@ -1496,12 +1174,9 @@ function OrderDetail() {
 
                                         <div
                                             style={{
-                                                color:
-                                                    "#666",
-                                                fontSize:
-                                                    "14px",
-                                                marginTop:
-                                                    "4px",
+                                                color: "#666",
+                                                fontSize: "14px",
+                                                marginTop: "4px",
                                             }}
                                         >
                                             {history.changedAt
@@ -1510,31 +1185,21 @@ function OrderDetail() {
                                                 ).toLocaleString()
                                                 : "-"}
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             )
                         )}
-
                     </div>
-
                 ) : (
-
                     <p
                         style={{
-                            color:
-                                "#666",
-                            marginBottom:
-                                0,
+                            color: "#666",
+                            marginBottom: 0,
                         }}
                     >
                         No status history available.
                     </p>
-
                 )}
-
             </div>
 
             {/* =========================
@@ -1542,21 +1207,15 @@ function OrderDetail() {
             ========================= */}
             <div
                 style={{
-                    border:
-                        "1px solid #ddd",
-                    borderRadius:
-                        "12px",
-                    padding:
-                        "25px",
-                    background:
-                        "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "12px",
+                    padding: "25px",
+                    background: "#fff",
                 }}
             >
-
                 <h2
                     style={{
-                        marginTop:
-                            0,
+                        marginTop: 0,
                     }}
                 >
                     Order Information
@@ -1584,8 +1243,7 @@ function OrderDetail() {
 
                 <p
                     style={{
-                        marginBottom:
-                            0,
+                        marginBottom: 0,
                     }}
                 >
                     <strong>
@@ -1597,7 +1255,6 @@ function OrderDetail() {
                         ).toLocaleString()
                         : "-"}
                 </p>
-
             </div>
 
         </div>

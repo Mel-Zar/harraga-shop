@@ -285,6 +285,50 @@ export const getMyOrderById =
     };
 
 // =========================
+// 📦 CANCEL MY ORDER
+// CUSTOMER ONLY
+// =========================
+export const cancelMyOrder =
+    async (id) => {
+
+        try {
+
+            if (!id) {
+
+                throw new Error(
+                    "Order ID is required"
+                );
+
+            }
+
+            const response =
+                await axios.patch(
+                    `${API_URL}/my-orders/${id}/cancel`,
+                    {},
+                    {
+                        withCredentials:
+                            true,
+
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
+
+            return response.data;
+
+        } catch (error) {
+
+            console.error(
+                "❌ CANCEL MY ORDER ERROR:",
+                error.response?.data ||
+                error.message
+            );
+
+            throw error;
+        }
+    };
+
+// =========================
 // 📦 GET SINGLE ORDER
 // ADMIN ONLY
 // =========================
