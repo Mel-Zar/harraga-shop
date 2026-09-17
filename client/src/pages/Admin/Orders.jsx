@@ -51,6 +51,12 @@ function Orders() {
                         .includes(value) ||
                     order.status
                         ?.toLowerCase()
+                        .includes(value) ||
+                    order.payment?.status
+                        ?.toLowerCase()
+                        .includes(value) ||
+                    order.payment?.method
+                        ?.toLowerCase()
                         .includes(value)
                 );
             });
@@ -75,6 +81,53 @@ function Orders() {
 
             default:
                 return "#555";
+        }
+    };
+
+    const getPaymentColor = (status) => {
+        switch (status) {
+            case "paid":
+                return "#16a34a";
+
+            case "failed":
+                return "#dc2626";
+
+            case "refunded":
+                return "#6b7280";
+
+            case "pending":
+            default:
+                return "#f59e0b";
+        }
+    };
+
+    const formatStatus = (value) => {
+        if (!value) {
+            return "Pending";
+        }
+
+        return (
+            value.charAt(0).toUpperCase() +
+            value.slice(1)
+        );
+    };
+
+    const formatPaymentMethod = (method) => {
+        switch (method) {
+            case "cod":
+                return "Cash on Delivery";
+
+            case "stripe":
+                return "Stripe";
+
+            case "klarna":
+                return "Klarna";
+
+            case "swish":
+                return "Swish";
+
+            default:
+                return method || "-";
         }
     };
 
@@ -145,6 +198,34 @@ function Orders() {
                             (o) =>
                                 o.status ===
                                 "cancelled"
+                        ).length
+                    }
+                </div>
+
+                <div>
+                    <strong>Paid</strong>
+
+                    <br />
+
+                    {
+                        orders.filter(
+                            (o) =>
+                                o.payment?.status ===
+                                "paid"
+                        ).length
+                    }
+                </div>
+
+                <div>
+                    <strong>Payment Pending</strong>
+
+                    <br />
+
+                    {
+                        orders.filter(
+                            (o) =>
+                                o.payment?.status ===
+                                "pending"
                         ).length
                     }
                 </div>
@@ -246,6 +327,40 @@ function Orders() {
                                     order.status
                                 }
                             </span>
+                        </p>
+
+                        <p>
+                            <strong>
+                                Payment:
+                            </strong>{" "}
+                            <span
+                                style={{
+                                    color: getPaymentColor(
+                                        order.payment
+                                            ?.status
+                                    ),
+                                    fontWeight:
+                                        "bold",
+                                    textTransform:
+                                        "capitalize",
+                                }}
+                            >
+                                {formatStatus(
+                                    order.payment
+                                        ?.status ||
+                                    "pending"
+                                )}
+                            </span>
+                        </p>
+
+                        <p>
+                            <strong>
+                                Payment Method:
+                            </strong>{" "}
+                            {formatPaymentMethod(
+                                order.payment
+                                    ?.method
+                            )}
                         </p>
 
                         <p>

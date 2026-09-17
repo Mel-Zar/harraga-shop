@@ -200,10 +200,17 @@ function MyOrders() {
     // =========================
     // FORMAT PRICE
     // =========================
-    const formatPrice = (value) => {
-        const number = Number(value);
+    const formatPrice = (
+        value
+    ) => {
+        const number =
+            Number(value);
 
-        if (!Number.isFinite(number)) {
+        if (
+            !Number.isFinite(
+                number
+            )
+        ) {
             return "0.00";
         }
 
@@ -213,65 +220,166 @@ function MyOrders() {
     // =========================
     // FORMAT STATUS
     // =========================
-    const formatStatus = (status) => {
-        if (!status) {
-            return "Pending";
-        }
+    const formatStatus =
+        (status) => {
 
-        return (
-            status.charAt(0).toUpperCase() +
-            status.slice(1)
-        );
-    };
+            if (!status) {
+                return "Pending";
+            }
+
+            return (
+                status
+                    .charAt(0)
+                    .toUpperCase() +
+                status.slice(1)
+            );
+        };
 
     // =========================
     // STATUS STYLE
     // =========================
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case "pending":
-                return {
-                    background: "#fff3cd",
-                    color: "#856404",
-                    border: "1px solid #ffe69c",
-                };
+    const getStatusStyle =
+        (status) => {
 
-            case "processing":
-                return {
-                    background: "#cff4fc",
-                    color: "#055160",
-                    border: "1px solid #9eeaf9",
-                };
+            switch (status) {
 
-            case "shipped":
-                return {
-                    background: "#cfe2ff",
-                    color: "#084298",
-                    border: "1px solid #9ec5fe",
-                };
+                case "pending":
+                    return {
+                        background:
+                            "#fff3cd",
+                        color:
+                            "#856404",
+                        border:
+                            "1px solid #ffe69c",
+                    };
 
-            case "delivered":
-                return {
-                    background: "#d1e7dd",
-                    color: "#0f5132",
-                    border: "1px solid #a3cfbb",
-                };
+                case "processing":
+                    return {
+                        background:
+                            "#cff4fc",
+                        color:
+                            "#055160",
+                        border:
+                            "1px solid #9eeaf9",
+                    };
 
-            case "cancelled":
-                return {
-                    background: "#f8d7da",
-                    color: "#842029",
-                    border: "1px solid #f1aeb5",
-                };
+                case "shipped":
+                    return {
+                        background:
+                            "#cfe2ff",
+                        color:
+                            "#084298",
+                        border:
+                            "1px solid #9ec5fe",
+                    };
 
-            default:
-                return {
-                    background: "#f8f9fa",
-                    color: "#212529",
-                    border: "1px solid #dee2e6",
-                };
-        }
-    };
+                case "delivered":
+                    return {
+                        background:
+                            "#d1e7dd",
+                        color:
+                            "#0f5132",
+                        border:
+                            "1px solid #a3cfbb",
+                    };
+
+                case "cancelled":
+                    return {
+                        background:
+                            "#f8d7da",
+                        color:
+                            "#842029",
+                        border:
+                            "1px solid #f1aeb5",
+                    };
+
+                default:
+                    return {
+                        background:
+                            "#f8f9fa",
+                        color:
+                            "#212529",
+                        border:
+                            "1px solid #dee2e6",
+                    };
+            }
+        };
+
+    // =========================
+    // PAYMENT STATUS STYLE
+    // =========================
+    const getPaymentStatusStyle =
+        (status) => {
+
+            switch (status) {
+
+                case "paid":
+                    return {
+                        background:
+                            "#d1e7dd",
+                        color:
+                            "#0f5132",
+                        border:
+                            "1px solid #a3cfbb",
+                    };
+
+                case "failed":
+                    return {
+                        background:
+                            "#f8d7da",
+                        color:
+                            "#842029",
+                        border:
+                            "1px solid #f1aeb5",
+                    };
+
+                case "refunded":
+                    return {
+                        background:
+                            "#e2e3e5",
+                        color:
+                            "#41464b",
+                        border:
+                            "1px solid #d3d6d8",
+                    };
+
+                case "pending":
+                default:
+                    return {
+                        background:
+                            "#fff3cd",
+                        color:
+                            "#856404",
+                        border:
+                            "1px solid #ffe69c",
+                    };
+            }
+        };
+
+    // =========================
+    // PAYMENT METHOD
+    // =========================
+    const formatPaymentMethod =
+        (method) => {
+
+            switch (method) {
+
+                case "cod":
+                    return "Cash on Delivery";
+
+                case "stripe":
+                    return "Stripe";
+
+                case "klarna":
+                    return "Klarna";
+
+                case "swish":
+                    return "Swish";
+
+                default:
+                    return method || "-";
+            }
+        };
 
     // =========================
     // LOADING
@@ -471,6 +579,10 @@ function MyOrders() {
                             order.status ||
                             "pending";
 
+                        const paymentStatus =
+                            order.payment?.status ||
+                            "pending";
+
                         return (
                             <div
                                 key={order._id}
@@ -540,27 +652,59 @@ function MyOrders() {
                                     {/* =========================
                                 STATUS
                             ========================= */}
-                                    <span
+                                    <div
                                         style={{
-                                            ...getStatusStyle(
-                                                status
-                                            ),
-                                            display:
-                                                "inline-block",
-                                            padding:
-                                                "7px 14px",
-                                            borderRadius:
-                                                "999px",
-                                            fontWeight:
-                                                "600",
-                                            fontSize:
-                                                "14px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "10px",
+                                            flexWrap: "wrap",
                                         }}
                                     >
-                                        {formatStatus(
-                                            status
-                                        )}
-                                    </span>
+                                        <span
+                                            style={{
+                                                ...getStatusStyle(
+                                                    status
+                                                ),
+                                                display:
+                                                    "inline-block",
+                                                padding:
+                                                    "7px 14px",
+                                                borderRadius:
+                                                    "999px",
+                                                fontWeight:
+                                                    "600",
+                                                fontSize:
+                                                    "14px",
+                                            }}
+                                        >
+                                            {formatStatus(
+                                                status
+                                            )}
+                                        </span>
+
+                                        <span
+                                            style={{
+                                                ...getPaymentStatusStyle(
+                                                    paymentStatus
+                                                ),
+                                                display:
+                                                    "inline-block",
+                                                padding:
+                                                    "7px 14px",
+                                                borderRadius:
+                                                    "999px",
+                                                fontWeight:
+                                                    "600",
+                                                fontSize:
+                                                    "14px",
+                                            }}
+                                        >
+                                            Payment:{" "}
+                                            {formatStatus(
+                                                paymentStatus
+                                            )}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <hr
@@ -757,6 +901,25 @@ function MyOrders() {
                                             )}{" "}
                                             kr
                                         </strong>
+
+                                        <span
+                                            style={{
+                                                display:
+                                                    "block",
+                                                marginTop:
+                                                    "5px",
+                                                color:
+                                                    "#666",
+                                                fontSize:
+                                                    "13px",
+                                            }}
+                                        >
+                                            Payment method:{" "}
+                                            {formatPaymentMethod(
+                                                order.payment
+                                                    ?.method
+                                            )}
+                                        </span>
                                     </div>
 
                                     {/* =========================

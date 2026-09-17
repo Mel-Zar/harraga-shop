@@ -236,6 +236,37 @@ export const createStripeCheckoutSession = async ({
         }
     );
 
+    // =================================================
+    // STRIPE DIAGNOSTICS
+    // =================================================
+
+    console.log(
+        "STRIPE CHECKOUT CONFIG:",
+        {
+            keyMode:
+                stripeSecretKey?.startsWith("sk_test_")
+                    ? "test"
+                    : stripeSecretKey?.startsWith("sk_live_")
+                        ? "live"
+                        : "unknown",
+
+            frontendUrl:
+                validFrontendUrl,
+
+            orderId:
+                order._id.toString(),
+
+            orderNumber:
+                order.orderNumber,
+
+            paymentMethod:
+                paymentMethod,
+
+            paymentMethodTypes:
+                paymentMethodTypes,
+        }
+    );
+
     const session =
         await stripe.checkout.sessions.create({
             mode: "payment",
@@ -274,7 +305,28 @@ export const createStripeCheckoutSession = async ({
                 cancelUrl,
         });
 
-    return session;
+    console.log(
+        "STRIPE SESSION CREATED:",
+        {
+            sessionId:
+                session.id,
+
+            paymentStatus:
+                session.payment_status,
+
+            status:
+                session.status,
+
+            url:
+                session.url,
+        }
+    );
+
+    return {
+        ...session,
+        checkoutUrl:
+            session.url,
+    };
 };
 
 // =====================================================
