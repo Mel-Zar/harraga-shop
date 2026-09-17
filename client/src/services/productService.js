@@ -32,12 +32,30 @@ const getAuthConfig = () => {
 // 📦 GET ALL PRODUCTS
 // =========================
 
-export const getProducts = async () => {
+export const getProducts = async (
+    params = {}
+) => {
     try {
         const response =
             await axios.get(
                 API_URL,
-                getAuthConfig()
+                {
+                    ...getAuthConfig(),
+
+                    params: {
+                        search:
+                            params.search ||
+                            undefined,
+
+                        category:
+                            params.category ||
+                            undefined,
+
+                        sort:
+                            params.sort ||
+                            "newest",
+                    },
+                }
             );
 
         return response.data;
@@ -52,6 +70,32 @@ export const getProducts = async () => {
         throw error;
     }
 };
+
+// =========================
+// 📂 GET PRODUCT CATEGORIES
+// =========================
+
+export const getProductCategories =
+    async () => {
+        try {
+            const response =
+                await axios.get(
+                    `${API_URL}/categories`,
+                    getAuthConfig()
+                );
+
+            return response.data;
+
+        } catch (error) {
+            console.error(
+                "❌ GET PRODUCT CATEGORIES ERROR:",
+                error.response?.data ||
+                error.message
+            );
+
+            throw error;
+        }
+    };
 
 // =========================
 // 📦 GET SINGLE PRODUCT

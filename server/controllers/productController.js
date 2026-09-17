@@ -192,12 +192,128 @@ export const getProducts = async (
     res
 ) => {
     try {
-        const products =
-            await Product.find()
-                .select("-__v")
-                .sort({
+
+        // =========================
+        // SEARCH
+        // =========================
+
+        const {
+            search,
+            category,
+            sort,
+        } = req.query;
+
+        const filter = {};
+
+        if (
+            search &&
+            search.trim()
+        ) {
+            const escapedSearch =
+                search
+                    .trim()
+                    .replace(
+                        /[.*+?^${}()|[\]\\]/g,
+                        "\\$&"
+                    );
+
+            filter.$or = [
+                {
+                    name: {
+                        $regex:
+                            escapedSearch,
+                        $options:
+                            "i",
+                    },
+                },
+                {
+                    description: {
+                        $regex:
+                            escapedSearch,
+                        $options:
+                            "i",
+                    },
+                },
+            ];
+        }
+
+        // =========================
+        // CATEGORY FILTER
+        // =========================
+
+        if (
+            category &&
+            category.trim()
+        ) {
+            filter.category =
+                category.trim();
+        }
+
+        // =========================
+        // SORT
+        // =========================
+
+        let sortOption = {
+            createdAt: -1,
+        };
+
+        switch (sort) {
+
+            case "price_asc":
+                sortOption = {
+                    price: 1,
+                };
+                break;
+
+            case "price_desc":
+                sortOption = {
+                    price: -1,
+                };
+                break;
+
+            case "name_asc":
+                sortOption = {
+                    name: 1,
+                };
+                break;
+
+            case "name_desc":
+                sortOption = {
+                    name: -1,
+                };
+                break;
+
+            case "newest":
+                sortOption = {
                     createdAt: -1,
-                })
+                };
+                break;
+
+            case "oldest":
+                sortOption = {
+                    createdAt: 1,
+                };
+                break;
+
+            default:
+                sortOption = {
+                    createdAt: -1,
+                };
+                break;
+        }
+
+        // =========================
+        // GET PRODUCTS
+        // =========================
+
+        const products =
+            await Product.find(
+                filter
+            )
+                .select("-__v")
+                .sort(
+                    sortOption
+                )
                 .lean();
 
         return res
@@ -215,6 +331,75 @@ export const getProducts = async (
             .json({
                 message:
                     "Failed to fetch products",
+            });
+    }
+};
+
+// =========================
+// GET PRODUCT CATEGORIES
+// =========================
+
+export const getProductCategories = async (
+    req,
+    res
+) => {
+    try {
+        const categories =
+            await Product.distinct(
+                "category"
+            );
+
+        const sortedCategories =
+            categories
+                .filter(
+                    (category) =>
+                        typeof category ===
+                        "string" &&
+                        category.trim() !== ""
+                )
+                .map(
+                    (category) =>
+                        category.trim()
+                )
+                .filter(
+                    (
+                        category,
+                        index,
+                        array
+                    ) =>
+                        array.indexOf(
+                            category
+                        ) === index
+                )
+                .sort(
+                    (a, b) =>
+                        a.localeCompare(
+                            b,
+                            undefined,
+                            {
+                                sensitivity:
+                                    "base",
+                            }
+                        )
+                );
+
+        return res
+            .status(200)
+            .json(
+                sortedCategories
+            );
+
+    } catch (error) {
+        console.error(
+            "GET PRODUCT CATEGORIES ERROR:",
+            error
+        );
+
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to fetch product categories",
             });
     }
 };

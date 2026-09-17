@@ -6,15 +6,29 @@ function Home() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // =========================
+    // GET FEATURED PRODUCTS
+    // =========================
+
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const data = await getProducts();
+                const data = await getProducts({
+                    sort: "newest",
+                });
 
-                // Visa t.ex. bara de 4 första produkterna på startsidan
-                setProducts(data.slice(0, 4));
+                // Visa bara de 4 nyaste produkterna
+                setProducts(
+                    Array.isArray(data)
+                        ? data.slice(0, 4)
+                        : []
+                );
+
             } catch (error) {
-                console.error(error);
+                console.error(
+                    "HOME PRODUCTS ERROR:",
+                    error
+                );
             } finally {
                 setLoading(false);
             }
@@ -23,8 +37,22 @@ function Home() {
         fetchProducts();
     }, []);
 
+    // =========================
+    // LOADING
+    // =========================
+
     if (loading) {
-        return <h2>Loading...</h2>;
+        return (
+            <div
+                style={{
+                    padding: "20px",
+                }}
+            >
+                <h2>
+                    Loading...
+                </h2>
+            </div>
+        );
     }
 
     return (
@@ -33,10 +61,18 @@ function Home() {
                 padding: "20px",
             }}
         >
-            <h1>Featured Products</h1>
+            {/* =========================
+                FEATURED PRODUCTS
+            ========================= */}
+
+            <h1>
+                Featured Products
+            </h1>
 
             {products.length === 0 ? (
-                <p>No products found.</p>
+                <p>
+                    No products found.
+                </p>
             ) : (
                 <div
                     style={{
@@ -46,12 +82,18 @@ function Home() {
                         gap: "20px",
                     }}
                 >
-                    {products.map((product) => (
-                        <HomeProductCard
-                            key={product._id}
-                            product={product}
-                        />
-                    ))}
+                    {products.map(
+                        (product) => (
+                            <HomeProductCard
+                                key={
+                                    product._id
+                                }
+                                product={
+                                    product
+                                }
+                            />
+                        )
+                    )}
                 </div>
             )}
         </div>
