@@ -34,6 +34,8 @@ import {
 
     deleteAddress,
 
+    setDefaultAddress,
+
 } from "../controllers/addressController.js";
 
 const router = express.Router();
@@ -99,6 +101,18 @@ router.post(
     protect,
 
     addAddress
+
+);
+
+// PUT /api/users/me/addresses/:id/default
+
+router.put(
+
+    "/me/addresses/:id/default",
+
+    protect,
+
+    setDefaultAddress
 
 );
 

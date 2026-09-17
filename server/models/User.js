@@ -12,6 +12,13 @@ const addressSchema = new mongoose.Schema(
             trim: true,
         },
 
+        email: {
+            type: String,
+            lowercase: true,
+            trim: true,
+            maxlength: 320,
+        },
+
         phone: {
             type: String,
             trim: true,
@@ -35,6 +42,15 @@ const addressSchema = new mongoose.Schema(
         country: {
             type: String,
             trim: true,
+        },
+
+        // =================================================
+        // ⭐ PRIMARY / DEFAULT ADDRESS
+        // =================================================
+
+        isDefault: {
+            type: Boolean,
+            default: false,
         },
     },
     { _id: false }

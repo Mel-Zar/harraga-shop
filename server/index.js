@@ -15,7 +15,33 @@ import rateLimit from "express-rate-limit";
 // SAFETY CHECK (VIKTIGT)
 // =========================
 if (!process.env.MONGO_URI) {
-    console.error("❌ MONGO_URI saknas i .env");
+    console.error(
+        "❌ MONGO_URI saknas i .env"
+    );
+
+    process.exit(1);
+}
+
+if (
+    !process.env.MONGO_URI.startsWith(
+        "mongodb://"
+    ) &&
+    !process.env.MONGO_URI.startsWith(
+        "mongodb+srv://"
+    )
+) {
+    console.error(
+        "❌ MONGO_URI har fel format."
+    );
+
+    console.error(
+        "MONGO_URI börjar med:",
+        process.env.MONGO_URI.slice(
+            0,
+            20
+        )
+    );
+
     process.exit(1);
 }
 
@@ -27,33 +53,49 @@ const app = express();
 // =========================
 // FIX __dirname (ESM)
 // =========================
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename =
+    fileURLToPath(import.meta.url);
+
+const __dirname =
+    path.dirname(__filename);
 
 // =========================
 // TRUST PROXY
 // =========================
-app.set("trust proxy", 1);
+app.set(
+    "trust proxy",
+    1
+);
 
 // =========================
 // SECURITY
 // =========================
-app.use(helmet());
+app.use(
+    helmet()
+);
 
 // =========================
 // CORS
 // =========================
-const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean)
-    : ["http://localhost:5173"];
+const allowedOrigins =
+    process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN
+            .split(",")
+            .map(
+                (o) =>
+                    o.trim()
+            )
+            .filter(Boolean)
+        : [
+            "http://localhost:5173",
+        ];
 
 app.use(
     cors({
-        origin: allowedOrigins,
-        credentials: true,
+        origin:
+            allowedOrigins,
+        credentials:
+            true,
     })
 );
 
@@ -75,18 +117,29 @@ app.use(
 // =========================
 // BODY PARSING
 // =========================
-app.use(express.json());
-app.use(cookieParser());
+app.use(
+    express.json()
+);
+
+app.use(
+    cookieParser()
+);
 
 // =========================
 // RATE LIMIT
 // =========================
 app.use(
     rateLimit({
-        windowMs: 15 * 60 * 1000,
+        windowMs:
+            15 * 60 * 1000,
+
         max: 300,
-        standardHeaders: true,
-        legacyHeaders: false,
+
+        standardHeaders:
+            true,
+
+        legacyHeaders:
+            false,
     })
 );
 
@@ -95,23 +148,35 @@ app.use(
 // =========================
 app.use(
     "/uploads",
-    express.static(path.join(__dirname, "uploads"), {
-        setHeaders: (res) => {
-            res.setHeader(
-                "Cross-Origin-Resource-Policy",
-                "cross-origin"
-            );
-        },
-    })
+    express.static(
+        path.join(
+            __dirname,
+            "uploads"
+        ),
+        {
+            setHeaders: (
+                res
+            ) => {
+                res.setHeader(
+                    "Cross-Origin-Resource-Policy",
+                    "cross-origin"
+                );
+            },
+        }
+    )
 );
 
-app.use("/uploads", (req, res, next) => {
-    res.setHeader(
-        "Access-Control-Allow-Origin",
-        "*"
-    );
-    next();
-});
+app.use(
+    "/uploads",
+    (req, res, next) => {
+        res.setHeader(
+            "Access-Control-Allow-Origin",
+            "*"
+        );
+
+        next();
+    }
+);
 
 // =========================
 // DB (SAFE INIT)
@@ -130,49 +195,107 @@ import protectedRoutes from "./routes/protectedRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/address", addressRoutes);
-app.use("/api/countries", countryRoutes);
-app.use("/api/protected", protectedRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
+app.use(
+    "/api/auth",
+    authRoutes
+);
+
+app.use(
+    "/api/users",
+    userRoutes
+);
+
+app.use(
+    "/api/address",
+    addressRoutes
+);
+
+app.use(
+    "/api/countries",
+    countryRoutes
+);
+
+app.use(
+    "/api/protected",
+    protectedRoutes
+);
+
+app.use(
+    "/api/products",
+    productRoutes
+);
+
+app.use(
+    "/api/orders",
+    orderRoutes
+);
 
 // =========================
 // HEALTH
 // =========================
-app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        status: "OK",
-    });
-});
+app.get(
+    "/api/health",
+    (req, res) => {
+        res.status(200).json({
+            status: "OK",
+        });
+    }
+);
 
 // =========================
 // 404
 // =========================
-app.use((req, res) => {
-    res.status(404).json({
-        message: "Route not found",
-        path: req.originalUrl,
-    });
-});
+app.use(
+    (req, res) => {
+        res.status(404).json({
+            message:
+                "Route not found",
+
+            path:
+                req.originalUrl,
+        });
+    }
+);
 
 // =========================
 // ERROR HANDLER
 // =========================
-app.use((err, req, res, next) => {
-    console.error("❌ Server error:", err);
+app.use(
+    (
+        err,
+        req,
+        res,
+        next
+    ) => {
+        console.error(
+            "❌ Server error:",
+            err
+        );
 
-    res.status(500).json({
-        message: "Server error",
-    });
-});
+        res.status(500).json({
+            message:
+                "Server error",
+        });
+    }
+);
 
 // =========================
 // START SERVER
 // =========================
-const PORT = process.env.PORT || 5050;
+const PORT =
+    process.env.PORT ||
+    5050;
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(
+    PORT,
+    () => {
+        console.log(
+            `🚀 Server running on port ${PORT}`
+        );
+    }
+);
+
+console.log(
+    "GOOGLE MAPS KEY LOADED:",
+    Boolean(process.env.GOOGLE_MAPS_API_KEY)
+);

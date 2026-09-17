@@ -345,6 +345,45 @@ export const addAddress = async (
 };
 
 // =====================================================
+// ⭐ SET PRIMARY / DEFAULT ADDRESS
+// =====================================================
+
+export const setDefaultAddress = async (
+    token,
+    id
+) => {
+
+    if (!id) {
+
+        throw new Error(
+            "Address ID is required."
+        );
+
+    }
+
+    try {
+
+        const res =
+            await axios.put(
+                `${API_URL}/api/users/me/addresses/${id}/default`,
+                {},
+                authHeaders(token)
+            );
+
+        return res.data;
+
+    } catch (error) {
+
+        throw new Error(
+            getErrorMessage(
+                error,
+                "Failed to set primary address."
+            )
+        );
+    }
+};
+
+// =====================================================
 // 📍 DELETE ADDRESS
 // =====================================================
 

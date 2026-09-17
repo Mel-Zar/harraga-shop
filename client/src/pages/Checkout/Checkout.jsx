@@ -1,7 +1,20 @@
-import { useState } from "react";
+import {
+    useEffect,
+    useState,
+} from "react";
+
 import { useCart } from "../../context/useCart";
+
 import { useNavigate } from "react-router-dom";
+
 import { toast } from "react-toastify";
+
+import {
+    getAddresses,
+    addAddress,
+} from "../../services/userService";
+
+import AddressInput from "../../components/address/AddressInput.jsx";
 
 import {
     createOrder,
@@ -19,6 +32,55 @@ function Checkout() {
         useNavigate();
 
 
+    // ============================================
+    // 👤 AUTHENTICATION
+    // ============================================
+
+    const token =
+        localStorage.getItem("token");
+
+    const isLoggedIn =
+        Boolean(
+            token &&
+            token !== "null" &&
+            token !== "undefined"
+        );
+
+
+    // ============================================
+    // 📍 SAVED ADDRESSES
+    // ============================================
+
+    const [addresses, setAddresses] =
+        useState([]);
+
+    const [selectedAddressId, setSelectedAddressId] =
+        useState("");
+
+    const [useNewAddress, setUseNewAddress] =
+        useState(!isLoggedIn);
+
+    const [saveNewAddress, setSaveNewAddress] =
+        useState(false);
+
+    const [makeNewAddressDefault, setMakeNewAddressDefault] =
+        useState(false);
+
+    const [addressesLoading, setAddressesLoading] =
+        useState(false);
+
+
+    // ============================================
+    // 🌍 COUNTRIES
+    // ============================================
+
+    const [countries, setCountries] =
+        useState([]);
+
+
+    // ============================================
+    // 📝 CHECKOUT FORM
+    // ============================================
 
     const [form, setForm] =
         useState({
@@ -28,20 +90,256 @@ function Checkout() {
             phone: "",
             city: "",
             postalCode: "",
+            country: "",
+            countryCode: "",
+            addressVerified: false,
         });
 
 
+    // ============================================
+    // 💳 PAYMENT METHOD
+    // ============================================
 
     const [paymentMethod, setPaymentMethod] =
         useState("cod");
 
 
+    // ============================================
+    // 🔒 SUBMIT STATE
+    // ============================================
 
     const [isSubmitting, setIsSubmitting] =
         useState(false);
 
 
+    // ============================================
+    // 🌍 LOAD COUNTRIES
+    // ============================================
 
+    useEffect(() => {
+
+        const fetchCountries =
+            async () => {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${import.meta.env.VITE_API_URL}/api/countries`
+                        );
+
+                    const data =
+                        await response.json();
+
+                    console.log(
+                        "📦 CHECKOUT COUNTRIES:",
+                        data
+                    );
+
+                    if (
+                        Array.isArray(data)
+                    ) {
+
+                        setCountries(
+                            data
+                        );
+
+                    } else if (
+                        data &&
+                        typeof data ===
+                        "object"
+                    ) {
+
+                        setCountries(
+                            Object.values(data)
+                        );
+
+                    } else {
+
+                        setCountries([]);
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "GET CHECKOUT COUNTRIES ERROR:",
+                        error
+                    );
+
+                    setCountries([]);
+
+                    toast.error(
+                        "Failed to load countries."
+                    );
+
+                }
+
+            };
+
+        fetchCountries();
+
+    }, []);
+
+
+    // ============================================
+    // 📍 LOAD SAVED ADDRESSES
+    // ============================================
+
+    useEffect(() => {
+
+        const fetchAddresses =
+            async () => {
+
+                if (!isLoggedIn) {
+                    return;
+                }
+
+                try {
+
+                    setAddressesLoading(
+                        true
+                    );
+
+                    const data =
+                        await getAddresses(
+                            token
+                        );
+
+                    let loadedAddresses = [];
+
+                    if (
+                        Array.isArray(data)
+                    ) {
+
+                        loadedAddresses =
+                            data;
+
+                    } else if (
+                        Array.isArray(
+                            data?.addresses
+                        )
+                    ) {
+
+                        loadedAddresses =
+                            data.addresses;
+
+                    }
+
+                    setAddresses(
+                        loadedAddresses
+                    );
+
+
+                    // ============================================
+                    // ⭐ AUTOMATICALLY SELECT PRIMARY ADDRESS
+                    // ============================================
+
+                    if (
+                        loadedAddresses.length > 0
+                    ) {
+
+                        const defaultAddress =
+                            loadedAddresses.find(
+                                (address) =>
+                                    address.isDefault === true
+                            );
+
+                        const addressToSelect =
+                            defaultAddress ||
+                            loadedAddresses[0];
+
+                        const addressId =
+                            addressToSelect._id ||
+                            addressToSelect.id;
+
+                        setSelectedAddressId(
+                            String(
+                                addressId
+                            )
+                        );
+
+                        setUseNewAddress(
+                            false
+                        );
+
+                        setForm(
+                            (previousForm) => ({
+                                ...previousForm,
+
+                                name:
+                                    addressToSelect.fullName ||
+                                    previousForm.name,
+
+                                phone:
+                                    addressToSelect.phone ||
+                                    previousForm.phone,
+
+                                address:
+                                    addressToSelect.street ||
+                                    previousForm.address,
+
+                                city:
+                                    addressToSelect.city ||
+                                    previousForm.city,
+
+                                postalCode:
+                                    addressToSelect.postalCode ||
+                                    previousForm.postalCode,
+
+                                country:
+                                    addressToSelect.country ||
+                                    previousForm.country,
+
+                                countryCode:
+                                    addressToSelect.countryCode ||
+                                    previousForm.countryCode,
+
+                                addressVerified:
+                                    true,
+                            })
+                        );
+
+                    } else {
+
+                        setUseNewAddress(
+                            true
+                        );
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "GET CHECKOUT ADDRESSES ERROR:",
+                        error
+                    );
+
+                    toast.error(
+                        error?.message ||
+                        "Failed to load saved addresses."
+                    );
+
+                    setUseNewAddress(
+                        true
+                    );
+
+                } finally {
+
+                    setAddressesLoading(
+                        false
+                    );
+
+                }
+
+            };
+
+        fetchAddresses();
+
+    }, [
+        isLoggedIn,
+        token,
+    ]);
 
 
     // ============================================
@@ -62,10 +360,8 @@ function Checkout() {
         );
 
 
-
     const tax =
         subtotal * 0.25;
-
 
 
     const shipping =
@@ -74,14 +370,10 @@ function Checkout() {
             : 0;
 
 
-
     const totalPrice =
         subtotal +
         tax +
         shipping;
-
-
-
 
 
     // ============================================
@@ -99,9 +391,6 @@ function Checkout() {
         );
 
 
-
-
-
     // ============================================
     // 📝 HANDLE FORM CHANGE
     // ============================================
@@ -116,18 +405,152 @@ function Checkout() {
         } = e.target;
 
 
-
         setForm(
             (previousForm) => ({
                 ...previousForm,
                 [name]: value,
+
+                ...(name === "address"
+                    ? {
+                        addressVerified:
+                            false,
+                    }
+                    : {}),
             })
         );
 
     };
 
 
+    // ============================================
+    // 🌍 HANDLE COUNTRY CHANGE
+    // ============================================
 
+    const handleCountryChange = (
+        e
+    ) => {
+
+        const selectedCountry =
+            e.target.value;
+
+        setForm(
+            (previousForm) => ({
+                ...previousForm,
+
+                country:
+                    selectedCountry,
+
+                countryCode:
+                    "",
+
+                addressVerified:
+                    false,
+            })
+        );
+
+    };
+
+
+    // ============================================
+    // 📍 HANDLE SAVED ADDRESS CHANGE
+    // ============================================
+
+    const handleAddressSelection = (
+        e
+    ) => {
+
+        const value =
+            e.target.value;
+
+
+        if (
+            value === "new"
+        ) {
+
+            setSelectedAddressId(
+                ""
+            );
+
+            setUseNewAddress(
+                true
+            );
+
+            setForm(
+                (previousForm) => ({
+                    ...previousForm,
+                    addressVerified:
+                        false,
+                })
+            );
+
+            return;
+
+        }
+
+
+        const selectedAddress =
+            addresses.find(
+                (address) =>
+                    String(
+                        address._id ||
+                        address.id
+                    ) ===
+                    String(value)
+            );
+
+
+        if (!selectedAddress) {
+            return;
+        }
+
+
+        setSelectedAddressId(
+            String(value)
+        );
+
+        setUseNewAddress(
+            false
+        );
+
+
+        setForm(
+            (previousForm) => ({
+                ...previousForm,
+
+                name:
+                    selectedAddress.fullName ||
+                    "",
+
+                phone:
+                    selectedAddress.phone ||
+                    "",
+
+                address:
+                    selectedAddress.street ||
+                    "",
+
+                city:
+                    selectedAddress.city ||
+                    "",
+
+                postalCode:
+                    selectedAddress.postalCode ||
+                    "",
+
+                country:
+                    selectedAddress.country ||
+                    "",
+
+                countryCode:
+                    selectedAddress.countryCode ||
+                    "",
+
+                addressVerified:
+                    true,
+            })
+        );
+
+    };
 
 
     // ============================================
@@ -135,6 +558,7 @@ function Checkout() {
     // ============================================
 
     const normalizedForm = {
+
         name:
             form.name.trim(),
 
@@ -152,10 +576,19 @@ function Checkout() {
 
         postalCode:
             form.postalCode.trim(),
+
+        country:
+            form.country.trim(),
+
+        countryCode:
+            form.countryCode?.trim() ||
+            "",
+
+        addressVerified:
+            Boolean(
+                form.addressVerified
+            ),
     };
-
-
-
 
 
     // ============================================
@@ -171,15 +604,11 @@ function Checkout() {
         }
 
 
-
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             email
         );
 
     };
-
-
-
 
 
     // ============================================
@@ -197,7 +626,86 @@ function Checkout() {
     };
 
 
+    // ============================================
+    // 💾 SAVE NEW ADDRESS
+    // ============================================
 
+    const saveAddressToBook =
+        async () => {
+
+            if (
+                !isLoggedIn ||
+                !saveNewAddress
+            ) {
+                return;
+            }
+
+
+            const addressData = {
+
+                fullName:
+                    normalizedForm.name,
+
+                phone:
+                    normalizedForm.phone,
+
+                street:
+                    normalizedForm.address,
+
+                city:
+                    normalizedForm.city,
+
+                postalCode:
+                    normalizedForm.postalCode,
+
+                country:
+                    normalizedForm.country,
+
+                isDefault:
+                    makeNewAddressDefault,
+
+            };
+
+
+            const response =
+                await addAddress(
+                    token,
+                    addressData
+                );
+
+
+            let savedAddresses = [];
+
+            if (
+                Array.isArray(response)
+            ) {
+
+                savedAddresses =
+                    response;
+
+            } else if (
+                Array.isArray(
+                    response?.addresses
+                )
+            ) {
+
+                savedAddresses =
+                    response.addresses;
+
+            }
+
+
+            if (
+                savedAddresses.length > 0
+            ) {
+
+                setAddresses(
+                    savedAddresses
+                );
+
+            }
+
+        };
 
 
     // ============================================
@@ -209,7 +717,6 @@ function Checkout() {
     ) => {
 
         e.preventDefault();
-
 
 
         // ============================================
@@ -228,9 +735,6 @@ function Checkout() {
         }
 
 
-
-
-
         // ============================================
         // 📝 REQUIRED FORM VALIDATION
         // ============================================
@@ -238,7 +742,8 @@ function Checkout() {
         if (
             !normalizedForm.name ||
             !normalizedForm.address ||
-            !normalizedForm.phone
+            !normalizedForm.phone ||
+            !normalizedForm.country
         ) {
 
             toast.error(
@@ -249,7 +754,21 @@ function Checkout() {
         }
 
 
+        // ============================================
+        // 📍 GOOGLE ADDRESS VALIDATION
+        // ============================================
 
+        if (
+            useNewAddress &&
+            !normalizedForm.addressVerified
+        ) {
+
+            toast.warning(
+                "Please select a valid address from the address suggestions."
+            );
+
+            return;
+        }
 
 
         // ============================================
@@ -271,9 +790,6 @@ function Checkout() {
         }
 
 
-
-
-
         // ============================================
         // 📞 PHONE VALIDATION
         // ============================================
@@ -292,9 +808,6 @@ function Checkout() {
         }
 
 
-
-
-
         // ============================================
         // 🔒 PREVENT DOUBLE SUBMIT
         // ============================================
@@ -302,9 +815,10 @@ function Checkout() {
         if (
             isSubmitting
         ) {
-            return;
-        }
 
+            return;
+
+        }
 
 
         setIsSubmitting(
@@ -312,96 +826,114 @@ function Checkout() {
         );
 
 
-
-
-
-        // ============================================
-        // 📦 CREATE SAFE ORDER PAYLOAD
-        // ============================================
-
-        const order = {
-
-            customer: {
-                name:
-                    normalizedForm.name,
-
-                email:
-                    normalizedForm.email,
-
-                phone:
-                    normalizedForm.phone,
-
-                address:
-                    normalizedForm.address,
-
-                city:
-                    normalizedForm.city,
-
-                postalCode:
-                    normalizedForm.postalCode,
-            },
-
-
-
-            items:
-                cartItems.map(
-                    (item) => ({
-
-                        productId:
-                            item._id,
-
-                        name:
-                            item.name,
-
-                        image:
-                            item.images?.[0] ||
-                            item.image ||
-                            "",
-
-                        price:
-                            Number(
-                                item.price
-                            ),
-
-                        quantity:
-                            Number(
-                                item.quantity
-                            ) || 1,
-
-                    })
-                ),
-
-
-
-            pricing: {
-                subtotal,
-                tax,
-                shipping,
-                total:
-                    totalPrice,
-            },
-
-
-
-            payment: {
-                method:
-                    paymentMethod,
-
-                status:
-                    "pending",
-            },
-
-        };
-
-
-
-
-
-        // ============================================
-        // 🚀 SEND ORDER
-        // ============================================
-
         try {
+
+            // ============================================
+            // 💾 SAVE NEW ADDRESS IF REQUESTED
+            // ============================================
+
+            if (
+                useNewAddress &&
+                saveNewAddress &&
+                isLoggedIn
+            ) {
+
+                await saveAddressToBook();
+
+            }
+
+
+            // ============================================
+            // 📦 CREATE SAFE ORDER PAYLOAD
+            // ============================================
+
+            const order = {
+
+                customer: {
+
+                    name:
+                        normalizedForm.name,
+
+                    email:
+                        normalizedForm.email,
+
+                    phone:
+                        normalizedForm.phone,
+
+                    address:
+                        normalizedForm.address,
+
+                    city:
+                        normalizedForm.city,
+
+                    postalCode:
+                        normalizedForm.postalCode,
+
+                    country:
+                        normalizedForm.country,
+
+                },
+
+
+                items:
+                    cartItems.map(
+                        (item) => ({
+
+                            productId:
+                                item._id,
+
+                            name:
+                                item.name,
+
+                            image:
+                                item.images?.[0] ||
+                                item.image ||
+                                "",
+
+                            price:
+                                Number(
+                                    item.price
+                                ),
+
+                            quantity:
+                                Number(
+                                    item.quantity
+                                ) || 1,
+
+                        })
+                    ),
+
+
+                pricing: {
+
+                    subtotal,
+
+                    tax,
+
+                    shipping,
+
+                    total:
+                        totalPrice,
+
+                },
+
+
+                payment: {
+
+                    method:
+                        paymentMethod,
+
+                    status:
+                        "pending",
+
+                },
+
+            };
+
+
+            // ============================================
+            // 🚀 SEND ORDER
+            // ============================================
 
             const data =
                 await createOrder(
@@ -409,14 +941,10 @@ function Checkout() {
                 );
 
 
-
             console.log(
                 "ORDER CREATED:",
                 data
             );
-
-
-
 
 
             // ============================================
@@ -436,9 +964,6 @@ function Checkout() {
             }
 
 
-
-
-
             // ============================================
             // 💳 CREATE PAYMENT
             // ============================================
@@ -453,11 +978,9 @@ function Checkout() {
                     data;
 
 
-
                 const orderId =
                     createdOrder?._id ||
                     createdOrder?.id;
-
 
 
                 if (!orderId) {
@@ -469,7 +992,6 @@ function Checkout() {
                 }
 
 
-
                 const paymentData =
                     await createPayment(
                         orderId,
@@ -477,12 +999,10 @@ function Checkout() {
                     );
 
 
-
                 console.log(
                     "PAYMENT RESPONSE:",
                     paymentData
                 );
-
 
 
                 // ============================================
@@ -502,9 +1022,6 @@ function Checkout() {
                 }
 
 
-
-
-
                 // ============================================
                 // 💳 STRIPE / KLARNA
                 // ============================================
@@ -518,18 +1035,13 @@ function Checkout() {
                     );
 
 
-
                     window.location.href =
                         paymentData.checkoutUrl;
-
 
 
                     return;
 
                 }
-
-
-
 
 
                 // ============================================
@@ -545,11 +1057,9 @@ function Checkout() {
                     );
 
 
-
                     clearCart(
                         false
                     );
-
 
 
                     navigate(
@@ -557,13 +1067,9 @@ function Checkout() {
                     );
 
 
-
                     return;
 
                 }
-
-
-
 
 
                 throw new Error(
@@ -571,9 +1077,6 @@ function Checkout() {
                 );
 
             }
-
-
-
 
 
             // ============================================
@@ -585,9 +1088,6 @@ function Checkout() {
             );
 
 
-
-
-
             // ============================================
             // 🧹 CLEAR CART
             // ============================================
@@ -597,9 +1097,6 @@ function Checkout() {
             );
 
 
-
-
-
             // ============================================
             // 🏠 GO HOME
             // ============================================
@@ -607,6 +1104,7 @@ function Checkout() {
             navigate(
                 "/"
             );
+
 
         } catch (
         error
@@ -618,13 +1116,11 @@ function Checkout() {
             );
 
 
-
             const message =
                 error?.response?.data
                     ?.message ||
                 error?.message ||
                 "Failed to place order. Please try again.";
-
 
 
             toast.error(
@@ -646,20 +1142,20 @@ function Checkout() {
     };
 
 
-
-
-
     // ============================================
     // 🧾 CHECKOUT PAGE
     // ============================================
 
     return (
+
         <div
             style={{
                 maxWidth:
                     "900px",
+
                 margin:
                     "0 auto",
+
                 padding:
                     "20px",
             }}
@@ -670,13 +1166,13 @@ function Checkout() {
             </h1>
 
 
-
             <form
                 onSubmit={
                     handleSubmit
                 }
                 noValidate
             >
+
 
                 {/* ============================================
                     👤 CUSTOMER INFORMATION
@@ -685,7 +1181,6 @@ function Checkout() {
                 <h2>
                     Customer Information
                 </h2>
-
 
 
                 <input
@@ -702,7 +1197,6 @@ function Checkout() {
                 />
 
 
-
                 <input
                     name="email"
                     type="email"
@@ -714,7 +1208,6 @@ function Checkout() {
                         handleChange
                     }
                 />
-
 
 
                 <input
@@ -731,7 +1224,6 @@ function Checkout() {
                 />
 
 
-
                 {/* ============================================
                     📍 SHIPPING INFORMATION
                 ============================================ */}
@@ -741,20 +1233,187 @@ function Checkout() {
                 </h2>
 
 
+                {/* ============================================
+                    📍 SAVED ADDRESS SELECTOR
+                ============================================ */}
 
-                <input
-                    name="address"
-                    type="text"
-                    placeholder="Address *"
+                {isLoggedIn && (
+                    <div
+                        style={{
+                            marginBottom:
+                                "20px",
+                        }}
+                    >
+
+                        <h3>
+                            Saved Addresses
+                        </h3>
+
+
+                        {addressesLoading ? (
+
+                            <p>
+                                Loading saved addresses...
+                            </p>
+
+                        ) : addresses.length > 0 ? (
+
+                            <>
+
+                                <select
+                                    value={
+                                        useNewAddress
+                                            ? "new"
+                                            : selectedAddressId
+                                    }
+                                    onChange={
+                                        handleAddressSelection
+                                    }
+                                >
+
+                                    {addresses.map(
+                                        (address) => {
+
+                                            const addressId =
+                                                address._id ||
+                                                address.id;
+
+                                            return (
+
+                                                <option
+                                                    key={
+                                                        addressId
+                                                    }
+                                                    value={
+                                                        addressId
+                                                    }
+                                                >
+                                                    {address.fullName}
+                                                    {" - "}
+                                                    {address.street}
+                                                    {" - "}
+                                                    {address.city}
+                                                    {
+                                                        address.isDefault
+                                                            ? " (Primary)"
+                                                            : ""
+                                                    }
+                                                </option>
+
+                                            );
+
+                                        }
+                                    )}
+
+
+                                    <option
+                                        value="new"
+                                    >
+                                        Use a new address
+                                    </option>
+
+                                </select>
+
+
+                                {addresses.some(
+                                    (address) =>
+                                        address.isDefault ===
+                                        true
+                                ) && !useNewAddress && (
+
+                                        <p>
+                                            ★ Primary address selected
+                                        </p>
+
+                                    )}
+
+                            </>
+
+                        ) : (
+
+                            <p>
+                                No saved addresses. Enter a new address below.
+                            </p>
+
+                        )}
+
+                    </div>
+                )}
+
+
+                {/* ============================================
+                    🌍 COUNTRY
+                ============================================ */}
+
+                <select
+                    name="country"
                     value={
-                        form.address
+                        form.country
                     }
                     onChange={
-                        handleChange
+                        handleCountryChange
                     }
                     required
-                />
+                    disabled={
+                        isLoggedIn &&
+                        !useNewAddress &&
+                        Boolean(selectedAddressId)
+                    }
+                >
 
+                    <option value="">
+                        Select country
+                    </option>
+
+                    {countries.map(
+                        (country, index) => (
+
+                            <option
+                                key={`${country}-${index}`}
+                                value={country}
+                            >
+                                {country}
+                            </option>
+
+                        )
+                    )}
+
+                </select>
+
+
+                {/* ============================================
+                    📍 GOOGLE ADDRESS SEARCH
+                ============================================ */}
+
+                {(
+                    !isLoggedIn ||
+                    useNewAddress ||
+                    !selectedAddressId
+                ) ? (
+
+                    <AddressInput
+                        form={form}
+                        setForm={setForm}
+                        loading={false}
+                    />
+
+                ) : (
+
+                    <input
+                        name="address"
+                        type="text"
+                        placeholder="Address *"
+                        value={
+                            form.address
+                        }
+                        onChange={
+                            handleChange
+                        }
+                        required
+                        disabled
+                    />
+
+                )}
 
 
                 <input
@@ -767,8 +1426,13 @@ function Checkout() {
                     onChange={
                         handleChange
                     }
+                    required
+                    disabled={
+                        isLoggedIn &&
+                        !useNewAddress &&
+                        Boolean(selectedAddressId)
+                    }
                 />
-
 
 
                 <input
@@ -781,10 +1445,93 @@ function Checkout() {
                     onChange={
                         handleChange
                     }
+                    required
+                    disabled={
+                        isLoggedIn &&
+                        !useNewAddress &&
+                        Boolean(selectedAddressId)
+                    }
                 />
 
 
+                {/* ============================================
+                    🆕 NEW ADDRESS OPTIONS
+                ============================================ */}
 
+                {isLoggedIn &&
+                    useNewAddress && (
+
+                        <div
+                            style={{
+                                marginTop:
+                                    "15px",
+                                marginBottom:
+                                    "25px",
+                            }}
+                        >
+
+                            <label
+                                style={{
+                                    display:
+                                        "block",
+                                    marginBottom:
+                                        "10px",
+                                }}
+                            >
+
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        saveNewAddress
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
+                                        setSaveNewAddress(
+                                            e.target.checked
+                                        )
+                                    }
+                                />
+
+                                {" "}
+                                Save this address to my Address Book
+
+                            </label>
+
+
+                            {saveNewAddress && (
+
+                                <label
+                                    style={{
+                                        display:
+                                            "block",
+                                    }}
+                                >
+
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            makeNewAddressDefault
+                                        }
+                                        onChange={(
+                                            e
+                                        ) =>
+                                            setMakeNewAddressDefault(
+                                                e.target.checked
+                                            )
+                                        }
+                                    />
+
+                                    {" "}
+                                    Make this my primary address
+
+                                </label>
+
+                            )}
+
+                        </div>
+
+                    )}
 
 
                 {/* ============================================
@@ -794,7 +1541,6 @@ function Checkout() {
                 <h2>
                     Order Summary
                 </h2>
-
 
 
                 <p>
@@ -812,9 +1558,6 @@ function Checkout() {
                             : "items"
                     }
                 </p>
-
-
-
 
 
                 {!cartItems.length ? (
@@ -835,7 +1578,6 @@ function Checkout() {
                                 );
 
 
-
                             const itemQuantity =
                                 Number(
                                     item.quantity ||
@@ -843,11 +1585,9 @@ function Checkout() {
                                 );
 
 
-
                             const itemTotal =
                                 itemPrice *
                                 itemQuantity;
-
 
 
                             const image =
@@ -856,14 +1596,12 @@ function Checkout() {
                                 "";
 
 
-
                             const imageUrl =
                                 image.startsWith(
                                     "http"
                                 )
                                     ? image
                                     : `${import.meta.env.VITE_API_URL}${image}`;
-
 
 
                             return (
@@ -900,9 +1638,6 @@ function Checkout() {
                                     )}
 
 
-
-
-
                                     {/* ============================================
                                         📦 PRODUCT INFORMATION
                                     ============================================ */}
@@ -914,14 +1649,12 @@ function Checkout() {
                                     </h3>
 
 
-
                                     <p>
                                         Price per item: $
                                         {itemPrice.toFixed(
                                             2
                                         )}
                                     </p>
-
 
 
                                     <p>
@@ -932,14 +1665,12 @@ function Checkout() {
                                     </p>
 
 
-
                                     <p>
                                         Product total: $
                                         {itemTotal.toFixed(
                                             2
                                         )}
                                     </p>
-
 
 
                                     <hr />
@@ -954,9 +1685,6 @@ function Checkout() {
                 )}
 
 
-
-
-
                 {/* ============================================
                     💰 PRICE BREAKDOWN
                 ============================================ */}
@@ -964,7 +1692,6 @@ function Checkout() {
                 <h2>
                     Price Summary
                 </h2>
-
 
 
                 <p>
@@ -975,14 +1702,12 @@ function Checkout() {
                 </p>
 
 
-
                 <p>
                     Tax (25%): $
                     {tax.toFixed(
                         2
                     )}
                 </p>
-
 
 
                 <p>
@@ -993,9 +1718,7 @@ function Checkout() {
                 </p>
 
 
-
                 <hr />
-
 
 
                 <h2>
@@ -1004,9 +1727,6 @@ function Checkout() {
                         2
                     )}
                 </h2>
-
-
-
 
 
                 {/* ============================================
@@ -1018,13 +1738,11 @@ function Checkout() {
                 </h2>
 
 
-
                 <p>
                     Name:{" "}
                     {normalizedForm.name ||
                         "Not provided"}
                 </p>
-
 
 
                 <p>
@@ -1034,13 +1752,11 @@ function Checkout() {
                 </p>
 
 
-
                 <p>
                     Address:{" "}
                     {normalizedForm.address ||
                         "Not provided"}
                 </p>
-
 
 
                 <p>
@@ -1050,7 +1766,6 @@ function Checkout() {
                 </p>
 
 
-
                 <p>
                     Postal Code:{" "}
                     {normalizedForm.postalCode ||
@@ -1058,7 +1773,11 @@ function Checkout() {
                 </p>
 
 
-
+                <p>
+                    Country:{" "}
+                    {normalizedForm.country ||
+                        "Not provided"}
+                </p>
 
 
                 {/* ============================================
@@ -1068,7 +1787,6 @@ function Checkout() {
                 <h2>
                     Payment
                 </h2>
-
 
 
                 <label>
@@ -1090,9 +1808,7 @@ function Checkout() {
                 </label>
 
 
-
                 <br />
-
 
 
                 <label>
@@ -1114,9 +1830,7 @@ function Checkout() {
                 </label>
 
 
-
                 <br />
-
 
 
                 <label>
@@ -1138,9 +1852,7 @@ function Checkout() {
                 </label>
 
 
-
                 <br />
-
 
 
                 <label>
@@ -1162,7 +1874,6 @@ function Checkout() {
                 </label>
 
 
-
                 <p>
                     Payment method:{" "}
                     {
@@ -1177,15 +1888,11 @@ function Checkout() {
                 </p>
 
 
-
                 <p>
                     Payment status:
                     {" "}
                     Pending
                 </p>
-
-
-
 
 
                 {/* ============================================
@@ -1209,6 +1916,7 @@ function Checkout() {
             </form>
 
         </div>
+
     );
 }
 

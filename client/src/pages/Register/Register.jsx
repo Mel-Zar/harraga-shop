@@ -17,7 +17,8 @@ export default function Register() {
         postalCode: "",
         city: "",
         country: "",
-        website: ""
+        website: "",
+        addressVerified: false
     });
 
     const [countries, setCountries] = useState([]);
@@ -88,6 +89,7 @@ export default function Register() {
         if (password.length >= 8) score++;
         if (password.length >= 12) score++;
         if (/\d/.test(password)) score++;
+
         if (
             /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
                 password
@@ -127,9 +129,15 @@ export default function Register() {
         setForm((prev) => ({
             ...prev,
             [name]: value,
+
             ...(name === "address" && {
                 city: "",
                 postalCode: "",
+                addressVerified: false
+            }),
+
+            ...(name === "country" && {
+                addressVerified: false
             })
         }));
 
@@ -348,12 +356,26 @@ export default function Register() {
             return;
         }
 
+        // =================================================
+        // 📍 ADDRESS VALIDATION
+        // =================================================
+
         if (!form.address.trim()) {
             const message =
                 "Please enter your street address";
 
             setError(message);
             toast.error(message);
+
+            return;
+        }
+
+        if (!form.addressVerified) {
+            const message =
+                "Please select a valid address from the address suggestions.";
+
+            setError(message);
+            toast.warning(message);
 
             return;
         }
@@ -417,7 +439,8 @@ export default function Register() {
                 postalCode: "",
                 city: "",
                 country: "",
-                website: ""
+                website: "",
+                addressVerified: false
             });
 
             setCaptchaToken("");
@@ -488,6 +511,7 @@ export default function Register() {
 
             <input
                 name="email"
+                type="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
@@ -595,6 +619,7 @@ export default function Register() {
             )}
 
             <button
+                type="submit"
                 disabled={loading}
             >
                 {
