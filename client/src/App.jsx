@@ -32,6 +32,13 @@ import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 
 // =====================================================
+// PAYMENT PAGES
+// =====================================================
+
+import PaymentSuccess from "./pages/PaymentSuccess/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel/PaymentCancel";
+
+// =====================================================
 // ADMIN
 // =====================================================
 
@@ -203,13 +210,37 @@ function App() {
 
           {/* =================================================
                         💳 CHECKOUT
-                        LOGIN REQUIRED
+                        PUBLIC
                     ================================================= */}
 
           <Route
             path="/checkout"
             element={
               <Checkout />
+            }
+          />
+
+          {/* =================================================
+                        💰 PAYMENT SUCCESS
+                        PUBLIC
+                    ================================================= */}
+
+          <Route
+            path="/payment/success"
+            element={
+              <PaymentSuccess />
+            }
+          />
+
+          {/* =================================================
+                        ❌ PAYMENT CANCEL
+                        PUBLIC
+                    ================================================= */}
+
+          <Route
+            path="/payment/cancel"
+            element={
+              <PaymentCancel />
             }
           />
 

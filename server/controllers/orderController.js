@@ -10,15 +10,39 @@ import {
     sendOrderCancelledEmail,
 } from "../utils/mailer.js";
 
+import {
+    createStripeCheckoutSession,
+    constructStripeWebhookEvent,
+    getStripeCheckoutSession,
+    createSwishPayment,
+    getSwishPayment,
+} from "../services/paymentService.js";
+
+
 // =========================
 // EMAIL VALIDATION
 // =========================
+
 const emailRegex =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+// =========================
+// PAYMENT METHODS
+// =========================
+
+const allowedPaymentMethods = [
+    "cod",
+    "stripe",
+    "klarna",
+    "swish",
+];
+
 
 // =========================
 // ORDER STATUS FLOW
 // =========================
+
 const allowedStatuses = [
     "pending",
     "processing",
@@ -27,10 +51,13 @@ const allowedStatuses = [
     "cancelled",
 ];
 
+
 // =========================
 // VALID STATUS TRANSITIONS
 // =========================
+
 const allowedTransitions = {
+
     pending: [
         "processing",
         "cancelled",
@@ -48,12 +75,16 @@ const allowedTransitions = {
     delivered: [],
 
     cancelled: [],
+
 };
+
 
 // =========================
 // ORDER STATUS EMAIL MAP
 // =========================
+
 const statusEmailMap = {
+
     processing:
         sendOrderProcessingEmail,
 
@@ -65,11 +96,239 @@ const statusEmailMap = {
 
     cancelled:
         sendOrderCancelledEmail,
+
 };
 
-// =========================
+
+// =====================================================
+// GENERATE ORDER NUMBER
+// =====================================================
+
+const generateOrderNumber = async (
+    session
+) => {
+
+    const lastOrder =
+        await Order.findOne()
+            .sort({
+                createdAt: -1,
+            })
+            .session(
+                session
+            );
+
+
+    let nextNumber =
+        1;
+
+
+    if (
+        lastOrder?.orderNumber
+    ) {
+
+        const currentNumber =
+            parseInt(
+                lastOrder.orderNumber.replace(
+                    "HARRAGA-",
+                    ""
+                ),
+                10
+            );
+
+
+        if (
+            !isNaN(
+                currentNumber
+            )
+        ) {
+
+            nextNumber =
+                currentNumber + 1;
+
+        }
+
+    }
+
+
+    return `HARRAGA-${String(
+        nextNumber
+    ).padStart(
+        6,
+        "0"
+    )}`;
+
+};
+
+
+// =====================================================
+// DECREASE STOCK
+// =====================================================
+
+const decreaseStock = async (
+    order,
+    session
+) => {
+
+    if (
+        !Array.isArray(
+            order.items
+        )
+    ) {
+        throw new Error(
+            "Order items are missing"
+        );
+    }
+
+
+    for (
+        const item of order.items
+    ) {
+
+        const updatedProduct =
+            await Product.findOneAndUpdate(
+
+                {
+                    _id:
+                        item.productId,
+
+                    isActive:
+                        true,
+
+                    stock: {
+                        $gte:
+                            item.quantity,
+                    },
+                },
+
+                {
+                    $inc: {
+                        stock:
+                            -item.quantity,
+                    },
+                },
+
+                {
+                    new:
+                        true,
+
+                    session,
+                }
+
+            );
+
+
+        if (
+            !updatedProduct
+        ) {
+
+            throw new Error(
+                `Not enough stock for ${item.name}`
+            );
+
+        }
+
+    }
+
+};
+
+
+// =====================================================
+// RESTORE STOCK
+// =====================================================
+
+const restoreStock = async (
+    order
+) => {
+
+    if (
+        !Array.isArray(
+            order.items
+        ) ||
+        order.items.length === 0
+    ) {
+
+        throw new Error(
+            "Order contains no items"
+        );
+
+    }
+
+
+    for (
+        const item of order.items
+    ) {
+
+        if (
+            !item.productId ||
+            !mongoose.Types.ObjectId.isValid(
+                item.productId
+            )
+        ) {
+
+            throw new Error(
+                "Order contains an invalid product"
+            );
+
+        }
+
+
+        const quantity =
+            Number(
+                item.quantity
+            );
+
+
+        if (
+            !Number.isInteger(
+                quantity
+            ) ||
+            quantity < 1
+        ) {
+
+            throw new Error(
+                "Order contains an invalid quantity"
+            );
+
+        }
+
+
+        const product =
+            await Product.findById(
+                item.productId
+            );
+
+
+        if (
+            !product
+        ) {
+
+            throw new Error(
+                `Product not found while restoring stock: ${item.name ||
+                item.productId
+                }`
+            );
+
+        }
+
+
+        product.stock =
+            Number(
+                product.stock
+            ) +
+            quantity;
+
+
+        await product.save();
+
+    }
+
+};
+
+
+// =====================================================
 // SEND STATUS EMAIL
-// =========================
+// =====================================================
+
 const sendStatusEmail = async (
     order,
     status
@@ -80,40 +339,52 @@ const sendStatusEmail = async (
     ) {
 
         console.log(
-            `ℹ️ No customer email. ${status} notification skipped for ${order?.orderNumber || "order"}.`
+            `ℹ️ No customer email. ${status} notification skipped.`
         );
 
         return false;
+
     }
 
-    const emailFunction =
-        statusEmailMap[status];
 
-    if (!emailFunction) {
+    const emailFunction =
+        statusEmailMap[
+        status
+        ];
+
+
+    if (
+        !emailFunction
+    ) {
         return false;
     }
 
-    // =========================
-    // PREVENT DUPLICATE EMAILS
-    // =========================
+
     const alreadySent =
         Array.isArray(
             order.statusEmailNotifications
         ) &&
         order.statusEmailNotifications.some(
-            (notification) =>
+            (
+                notification
+            ) =>
                 notification.status ===
                 status
         );
 
-    if (alreadySent) {
+
+    if (
+        alreadySent
+    ) {
 
         console.log(
             `ℹ️ ${status} email already sent for ${order.orderNumber}.`
         );
 
         return false;
+
     }
+
 
     try {
 
@@ -122,55 +393,314 @@ const sendStatusEmail = async (
             order
         );
 
-        // =========================
-        // MAKE SURE ARRAY EXISTS
-        // =========================
+
         if (
             !Array.isArray(
                 order.statusEmailNotifications
             )
         ) {
-            order.statusEmailNotifications = [];
+
+            order.statusEmailNotifications =
+                [];
+
         }
 
-        // =========================
-        // ONLY MARK AS SENT AFTER
-        // SUCCESSFUL EMAIL
-        // =========================
+
         order.statusEmailNotifications.push({
+
             status,
+
+            type:
+                "status",
+
             sentAt:
                 new Date(),
+
         });
 
+
         await order.save();
+
 
         console.log(
             `✅ ${status} notification email sent:`,
             order.orderNumber
         );
 
+
         return true;
 
-    } catch (emailError) {
+    } catch (
+    emailError
+    ) {
 
         console.error(
-            `❌ ${status} notification email failed:`,
+            `❌ ${status} email failed:`,
             emailError?.message ||
             emailError
         );
 
-        // =========================
-        // EMAIL FAILURE MUST NOT
-        // BREAK ORDER
-        // =========================
+
         return false;
+
     }
+
 };
 
-// =========================
+
+// =====================================================
+// FINALIZE PAID ORDER
+// =====================================================
+
+export const finalizePaidOrder = async (
+    orderId,
+    providerData = {}
+) => {
+
+    const session =
+        await mongoose.startSession();
+
+
+    try {
+
+        session.startTransaction();
+
+
+        const order =
+            await Order.findById(
+                orderId
+            ).session(
+                session
+            );
+
+
+        if (
+            !order
+        ) {
+
+            throw new Error(
+                "Order not found"
+            );
+
+        }
+
+
+        // =========================
+        // IDEMPOTENCY
+        // =========================
+
+        if (
+            order.payment?.status ===
+            "paid"
+        ) {
+
+            await session.commitTransaction();
+
+            return order;
+
+        }
+
+
+        // =========================
+        // CANCELLED ORDER
+        // =========================
+
+        if (
+            order.status ===
+            "cancelled"
+        ) {
+
+            throw new Error(
+                "Cancelled order cannot be paid"
+            );
+
+        }
+
+
+        // =========================
+        // DECREASE STOCK ONLY NOW
+        // =========================
+
+        await decreaseStock(
+            order,
+            session
+        );
+
+
+        // =========================
+        // PAYMENT
+        // =========================
+
+        order.payment.status =
+            "paid";
+
+
+        order.payment.paidAt =
+            new Date();
+
+
+        order.payment.lastUpdatedAt =
+            new Date();
+
+
+        if (
+            providerData.provider
+        ) {
+
+            order.payment.provider =
+                providerData.provider;
+
+        }
+
+
+        if (
+            providerData.providerStatus
+        ) {
+
+            order.payment.providerStatus =
+                providerData.providerStatus;
+
+        }
+
+
+        if (
+            providerData.stripePaymentIntentId
+        ) {
+
+            order.payment.stripePaymentIntentId =
+                providerData.stripePaymentIntentId;
+
+        }
+
+
+        if (
+            providerData.stripeSessionId
+        ) {
+
+            order.payment.stripeSessionId =
+                providerData.stripeSessionId;
+
+        }
+
+
+        if (
+            providerData.swishPaymentId
+        ) {
+
+            order.payment.swishPaymentId =
+                providerData.swishPaymentId;
+
+        }
+
+
+        // =========================
+        // ORDER STATUS
+        // =========================
+
+        order.status =
+            "processing";
+
+
+        if (
+            !Array.isArray(
+                order.statusHistory
+            )
+        ) {
+
+            order.statusHistory =
+                [];
+
+        }
+
+
+        order.statusHistory.push({
+
+            status:
+                "processing",
+
+            changedAt:
+                new Date(),
+
+            changedBy:
+                null,
+
+        });
+
+
+        await order.save({
+            session,
+        });
+
+
+        await session.commitTransaction();
+
+
+        // =========================
+        // SEND EMAILS AFTER COMMIT
+        // =========================
+
+        if (
+            order.customer?.email
+        ) {
+
+            try {
+
+                await sendOrderConfirmationEmail(
+                    order.customer.email,
+                    order
+                );
+
+            } catch (
+            error
+            ) {
+
+                console.error(
+                    "Confirmation email failed:",
+                    error?.message ||
+                    error
+                );
+
+            }
+
+        }
+
+
+        await sendStatusEmail(
+            order,
+            "processing"
+        );
+
+
+        return order;
+
+    } catch (
+    error
+    ) {
+
+        if (
+            session.inTransaction()
+        ) {
+
+            await session.abortTransaction();
+
+        }
+
+
+        throw error;
+
+    } finally {
+
+        await session.endSession();
+
+    }
+
+};
+
+
+// =====================================================
 // CREATE ORDER
-// =========================
+// =====================================================
+
 export const createOrder = async (
     req,
     res
@@ -179,60 +709,92 @@ export const createOrder = async (
     const session =
         await mongoose.startSession();
 
+
     try {
 
         const {
             items,
             customer,
-        } = req.body;
+            paymentMethod,
+        } =
+            req.body;
 
-        console.log(
-            "CREATE ORDER:",
-            {
-                itemCount:
-                    Array.isArray(items)
-                        ? items.length
-                        : 0,
-
-                customerEmail:
-                    customer?.email || "none",
-
-                authenticated:
-                    Boolean(req.user),
-            }
-        );
 
         // =========================
         // VALIDATE CART
         // =========================
+
         if (
             !Array.isArray(items) ||
             items.length === 0
         ) {
 
             return res.status(400).json({
-                success: false,
-                message: "Cart is empty",
+
+                success:
+                    false,
+
+                message:
+                    "Cart is empty",
+
             });
 
         }
 
-        // =========================
-        // PROTECTION AGAINST HUGE ORDERS
-        // =========================
-        if (items.length > 50) {
+
+        if (
+            items.length > 50
+        ) {
 
             return res.status(400).json({
-                success: false,
+
+                success:
+                    false,
+
                 message:
                     "Too many different products in one order",
+
             });
 
         }
 
+
         // =========================
-        // VALIDATE CUSTOMER
+        // PAYMENT METHOD
         // =========================
+
+        const selectedPaymentMethod =
+            String(
+                paymentMethod ||
+                "cod"
+            )
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            !allowedPaymentMethods.includes(
+                selectedPaymentMethod
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Invalid payment method",
+
+            });
+
+        }
+
+
+        // =========================
+        // CUSTOMER
+        // =========================
+
         if (
             !customer?.name ||
             !customer?.address ||
@@ -240,16 +802,22 @@ export const createOrder = async (
         ) {
 
             return res.status(400).json({
-                success: false,
+
+                success:
+                    false,
+
                 message:
                     "Missing customer info",
+
             });
 
         }
 
+
         // =========================
         // VALIDATE ITEMS
         // =========================
+
         for (
             const item of items
         ) {
@@ -261,51 +829,69 @@ export const createOrder = async (
                 ) ||
                 !item.quantity ||
                 !Number.isInteger(
-                    Number(item.quantity)
+                    Number(
+                        item.quantity
+                    )
                 ) ||
-                Number(item.quantity) < 1
+                Number(
+                    item.quantity
+                ) < 1
             ) {
 
                 return res.status(400).json({
-                    success: false,
+
+                    success:
+                        false,
+
                     message:
                         "Invalid order item",
+
                 });
 
             }
 
-            // =========================
-            // MAX QUANTITY PER PRODUCT
-            // =========================
+
             if (
-                Number(item.quantity) > 100
+                Number(
+                    item.quantity
+                ) > 100
             ) {
 
                 return res.status(400).json({
-                    success: false,
+
+                    success:
+                        false,
+
                     message:
                         "Maximum quantity per product is 100",
+
                 });
 
             }
 
         }
 
+
         // =========================
-        // CHECK DUPLICATE PRODUCTS
+        // DUPLICATES
         // =========================
+
         const productIds =
             items.map(
-                (item) =>
+                (
+                    item
+                ) =>
                     String(
                         item.productId
                     )
             );
 
+
         const uniqueProductIds =
             new Set(
                 productIds
             );
+
 
         if (
             uniqueProductIds.size !==
@@ -313,16 +899,22 @@ export const createOrder = async (
         ) {
 
             return res.status(400).json({
-                success: false,
+
+                success:
+                    false,
+
                 message:
                     "Duplicate products are not allowed in the order",
+
             });
 
         }
 
+
         // =========================
         // SAFE CUSTOMER
         // =========================
+
         const safeCustomer = {
 
             name:
@@ -332,7 +924,8 @@ export const createOrder = async (
 
             email:
                 String(
-                    customer.email || ""
+                    customer.email ||
+                    ""
                 )
                     .trim()
                     .toLowerCase(),
@@ -349,19 +942,19 @@ export const createOrder = async (
 
             city:
                 String(
-                    customer.city || ""
+                    customer.city ||
+                    ""
                 ).trim(),
 
             postalCode:
                 String(
-                    customer.postalCode || ""
+                    customer.postalCode ||
+                    ""
                 ).trim(),
 
         };
 
-        // =========================
-        // VALIDATE CUSTOMER AFTER TRIM
-        // =========================
+
         if (
             !safeCustomer.name ||
             !safeCustomer.address ||
@@ -369,16 +962,18 @@ export const createOrder = async (
         ) {
 
             return res.status(400).json({
-                success: false,
+
+                success:
+                    false,
+
                 message:
                     "Missing customer info",
+
             });
 
         }
 
-        // =========================
-        // VALIDATE EMAIL IF PROVIDED
-        // =========================
+
         if (
             safeCustomer.email &&
             !emailRegex.test(
@@ -387,22 +982,31 @@ export const createOrder = async (
         ) {
 
             return res.status(400).json({
-                success: false,
+
+                success:
+                    false,
+
                 message:
                     "Invalid email format",
+
             });
 
         }
 
+
         // =========================
         // START TRANSACTION
         // =========================
+
         session.startTransaction();
 
+
         // =========================
-        // GET PRODUCTS + VALIDATE STOCK
+        // PRODUCTS
         // =========================
+
         const safeItems = [];
+
 
         for (
             const item of items
@@ -415,19 +1019,27 @@ export const createOrder = async (
                     session
                 );
 
-            if (!product) {
+
+            if (
+                !product
+            ) {
 
                 await session.abortTransaction();
 
                 return res.status(404).json({
-                    success: false,
+
+                    success:
+                        false,
+
                     message:
                         `Product not found: ${item.name ||
                         item.productId
                         }`,
+
                 });
 
             }
+
 
             if (
                 !product.isActive
@@ -436,12 +1048,17 @@ export const createOrder = async (
                 await session.abortTransaction();
 
                 return res.status(400).json({
-                    success: false,
+
+                    success:
+                        false,
+
                     message:
                         `${product.name} is unavailable`,
+
                 });
 
             }
+
 
             if (
                 product.stock <
@@ -453,16 +1070,18 @@ export const createOrder = async (
                 await session.abortTransaction();
 
                 return res.status(400).json({
-                    success: false,
+
+                    success:
+                        false,
+
                     message:
                         `Not enough stock for ${product.name}. Available: ${product.stock}`,
+
                 });
 
             }
 
-            // =========================
-            // USE DATABASE PRODUCT DATA
-            // =========================
+
             safeItems.push({
 
                 productId:
@@ -490,10 +1109,11 @@ export const createOrder = async (
 
         }
 
+
         // =========================
-        // CALCULATE PRICING
-        // BACKEND IS SOURCE OF TRUTH
+        // PRICING
         // =========================
+
         const subtotal =
             Math.round(
                 safeItems.reduce(
@@ -512,9 +1132,7 @@ export const createOrder = async (
                 ) * 100
             ) / 100;
 
-        // =========================
-        // TAX
-        // =========================
+
         const tax =
             Math.round(
                 subtotal *
@@ -522,17 +1140,13 @@ export const createOrder = async (
                 100
             ) / 100;
 
-        // =========================
-        // SHIPPING
-        // =========================
+
         const shipping =
             safeItems.length > 0
                 ? 49
                 : 0;
 
-        // =========================
-        // TOTAL
-        // =========================
+
         const calculatedTotal =
             Math.round(
                 (
@@ -541,6 +1155,7 @@ export const createOrder = async (
                     shipping
                 ) * 100
             ) / 100;
+
 
         const safePricing = {
 
@@ -555,124 +1170,68 @@ export const createOrder = async (
 
         };
 
+
         // =========================
-        // SAFE PAYMENT
+        // ORDER NUMBER
         // =========================
+
+        const orderNumber =
+            await generateOrderNumber(
+                session
+            );
+
+
+        // =========================
+        // PAYMENT
+        // =========================
+
+        const paymentProvider =
+            selectedPaymentMethod ===
+                "klarna"
+                ? "stripe"
+                : selectedPaymentMethod;
+
+
         const safePayment = {
 
             method:
-                "cod",
+                selectedPaymentMethod,
 
             status:
                 "pending",
 
+            provider:
+                paymentProvider,
+
+            providerStatus:
+                "pending",
+
+            stripeSessionId:
+                null,
+
+            stripePaymentIntentId:
+                null,
+
+            swishPaymentId:
+                null,
+
+            paidAt:
+                null,
+
+            lastUpdatedAt:
+                new Date(),
+
         };
 
-        // =========================
-        // DECREASE STOCK
-        // =========================
-        for (
-            const item of safeItems
-        ) {
-
-            const updatedProduct =
-                await Product.findOneAndUpdate(
-                    {
-                        _id:
-                            item.productId,
-
-                        isActive:
-                            true,
-
-                        stock: {
-                            $gte:
-                                item.quantity,
-                        },
-
-                    },
-
-                    {
-                        $inc: {
-                            stock:
-                                -item.quantity,
-                        },
-                    },
-
-                    {
-                        new: true,
-                        session,
-                    }
-                );
-
-            if (
-                !updatedProduct
-            ) {
-
-                await session.abortTransaction();
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        `Not enough stock for ${item.name}`,
-                });
-
-            }
-
-        }
-
-        // =========================
-        // GENERATE ORDER NUMBER
-        // =========================
-        const lastOrder =
-            await Order.findOne()
-                .sort({
-                    createdAt: -1,
-                })
-                .session(
-                    session
-                );
-
-        let nextNumber = 1;
-
-        if (
-            lastOrder?.orderNumber
-        ) {
-
-            const currentNumber =
-                parseInt(
-                    lastOrder.orderNumber.replace(
-                        "HARRAGA-",
-                        ""
-                    ),
-                    10
-                );
-
-            if (
-                !isNaN(
-                    currentNumber
-                )
-            ) {
-
-                nextNumber =
-                    currentNumber + 1;
-
-            }
-
-        }
-
-        const orderNumber =
-            `HARRAGA-${String(
-                nextNumber
-            ).padStart(
-                6,
-                "0"
-            )}`;
 
         // =========================
         // INITIAL STATUS HISTORY
         // =========================
+
         const initialStatusHistory = [
+
             {
+
                 status:
                     "pending",
 
@@ -682,12 +1241,16 @@ export const createOrder = async (
                 changedBy:
                     req.user?._id ||
                     null,
+
             },
+
         ];
+
 
         // =========================
         // CREATE ORDER
         // =========================
+
         const order =
             new Order({
 
@@ -720,22 +1283,44 @@ export const createOrder = async (
 
             });
 
+
         const savedOrder =
             await order.save({
                 session,
             });
 
-        // =========================
-        // COMMIT TRANSACTION
-        // =========================
-        await session.commitTransaction();
 
         // =========================
-        // SEND ORDER CONFIRMATION
-        // EMAIL FAILURE MUST NOT
-        // CANCEL THE ORDER
+        // COD
         // =========================
+
         if (
+            selectedPaymentMethod ===
+            "cod"
+        ) {
+
+            await decreaseStock(
+                savedOrder,
+                session
+            );
+
+        }
+
+
+        // =========================
+        // COMMIT
+        // =========================
+
+        await session.commitTransaction();
+
+
+        // =========================
+        // COD EMAIL
+        // =========================
+
+        if (
+            selectedPaymentMethod ===
+            "cod" &&
             safeCustomer.email
         ) {
 
@@ -746,18 +1331,9 @@ export const createOrder = async (
                     savedOrder
                 );
 
-                // =========================
-                // TRACK CONFIRMATION EMAIL
-                // =========================
-                if (
-                    !Array.isArray(
-                        savedOrder.statusEmailNotifications
-                    )
-                ) {
-                    savedOrder.statusEmailNotifications = [];
-                }
 
                 savedOrder.statusEmailNotifications.push({
+
                     status:
                         "pending",
 
@@ -766,39 +1342,31 @@ export const createOrder = async (
 
                     sentAt:
                         new Date(),
+
                 });
+
 
                 await savedOrder.save();
 
-                console.log(
-                    "✅ Order confirmation email sent:",
-                    savedOrder.orderNumber
-                );
-
-            } catch (emailError) {
+            } catch (
+            emailError
+            ) {
 
                 console.error(
-                    "❌ Order confirmation email failed:",
+                    "Confirmation email failed:",
                     emailError?.message ||
                     emailError
                 );
 
-                // =========================
-                // DO NOT FAIL THE ORDER
-                // =========================
             }
 
-        } else {
-
-            console.log(
-                "ℹ️ No customer email provided. Order confirmation email skipped."
-            );
-
         }
+
 
         // =========================
         // SUCCESS
         // =========================
+
         return res.status(201).json({
 
             success:
@@ -810,15 +1378,17 @@ export const createOrder = async (
             order:
                 savedOrder,
 
+            paymentRequired:
+                selectedPaymentMethod !==
+                "cod",
+
         });
+
 
     } catch (
     error
     ) {
 
-        // =========================
-        // ROLLBACK TRANSACTION
-        // =========================
         if (
             session.inTransaction()
         ) {
@@ -827,16 +1397,16 @@ export const createOrder = async (
 
         }
 
+
         console.error(
             "CREATE ORDER ERROR:",
             error
         );
 
-        // =========================
-        // DUPLICATE ORDER NUMBER
-        // =========================
+
         if (
-            error?.code === 11000
+            error?.code ===
+            11000
         ) {
 
             return res.status(409).json({
@@ -850,6 +1420,7 @@ export const createOrder = async (
             });
 
         }
+
 
         return res.status(500).json({
 
@@ -869,10 +1440,1024 @@ export const createOrder = async (
 
 };
 
-// =========================
+
+// =====================================================
+// CREATE PAYMENT
+// =====================================================
+
+export const createPayment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { paymentMethod } = req.body;
+
+        console.log("CREATE PAYMENT:", {
+            orderId: id,
+            paymentMethod,
+            userId: req.user?.id || null,
+        });
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID.",
+            });
+        }
+
+        const order = await Order.findById(id);
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found.",
+            });
+        }
+
+        // Guest checkout is allowed.
+        // If a user is logged in, make sure they own the order
+        // unless they are an admin.
+        if (req.user) {
+            const isAdmin =
+                req.user.isAdmin === true ||
+                req.user.isAdmin === "true" ||
+                req.user.isAdmin === 1;
+
+            if (!isAdmin) {
+                const orderUserId =
+                    order.user?.toString?.() ||
+                    order.userId?.toString?.();
+
+                if (
+                    orderUserId &&
+                    orderUserId !== req.user.id.toString()
+                ) {
+                    return res.status(403).json({
+                        success: false,
+                        message:
+                            "You are not allowed to pay for this order.",
+                    });
+                }
+            }
+        }
+
+        if (order.payment?.status === "paid") {
+            return res.status(200).json({
+                success: true,
+                paid: true,
+                paymentRequired: false,
+                message: "Order is already paid.",
+                order,
+            });
+        }
+
+        if (order.status === "cancelled") {
+            return res.status(400).json({
+                success: false,
+                message: "Cancelled orders cannot be paid.",
+            });
+        }
+
+        const method =
+            paymentMethod ||
+            order.payment?.method ||
+            "cod";
+
+        console.log("PAYMENT METHOD:", method);
+
+        // Make sure the selected payment method is stored.
+        order.payment.method = method;
+
+        /*
+         * STRIPE / KLARNA
+         *
+         * Klarna is handled through Stripe Checkout.
+         */
+        if (
+            method === "stripe" ||
+            method === "klarna"
+        ) {
+            const frontendUrl =
+                process.env.FRONTEND_URL;
+
+            if (!frontendUrl) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "FRONTEND_URL is not configured.",
+                });
+            }
+
+            console.log(
+                "CREATING STRIPE CHECKOUT SESSION..."
+            );
+
+            const session =
+                await createStripeCheckoutSession({
+                    order,
+                    frontendUrl,
+                });
+
+            console.log(
+                "STRIPE SESSION RESULT:",
+                {
+                    id: session?.id,
+                    url: session?.url,
+                    checkoutUrl:
+                        session?.checkoutUrl,
+                    dataUrl:
+                        session?.data?.url,
+                }
+            );
+
+            const checkoutUrl =
+                session?.url ||
+                session?.checkoutUrl ||
+                session?.data?.url;
+
+            if (!checkoutUrl) {
+                console.error(
+                    "STRIPE SESSION HAS NO URL:",
+                    session
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Stripe Checkout session was created, but no checkout URL was returned.",
+                });
+            }
+
+            order.payment.provider = "stripe";
+            order.payment.stripeSessionId =
+                session.id;
+            order.payment.providerStatus =
+                "created";
+            order.payment.lastUpdatedAt =
+                new Date();
+
+            await order.save();
+
+            return res.status(200).json({
+                success: true,
+                paymentRequired: true,
+                paymentMethod: method,
+                checkoutUrl,
+                sessionId: session.id,
+                order,
+            });
+        }
+
+        /*
+         * SWISH
+         */
+        if (method === "swish") {
+            console.log(
+                "CREATING SWISH PAYMENT..."
+            );
+
+            const payment =
+                await createSwishPayment({
+                    order,
+                });
+
+            console.log(
+                "SWISH PAYMENT RESULT:",
+                payment
+            );
+
+            const paymentId =
+                payment?.paymentId ||
+                payment?.id ||
+                payment?.data?.paymentId;
+
+            if (!paymentId) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Swish payment was created, but no payment ID was returned.",
+                });
+            }
+
+            order.payment.provider = "swish";
+            order.payment.swishPaymentId =
+                paymentId;
+            order.payment.providerStatus =
+                "created";
+            order.payment.lastUpdatedAt =
+                new Date();
+
+            await order.save();
+
+            return res.status(200).json({
+                success: true,
+                paymentRequired: true,
+                paymentMethod: method,
+                paymentId,
+                order,
+            });
+        }
+
+        /*
+         * CASH ON DELIVERY
+         */
+        if (method === "cod") {
+            order.payment.provider = "cod";
+            order.payment.status = "pending";
+            order.payment.providerStatus =
+                "pending";
+            order.payment.lastUpdatedAt =
+                new Date();
+
+            await order.save();
+
+            return res.status(200).json({
+                success: true,
+                paymentRequired: false,
+                paymentMethod: "cod",
+                order,
+            });
+        }
+
+        return res.status(400).json({
+            success: false,
+            message:
+                `Unsupported payment method: ${method}`,
+        });
+    } catch (error) {
+        console.error(
+            "CREATE PAYMENT ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                error?.message ||
+                "Failed to create payment.",
+        });
+    }
+};
+
+
+// =====================================================
+// STRIPE WEBHOOK
+// =====================================================
+
+export const stripeWebhook = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const signature =
+            req.headers[
+            "stripe-signature"
+            ];
+
+
+        if (
+            !signature
+        ) {
+
+            return res.status(400).send(
+                "Missing Stripe signature"
+            );
+
+        }
+
+
+        const event =
+            constructStripeWebhookEvent(
+                req.body,
+                signature
+            );
+
+
+        console.log(
+            "STRIPE EVENT:",
+            event.type
+        );
+
+
+        if (
+            event.type ===
+            "checkout.session.completed"
+        ) {
+
+            const session =
+                event.data.object;
+
+
+            const orderId =
+                session.metadata?.orderId;
+
+
+            if (
+                !orderId
+            ) {
+
+                console.error(
+                    "Stripe session missing orderId metadata"
+                );
+
+                return res.json({
+                    received:
+                        true,
+                });
+
+            }
+
+
+            const stripePaymentIntentId =
+                typeof session.payment_intent ===
+                    "string"
+                    ? session.payment_intent
+                    : session.payment_intent?.id ||
+                    null;
+
+
+            await finalizePaidOrder(
+
+                orderId,
+
+                {
+
+                    provider:
+                        "stripe",
+
+                    providerStatus:
+                        "paid",
+
+                    stripeSessionId:
+                        session.id,
+
+                    stripePaymentIntentId,
+
+                }
+
+            );
+
+        }
+
+
+        if (
+            event.type ===
+            "checkout.session.async_payment_succeeded"
+        ) {
+
+            const session =
+                event.data.object;
+
+
+            const orderId =
+                session.metadata?.orderId;
+
+
+            if (
+                orderId
+            ) {
+
+                const stripePaymentIntentId =
+                    typeof session.payment_intent ===
+                        "string"
+                        ? session.payment_intent
+                        : session.payment_intent?.id ||
+                        null;
+
+
+                await finalizePaidOrder(
+
+                    orderId,
+
+                    {
+
+                        provider:
+                            "stripe",
+
+                        providerStatus:
+                            "paid",
+
+                        stripeSessionId:
+                            session.id,
+
+                        stripePaymentIntentId,
+
+                    }
+
+                );
+
+            }
+
+        }
+
+
+        if (
+            event.type ===
+            "checkout.session.async_payment_failed"
+        ) {
+
+            const session =
+                event.data.object;
+
+
+            const orderId =
+                session.metadata?.orderId;
+
+
+            if (
+                orderId
+            ) {
+
+                await Order.findByIdAndUpdate(
+
+                    orderId,
+
+                    {
+
+                        $set: {
+
+                            "payment.status":
+                                "failed",
+
+                            "payment.providerStatus":
+                                "failed",
+
+                            "payment.lastUpdatedAt":
+                                new Date(),
+
+                        },
+
+                    }
+
+                );
+
+            }
+
+        }
+
+
+        return res.json({
+
+            received:
+                true,
+
+        });
+
+
+    } catch (
+    error
+    ) {
+
+        console.error(
+            "STRIPE WEBHOOK ERROR:",
+            error
+        );
+
+
+        return res.status(400).send(
+            `Webhook Error: ${error.message
+            }`
+        );
+
+    }
+
+};
+
+
+// =====================================================
+// SWISH CALLBACK
+// =====================================================
+
+export const swishCallback = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const callbackData =
+            req.body || {};
+
+
+        console.log(
+            "SWISH CALLBACK:",
+            callbackData
+        );
+
+
+        const paymentReference =
+            callbackData.paymentReference ||
+            callbackData.payeePaymentReference ||
+            callbackData.reference;
+
+
+        if (
+            !paymentReference
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Missing Swish payment reference",
+
+            });
+
+        }
+
+
+        // =========================
+        // FIND ORDER
+        // =========================
+
+        const order =
+            await Order.findOne({
+
+                $or: [
+
+                    {
+                        "payment.swishPaymentId":
+                            paymentReference,
+                    },
+
+                    {
+                        orderNumber:
+                            paymentReference,
+                    },
+
+                ],
+
+            });
+
+
+        if (
+            !order
+        ) {
+
+            console.error(
+                "Swish callback order not found:",
+                paymentReference
+            );
+
+
+            return res.status(404).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order not found",
+
+            });
+
+        }
+
+
+        // =========================
+        // VERIFY WITH SWISH
+        // =========================
+
+        let swishStatus;
+
+
+        if (
+            order.payment?.swishPaymentId
+        ) {
+
+            try {
+
+                swishStatus =
+                    await getSwishPayment(
+                        order.payment.swishPaymentId
+                    );
+
+            } catch (
+            error
+            ) {
+
+                console.error(
+                    "Failed to verify Swish payment:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        const status =
+            String(
+                swishStatus?.data?.status ||
+                callbackData.status ||
+                ""
+            ).toUpperCase();
+
+
+        // =========================
+        // PAID
+        // =========================
+
+        if (
+            status ===
+            "PAID" ||
+            status ===
+            "COMPLETED"
+        ) {
+
+            await finalizePaidOrder(
+
+                order._id,
+
+                {
+
+                    provider:
+                        "swish",
+
+                    providerStatus:
+                        status,
+
+                    swishPaymentId:
+                        order.payment.swishPaymentId,
+
+                }
+
+            );
+
+        }
+
+
+        // =========================
+        // DECLINED / ERROR
+        // =========================
+
+        if (
+            [
+                "DECLINED",
+                "ERROR",
+                "CANCELLED",
+            ].includes(
+                status
+            )
+        ) {
+
+            order.payment.status =
+                "failed";
+
+
+            order.payment.providerStatus =
+                status;
+
+
+            order.payment.lastUpdatedAt =
+                new Date();
+
+
+            await order.save();
+
+        }
+
+
+        return res.status(200).json({
+
+            success:
+                true,
+
+        });
+
+
+    } catch (
+    error
+    ) {
+
+        console.error(
+            "SWISH CALLBACK ERROR:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success:
+                false,
+
+            message:
+                "Swish callback failed",
+
+        });
+
+    }
+
+};
+
+
+// =====================================================
+// GET PAYMENT STATUS
+// =====================================================
+
+export const getPaymentStatus = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            id
+        } = req.params;
+
+
+        if (
+            !mongoose.Types.ObjectId.isValid(
+                id
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Invalid order ID",
+
+            });
+
+        }
+
+
+        const order =
+            await Order.findById(
+                id
+            );
+
+
+        if (
+            !order
+        ) {
+
+            return res.status(404).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order not found",
+
+            });
+
+        }
+
+
+        // =========================
+        // AUTH
+        // =========================
+
+        if (
+            req.user
+        ) {
+
+            const isAdmin =
+                req.user.isAdmin ===
+                true;
+
+
+            const isOwner =
+                order.user &&
+                order.user.toString() ===
+                req.user._id.toString();
+
+
+            if (
+                !isAdmin &&
+                !isOwner
+            ) {
+
+                return res.status(403).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Not authorized",
+
+                });
+
+            }
+
+        }
+
+
+        // =========================
+        // STRIPE
+        // =========================
+
+        if (
+            order.payment?.stripeSessionId
+        ) {
+
+            try {
+
+                const session =
+                    await getStripeCheckoutSession(
+                        order.payment.stripeSessionId
+                    );
+
+
+                if (
+                    session.payment_status ===
+                    "paid" &&
+                    order.payment.status !==
+                    "paid"
+                ) {
+
+                    const stripePaymentIntentId =
+                        typeof session.payment_intent ===
+                            "string"
+                            ? session.payment_intent
+                            : session.payment_intent?.id ||
+                            null;
+
+
+                    await finalizePaidOrder(
+
+                        order._id,
+
+                        {
+
+                            provider:
+                                "stripe",
+
+                            providerStatus:
+                                "paid",
+
+                            stripeSessionId:
+                                session.id,
+
+                            stripePaymentIntentId,
+
+                        }
+
+                    );
+
+
+                    const updatedOrder =
+                        await Order.findById(
+                            id
+                        );
+
+
+                    return res.json({
+
+                        success:
+                            true,
+
+                        paymentStatus:
+                            "paid",
+
+                        order:
+                            updatedOrder,
+
+                    });
+
+                }
+
+            } catch (
+            error
+            ) {
+
+                console.error(
+                    "Stripe status check failed:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        // =========================
+        // SWISH
+        // =========================
+
+        if (
+            order.payment?.swishPaymentId
+        ) {
+
+            try {
+
+                const swish =
+                    await getSwishPayment(
+                        order.payment.swishPaymentId
+                    );
+
+
+                const swishStatus =
+                    String(
+                        swish?.data?.status ||
+                        ""
+                    ).toUpperCase();
+
+
+                if (
+                    [
+                        "PAID",
+                        "COMPLETED",
+                    ].includes(
+                        swishStatus
+                    ) &&
+                    order.payment.status !==
+                    "paid"
+                ) {
+
+                    await finalizePaidOrder(
+
+                        order._id,
+
+                        {
+
+                            provider:
+                                "swish",
+
+                            providerStatus:
+                                swishStatus,
+
+                            swishPaymentId:
+                                order.payment.swishPaymentId,
+
+                        }
+
+                    );
+
+                }
+
+            } catch (
+            error
+            ) {
+
+                console.error(
+                    "Swish status check failed:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        const updatedOrder =
+            await Order.findById(
+                id
+            );
+
+
+        return res.json({
+
+            success:
+                true,
+
+            paymentStatus:
+                updatedOrder.payment.status,
+
+            paymentMethod:
+                updatedOrder.payment.method,
+
+            order:
+                updatedOrder,
+
+        });
+
+
+    } catch (
+    error
+    ) {
+
+        console.error(
+            "GET PAYMENT STATUS ERROR:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success:
+                false,
+
+            message:
+                "Failed to get payment status",
+
+        });
+
+    }
+
+};
+
+
+// =====================================================
 // GET ALL ORDERS
-// ADMIN ONLY
-// =========================
+// =====================================================
+
 export const getAllOrders = async (
     req,
     res
@@ -883,8 +2468,10 @@ export const getAllOrders = async (
         const orders =
             await Order.find()
                 .sort({
-                    createdAt: -1,
+                    createdAt:
+                        -1,
                 });
+
 
         return res.json({
 
@@ -907,6 +2494,7 @@ export const getAllOrders = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -921,10 +2509,11 @@ export const getAllOrders = async (
 
 };
 
-// =========================
+
+// =====================================================
 // GET MY ORDERS
-// CUSTOMER ONLY
-// =========================
+// =====================================================
+
 export const getMyOrders = async (
     req,
     res
@@ -932,9 +2521,6 @@ export const getMyOrders = async (
 
     try {
 
-        // =========================
-        // CHECK AUTHENTICATION
-        // =========================
         if (
             !req.user?._id
         ) {
@@ -951,9 +2537,7 @@ export const getMyOrders = async (
 
         }
 
-        // =========================
-        // FIND CUSTOMER ORDERS
-        // =========================
+
         const orders =
             await Order.find({
 
@@ -962,12 +2546,11 @@ export const getMyOrders = async (
 
             })
                 .sort({
-                    createdAt: -1,
+                    createdAt:
+                        -1,
                 });
 
-        // =========================
-        // SUCCESS
-        // =========================
+
         return res.status(200).json({
 
             success:
@@ -989,6 +2572,7 @@ export const getMyOrders = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -1003,10 +2587,11 @@ export const getMyOrders = async (
 
 };
 
-// =========================
+
+// =====================================================
 // GET MY SINGLE ORDER
-// CUSTOMER ONLY
-// =========================
+// =====================================================
+
 export const getMyOrderById = async (
     req,
     res
@@ -1018,9 +2603,7 @@ export const getMyOrderById = async (
             id
         } = req.params;
 
-        // =========================
-        // CHECK AUTHENTICATION
-        // =========================
+
         if (
             !req.user?._id
         ) {
@@ -1037,9 +2620,7 @@ export const getMyOrderById = async (
 
         }
 
-        // =========================
-        // VALIDATE ID
-        // =========================
+
         if (
             !mongoose.Types.ObjectId.isValid(
                 id
@@ -1058,9 +2639,7 @@ export const getMyOrderById = async (
 
         }
 
-        // =========================
-        // FIND CUSTOMER ORDER
-        // =========================
+
         const order =
             await Order.findOne({
 
@@ -1072,9 +2651,7 @@ export const getMyOrderById = async (
 
             });
 
-        // =========================
-        // ORDER NOT FOUND
-        // =========================
+
         if (
             !order
         ) {
@@ -1091,9 +2668,7 @@ export const getMyOrderById = async (
 
         }
 
-        // =========================
-        // SUCCESS
-        // =========================
+
         return res.status(200).json({
 
             success:
@@ -1112,6 +2687,7 @@ export const getMyOrderById = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -1126,10 +2702,11 @@ export const getMyOrderById = async (
 
 };
 
-// =========================
+
+// =====================================================
 // GET SINGLE ORDER
-// CUSTOMER OR ADMIN
-// =========================
+// =====================================================
+
 export const getOrderById = async (
     req,
     res
@@ -1141,9 +2718,7 @@ export const getOrderById = async (
             id
         } = req.params;
 
-        // =========================
-        // VALIDATE ID
-        // =========================
+
         if (
             !mongoose.Types.ObjectId.isValid(
                 id
@@ -1162,13 +2737,12 @@ export const getOrderById = async (
 
         }
 
-        // =========================
-        // FIND ORDER
-        // =========================
+
         const order =
             await Order.findById(
                 id
             );
+
 
         if (
             !order
@@ -1186,11 +2760,10 @@ export const getOrderById = async (
 
         }
 
-        // =========================
-        // ADMIN
-        // =========================
+
         if (
-            req.user?.isAdmin === true
+            req.user?.isAdmin ===
+            true
         ) {
 
             return res.json({
@@ -1204,10 +2777,7 @@ export const getOrderById = async (
 
         }
 
-        // =========================
-        // CUSTOMER
-        // ONLY THEIR OWN ORDER
-        // =========================
+
         if (
             !req.user
         ) {
@@ -1224,23 +2794,9 @@ export const getOrderById = async (
 
         }
 
-        if (
-            !order.user
-        ) {
-
-            return res.status(403).json({
-
-                success:
-                    false,
-
-                message:
-                    "You are not authorized to view this order",
-
-            });
-
-        }
 
         if (
+            !order.user ||
             order.user.toString() !==
             req.user._id.toString()
         ) {
@@ -1257,9 +2813,7 @@ export const getOrderById = async (
 
         }
 
-        // =========================
-        // CUSTOMER SUCCESS
-        // =========================
+
         return res.json({
 
             success:
@@ -1278,6 +2832,7 @@ export const getOrderById = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -1292,10 +2847,11 @@ export const getOrderById = async (
 
 };
 
-// =========================
+
+// =====================================================
 // UPDATE ORDER STATUS
-// ADMIN ONLY
-// =========================
+// =====================================================
+
 export const updateOrderStatus = async (
     req,
     res
@@ -1307,13 +2863,12 @@ export const updateOrderStatus = async (
             id
         } = req.params;
 
+
         const {
             status
         } = req.body;
 
-        // =========================
-        // VALIDATE ID
-        // =========================
+
         if (
             !mongoose.Types.ObjectId.isValid(
                 id
@@ -1332,9 +2887,7 @@ export const updateOrderStatus = async (
 
         }
 
-        // =========================
-        // VALIDATE STATUS
-        // =========================
+
         if (
             !allowedStatuses.includes(
                 status
@@ -1353,13 +2906,12 @@ export const updateOrderStatus = async (
 
         }
 
-        // =========================
-        // FIND ORDER
-        // =========================
+
         const order =
             await Order.findById(
                 id
             );
+
 
         if (
             !order
@@ -1377,22 +2929,20 @@ export const updateOrderStatus = async (
 
         }
 
-        // =========================
-        // CHECK WHETHER STATUS CHANGED
-        // =========================
+
         const previousStatus =
             order.status ||
             "pending";
+
 
         const statusChanged =
             previousStatus !==
             status;
 
-        // =========================
-        // SAME STATUS
-        // DO NOTHING
-        // =========================
-        if (!statusChanged) {
+
+        if (
+            !statusChanged
+        ) {
 
             return res.status(200).json({
 
@@ -1408,13 +2958,12 @@ export const updateOrderStatus = async (
 
         }
 
-        // =========================
-        // CHECK STATUS TRANSITION
-        // =========================
+
         const possibleTransitions =
             allowedTransitions[
             previousStatus
             ] || [];
+
 
         if (
             !possibleTransitions.includes(
@@ -1434,21 +2983,50 @@ export const updateOrderStatus = async (
 
         }
 
+
         // =========================
-        // RESTORE STOCK ON CANCEL
+        // DO NOT SHIP UNPAID ORDER
         // =========================
+
         if (
-            status === "cancelled"
+            [
+                "processing",
+                "shipped",
+                "delivered",
+            ].includes(
+                status
+            ) &&
+            order.payment?.method !==
+            "cod" &&
+            order.payment?.status !==
+            "paid"
         ) {
 
-            // =========================
-            // MAKE SURE ORDER ITEMS EXIST
-            // =========================
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Order must be paid before it can be processed",
+
+            });
+
+        }
+
+
+        // =========================
+        // CANCEL
+        // =========================
+
+        if (
+            status ===
+            "cancelled"
+        ) {
+
             if (
-                !Array.isArray(
-                    order.items
-                ) ||
-                order.items.length === 0
+                order.payment?.status ===
+                "paid"
             ) {
 
                 return res.status(400).json({
@@ -1457,146 +3035,36 @@ export const updateOrderStatus = async (
                         false,
 
                     message:
-                        "Cannot cancel an order without items",
+                        "Paid orders require a refund flow before cancellation",
 
                 });
 
             }
 
-            // =========================
-            // RESTORE EACH PRODUCT
-            // =========================
-            for (
-                const item of order.items
-            ) {
 
-                if (
-                    !item.productId ||
-                    !mongoose.Types.ObjectId.isValid(
-                        item.productId
-                    )
-                ) {
-
-                    console.error(
-                        "INVALID PRODUCT ID IN ORDER:",
-                        item.productId
-                    );
-
-                    return res.status(400).json({
-
-                        success:
-                            false,
-
-                        message:
-                            "Order contains an invalid product",
-
-                    });
-
-                }
-
-                const quantity =
-                    Number(
-                        item.quantity
-                    );
-
-                if (
-                    !Number.isInteger(
-                        quantity
-                    ) ||
-                    quantity < 1
-                ) {
-
-                    return res.status(400).json({
-
-                        success:
-                            false,
-
-                        message:
-                            "Order contains an invalid quantity",
-
-                    });
-
-                }
-
-                const product =
-                    await Product.findById(
-                        item.productId
-                    );
-
-                if (
-                    !product
-                ) {
-
-                    console.error(
-                        "PRODUCT NOT FOUND WHEN RESTORING STOCK:",
-                        item.productId
-                    );
-
-                    return res.status(404).json({
-
-                        success:
-                            false,
-
-                        message:
-                            `Product not found while restoring stock: ${item.name || item.productId}`,
-
-                    });
-
-                }
-
-                // =========================
-                // INCREASE STOCK
-                // =========================
-                product.stock =
-                    Number(
-                        product.stock
-                    ) +
-                    quantity;
-
-                await product.save();
-
-                console.log(
-                    `✅ Stock restored: ${product.name} +${quantity}`
-                );
-
-            }
+            await restoreStock(
+                order
+            );
 
         }
 
-        // =========================
-        // UPDATE STATUS
-        // =========================
+
         order.status =
             status;
 
-        // =========================
-        // MAKE SURE STATUS HISTORY EXISTS
-        // =========================
+
         if (
             !Array.isArray(
                 order.statusHistory
             )
         ) {
 
-            order.statusHistory = [
-                {
-                    status:
-                        previousStatus,
-
-                    changedAt:
-                        order.createdAt ||
-                        new Date(),
-
-                    changedBy:
-                        null,
-                },
-            ];
+            order.statusHistory =
+                [];
 
         }
 
-        // =========================
-        // ADD STATUS HISTORY
-        // =========================
+
         order.statusHistory.push({
 
             status,
@@ -1610,19 +3078,16 @@ export const updateOrderStatus = async (
 
         });
 
+
         await order.save();
 
-        // =========================
-        // SEND STATUS EMAIL
-        // =========================
+
         await sendStatusEmail(
             order,
             status
         );
 
-        // =========================
-        // SUCCESS
-        // =========================
+
         return res.status(200).json({
 
             success:
@@ -1644,6 +3109,7 @@ export const updateOrderStatus = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -1658,10 +3124,11 @@ export const updateOrderStatus = async (
 
 };
 
-// =========================
+
+// =====================================================
 // CANCEL MY ORDER
-// CUSTOMER ONLY
-// =========================
+// =====================================================
+
 export const cancelMyOrder = async (
     req,
     res
@@ -1673,9 +3140,7 @@ export const cancelMyOrder = async (
             id
         } = req.params;
 
-        // =========================
-        // CHECK AUTHENTICATION
-        // =========================
+
         if (
             !req.user?._id
         ) {
@@ -1692,9 +3157,7 @@ export const cancelMyOrder = async (
 
         }
 
-        // =========================
-        // VALIDATE ORDER ID
-        // =========================
+
         if (
             !mongoose.Types.ObjectId.isValid(
                 id
@@ -1713,9 +3176,7 @@ export const cancelMyOrder = async (
 
         }
 
-        // =========================
-        // FIND CUSTOMER ORDER
-        // =========================
+
         const order =
             await Order.findOne({
 
@@ -1727,9 +3188,7 @@ export const cancelMyOrder = async (
 
             });
 
-        // =========================
-        // ORDER NOT FOUND
-        // =========================
+
         if (
             !order
         ) {
@@ -1746,9 +3205,7 @@ export const cancelMyOrder = async (
 
         }
 
-        // =========================
-        // ALREADY CANCELLED
-        // =========================
+
         if (
             order.status ===
             "cancelled"
@@ -1766,10 +3223,7 @@ export const cancelMyOrder = async (
 
         }
 
-        // =========================
-        // ONLY PENDING ORDERS
-        // CAN BE CANCELLED BY CUSTOMER
-        // =========================
+
         if (
             order.status !==
             "pending"
@@ -1787,14 +3241,10 @@ export const cancelMyOrder = async (
 
         }
 
-        // =========================
-        // MAKE SURE ORDER ITEMS EXIST
-        // =========================
+
         if (
-            !Array.isArray(
-                order.items
-            ) ||
-            order.items.length === 0
+            order.payment?.status ===
+            "paid"
         ) {
 
             return res.status(400).json({
@@ -1803,134 +3253,34 @@ export const cancelMyOrder = async (
                     false,
 
                 message:
-                    "Cannot cancel an order without items",
+                    "Paid orders require a refund flow",
 
             });
 
         }
 
-        // =========================
-        // RESTORE STOCK
-        // =========================
-        for (
-            const item of order.items
-        ) {
 
-            if (
-                !item.productId ||
-                !mongoose.Types.ObjectId.isValid(
-                    item.productId
-                )
-            ) {
+        await restoreStock(
+            order
+        );
 
-                return res.status(400).json({
 
-                    success:
-                        false,
-
-                    message:
-                        "Order contains an invalid product",
-
-                });
-
-            }
-
-            const quantity =
-                Number(
-                    item.quantity
-                );
-
-            if (
-                !Number.isInteger(
-                    quantity
-                ) ||
-                quantity < 1
-            ) {
-
-                return res.status(400).json({
-
-                    success:
-                        false,
-
-                    message:
-                        "Order contains an invalid quantity",
-
-                });
-
-            }
-
-            const product =
-                await Product.findById(
-                    item.productId
-                );
-
-            if (
-                !product
-            ) {
-
-                return res.status(404).json({
-
-                    success:
-                        false,
-
-                    message:
-                        `Product not found while restoring stock: ${item.name || item.productId}`,
-
-                });
-
-            }
-
-            // =========================
-            // INCREASE STOCK
-            // =========================
-            product.stock =
-                Number(
-                    product.stock
-                ) +
-                quantity;
-
-            await product.save();
-
-            console.log(
-                `✅ Customer cancellation - stock restored: ${product.name} +${quantity}`
-            );
-
-        }
-
-        // =========================
-        // UPDATE STATUS
-        // =========================
         order.status =
             "cancelled";
 
-        // =========================
-        // MAKE SURE STATUS HISTORY EXISTS
-        // =========================
+
         if (
             !Array.isArray(
                 order.statusHistory
             )
         ) {
 
-            order.statusHistory = [
-                {
-                    status:
-                        "pending",
-
-                    changedAt:
-                        order.createdAt ||
-                        new Date(),
-
-                    changedBy:
-                        null,
-                },
-            ];
+            order.statusHistory =
+                [];
 
         }
 
-        // =========================
-        // ADD CANCELLED HISTORY
-        // =========================
+
         order.statusHistory.push({
 
             status:
@@ -1944,19 +3294,16 @@ export const cancelMyOrder = async (
 
         });
 
+
         await order.save();
 
-        // =========================
-        // SEND CANCELLED EMAIL
-        // =========================
+
         await sendStatusEmail(
             order,
             "cancelled"
         );
 
-        // =========================
-        // SUCCESS
-        // =========================
+
         return res.status(200).json({
 
             success:
@@ -1978,6 +3325,7 @@ export const cancelMyOrder = async (
             error
         );
 
+
         return res.status(500).json({
 
             success:
@@ -1991,4 +3339,3 @@ export const cancelMyOrder = async (
     }
 
 };
-

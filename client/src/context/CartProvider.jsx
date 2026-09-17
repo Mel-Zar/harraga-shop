@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import CartContext from "./CartContext";
 import { getUser } from "../utils/auth";
@@ -714,7 +714,7 @@ export function CartProvider({
 
     // 🧹 Clear entire cart
 
-    const clearCart = (
+    const clearCart = useCallback((
         showToast = true
     ) => {
 
@@ -735,7 +735,9 @@ export function CartProvider({
 
         }
 
-    };
+    }, [
+        currentCartKey,
+    ]);
 
 
 

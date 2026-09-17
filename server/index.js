@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit"; // ✅ FIX 1 (DU SAKNADE DEN)
+import rateLimit from "express-rate-limit";
 
 // =========================
 // SAFETY CHECK (VIKTIGT)
@@ -44,7 +44,10 @@ app.use(helmet());
 // CORS
 // =========================
 const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+    ? process.env.CORS_ORIGIN
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
     : ["http://localhost:5173"];
 
 app.use(
@@ -52,6 +55,21 @@ app.use(
         origin: allowedOrigins,
         credentials: true,
     })
+);
+
+// =====================================================
+// STRIPE WEBHOOK
+// VIKTIGT: MÅSTE ligga före express.json()
+// =====================================================
+
+import paymentRoutes from "./routes/paymentRoutes.js";
+
+app.use(
+    "/api/payments/stripe/webhook",
+    express.raw({
+        type: "application/json",
+    }),
+    paymentRoutes
 );
 
 // =========================
@@ -79,13 +97,19 @@ app.use(
     "/uploads",
     express.static(path.join(__dirname, "uploads"), {
         setHeaders: (res) => {
-            res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+            res.setHeader(
+                "Cross-Origin-Resource-Policy",
+                "cross-origin"
+            );
         },
     })
 );
 
 app.use("/uploads", (req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+        "Access-Control-Allow-Origin",
+        "*"
+    );
     next();
 });
 
@@ -118,7 +142,9 @@ app.use("/api/orders", orderRoutes);
 // HEALTH
 // =========================
 app.get("/api/health", (req, res) => {
-    res.status(200).json({ status: "OK" });
+    res.status(200).json({
+        status: "OK",
+    });
 });
 
 // =========================

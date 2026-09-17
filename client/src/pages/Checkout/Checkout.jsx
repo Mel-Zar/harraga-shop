@@ -3,7 +3,10 @@ import { useCart } from "../../context/useCart";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { createOrder } from "../../services/orderService";
+import {
+    createOrder,
+    createPayment,
+} from "../../services/orderService";
 
 function Checkout() {
 
@@ -14,6 +17,7 @@ function Checkout() {
 
     const navigate =
         useNavigate();
+
 
 
     const [form, setForm] =
@@ -27,8 +31,16 @@ function Checkout() {
         });
 
 
+
+    const [paymentMethod, setPaymentMethod] =
+        useState("cod");
+
+
+
     const [isSubmitting, setIsSubmitting] =
         useState(false);
+
+
 
 
 
@@ -50,8 +62,10 @@ function Checkout() {
         );
 
 
+
     const tax =
         subtotal * 0.25;
+
 
 
     const shipping =
@@ -60,10 +74,13 @@ function Checkout() {
             : 0;
 
 
+
     const totalPrice =
         subtotal +
         tax +
         shipping;
+
+
 
 
 
@@ -83,6 +100,8 @@ function Checkout() {
 
 
 
+
+
     // ============================================
     // 📝 HANDLE FORM CHANGE
     // ============================================
@@ -97,6 +116,7 @@ function Checkout() {
         } = e.target;
 
 
+
         setForm(
             (previousForm) => ({
                 ...previousForm,
@@ -105,6 +125,8 @@ function Checkout() {
         );
 
     };
+
+
 
 
 
@@ -134,6 +156,8 @@ function Checkout() {
 
 
 
+
+
     // ============================================
     // 📧 EMAIL VALIDATION
     // ============================================
@@ -147,11 +171,14 @@ function Checkout() {
         }
 
 
+
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             email
         );
 
     };
+
+
 
 
 
@@ -171,6 +198,8 @@ function Checkout() {
 
 
 
+
+
     // ============================================
     // 🛒 CREATE ORDER
     // ============================================
@@ -180,6 +209,7 @@ function Checkout() {
     ) => {
 
         e.preventDefault();
+
 
 
         // ============================================
@@ -199,6 +229,8 @@ function Checkout() {
 
 
 
+
+
         // ============================================
         // 📝 REQUIRED FORM VALIDATION
         // ============================================
@@ -215,6 +247,8 @@ function Checkout() {
 
             return;
         }
+
+
 
 
 
@@ -238,6 +272,8 @@ function Checkout() {
 
 
 
+
+
         // ============================================
         // 📞 PHONE VALIDATION
         // ============================================
@@ -257,6 +293,8 @@ function Checkout() {
 
 
 
+
+
         // ============================================
         // 🔒 PREVENT DOUBLE SUBMIT
         // ============================================
@@ -268,9 +306,12 @@ function Checkout() {
         }
 
 
+
         setIsSubmitting(
             true
         );
+
+
 
 
 
@@ -299,6 +340,7 @@ function Checkout() {
                 postalCode:
                     normalizedForm.postalCode,
             },
+
 
 
             items:
@@ -330,6 +372,7 @@ function Checkout() {
                 ),
 
 
+
             pricing: {
                 subtotal,
                 tax,
@@ -339,12 +382,18 @@ function Checkout() {
             },
 
 
+
             payment: {
-                method: "cod",
-                status: "pending",
+                method:
+                    paymentMethod,
+
+                status:
+                    "pending",
             },
 
         };
+
+
 
 
 
@@ -360,10 +409,13 @@ function Checkout() {
                 );
 
 
+
             console.log(
                 "ORDER CREATED:",
                 data
             );
+
+
 
 
 
@@ -385,13 +437,154 @@ function Checkout() {
 
 
 
+
+
             // ============================================
-            // ✅ SUCCESS
+            // 💳 CREATE PAYMENT
+            // ============================================
+
+            if (
+                paymentMethod !== "cod"
+            ) {
+
+                const createdOrder =
+                    data.order ||
+                    data.data ||
+                    data;
+
+
+
+                const orderId =
+                    createdOrder?._id ||
+                    createdOrder?.id;
+
+
+
+                if (!orderId) {
+
+                    throw new Error(
+                        "Order was created, but no order ID was returned."
+                    );
+
+                }
+
+
+
+                const paymentData =
+                    await createPayment(
+                        orderId,
+                        paymentMethod
+                    );
+
+
+
+                console.log(
+                    "PAYMENT RESPONSE:",
+                    paymentData
+                );
+
+
+
+                // ============================================
+                // ❗ VERIFY PAYMENT RESPONSE
+                // ============================================
+
+                if (
+                    !paymentData ||
+                    paymentData.success === false
+                ) {
+
+                    throw new Error(
+                        paymentData?.message ||
+                        "Failed to create payment."
+                    );
+
+                }
+
+
+
+
+
+                // ============================================
+                // 💳 STRIPE / KLARNA
+                // ============================================
+
+                if (
+                    paymentData.checkoutUrl
+                ) {
+
+                    toast.success(
+                        "Order created. Redirecting to payment..."
+                    );
+
+
+
+                    window.location.href =
+                        paymentData.checkoutUrl;
+
+
+
+                    return;
+
+                }
+
+
+
+
+
+                // ============================================
+                // 📱 SWISH
+                // ============================================
+
+                if (
+                    paymentMethod === "swish"
+                ) {
+
+                    toast.success(
+                        "Swish payment created. Please complete your payment."
+                    );
+
+
+
+                    clearCart(
+                        false
+                    );
+
+
+
+                    navigate(
+                        `/orders/${orderId}`
+                    );
+
+
+
+                    return;
+
+                }
+
+
+
+
+
+                throw new Error(
+                    "Payment was created but no payment URL was returned."
+                );
+
+            }
+
+
+
+
+
+            // ============================================
+            // ✅ COD SUCCESS
             // ============================================
 
             toast.success(
                 "Order placed successfully!"
             );
+
+
 
 
 
@@ -402,6 +595,8 @@ function Checkout() {
             clearCart(
                 false
             );
+
+
 
 
 
@@ -423,11 +618,13 @@ function Checkout() {
             );
 
 
+
             const message =
                 error?.response?.data
                     ?.message ||
                 error?.message ||
                 "Failed to place order. Please try again.";
+
 
 
             toast.error(
@@ -447,6 +644,8 @@ function Checkout() {
         }
 
     };
+
+
 
 
 
@@ -471,6 +670,7 @@ function Checkout() {
             </h1>
 
 
+
             <form
                 onSubmit={
                     handleSubmit
@@ -487,6 +687,7 @@ function Checkout() {
                 </h2>
 
 
+
                 <input
                     name="name"
                     type="text"
@@ -501,6 +702,7 @@ function Checkout() {
                 />
 
 
+
                 <input
                     name="email"
                     type="email"
@@ -512,6 +714,7 @@ function Checkout() {
                         handleChange
                     }
                 />
+
 
 
                 <input
@@ -528,6 +731,7 @@ function Checkout() {
                 />
 
 
+
                 {/* ============================================
                     📍 SHIPPING INFORMATION
                 ============================================ */}
@@ -535,6 +739,7 @@ function Checkout() {
                 <h2>
                     Shipping Information
                 </h2>
+
 
 
                 <input
@@ -551,6 +756,7 @@ function Checkout() {
                 />
 
 
+
                 <input
                     name="city"
                     type="text"
@@ -562,6 +768,7 @@ function Checkout() {
                         handleChange
                     }
                 />
+
 
 
                 <input
@@ -578,6 +785,8 @@ function Checkout() {
 
 
 
+
+
                 {/* ============================================
                     🧾 ORDER SUMMARY
                 ============================================ */}
@@ -585,6 +794,7 @@ function Checkout() {
                 <h2>
                     Order Summary
                 </h2>
+
 
 
                 <p>
@@ -602,6 +812,8 @@ function Checkout() {
                             : "items"
                     }
                 </p>
+
+
 
 
 
@@ -623,6 +835,7 @@ function Checkout() {
                                 );
 
 
+
                             const itemQuantity =
                                 Number(
                                     item.quantity ||
@@ -630,9 +843,11 @@ function Checkout() {
                                 );
 
 
+
                             const itemTotal =
                                 itemPrice *
                                 itemQuantity;
+
 
 
                             const image =
@@ -641,12 +856,14 @@ function Checkout() {
                                 "";
 
 
+
                             const imageUrl =
                                 image.startsWith(
                                     "http"
                                 )
                                     ? image
                                     : `${import.meta.env.VITE_API_URL}${image}`;
+
 
 
                             return (
@@ -684,6 +901,8 @@ function Checkout() {
 
 
 
+
+
                                     {/* ============================================
                                         📦 PRODUCT INFORMATION
                                     ============================================ */}
@@ -695,12 +914,14 @@ function Checkout() {
                                     </h3>
 
 
+
                                     <p>
                                         Price per item: $
                                         {itemPrice.toFixed(
                                             2
                                         )}
                                     </p>
+
 
 
                                     <p>
@@ -711,12 +932,14 @@ function Checkout() {
                                     </p>
 
 
+
                                     <p>
                                         Product total: $
                                         {itemTotal.toFixed(
                                             2
                                         )}
                                     </p>
+
 
 
                                     <hr />
@@ -732,6 +955,8 @@ function Checkout() {
 
 
 
+
+
                 {/* ============================================
                     💰 PRICE BREAKDOWN
                 ============================================ */}
@@ -739,6 +964,7 @@ function Checkout() {
                 <h2>
                     Price Summary
                 </h2>
+
 
 
                 <p>
@@ -749,12 +975,14 @@ function Checkout() {
                 </p>
 
 
+
                 <p>
                     Tax (25%): $
                     {tax.toFixed(
                         2
                     )}
                 </p>
+
 
 
                 <p>
@@ -765,7 +993,9 @@ function Checkout() {
                 </p>
 
 
+
                 <hr />
+
 
 
                 <h2>
@@ -774,6 +1004,8 @@ function Checkout() {
                         2
                     )}
                 </h2>
+
+
 
 
 
@@ -786,11 +1018,13 @@ function Checkout() {
                 </h2>
 
 
+
                 <p>
                     Name:{" "}
                     {normalizedForm.name ||
                         "Not provided"}
                 </p>
+
 
 
                 <p>
@@ -800,11 +1034,13 @@ function Checkout() {
                 </p>
 
 
+
                 <p>
                     Address:{" "}
                     {normalizedForm.address ||
                         "Not provided"}
                 </p>
+
 
 
                 <p>
@@ -814,11 +1050,14 @@ function Checkout() {
                 </p>
 
 
+
                 <p>
                     Postal Code:{" "}
                     {normalizedForm.postalCode ||
                         "Not provided"}
                 </p>
+
+
 
 
 
@@ -831,11 +1070,112 @@ function Checkout() {
                 </h2>
 
 
-                <p>
-                    Payment method:
-                    {" "}
+
+                <label>
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={
+                            paymentMethod === "cod"
+                        }
+                        onChange={() =>
+                            setPaymentMethod(
+                                "cod"
+                            )
+                        }
+                    />
+
                     Cash on Delivery
+                </label>
+
+
+
+                <br />
+
+
+
+                <label>
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="stripe"
+                        checked={
+                            paymentMethod === "stripe"
+                        }
+                        onChange={() =>
+                            setPaymentMethod(
+                                "stripe"
+                            )
+                        }
+                    />
+
+                    Stripe
+                </label>
+
+
+
+                <br />
+
+
+
+                <label>
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="klarna"
+                        checked={
+                            paymentMethod === "klarna"
+                        }
+                        onChange={() =>
+                            setPaymentMethod(
+                                "klarna"
+                            )
+                        }
+                    />
+
+                    Klarna
+                </label>
+
+
+
+                <br />
+
+
+
+                <label>
+                    <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="swish"
+                        checked={
+                            paymentMethod === "swish"
+                        }
+                        onChange={() =>
+                            setPaymentMethod(
+                                "swish"
+                            )
+                        }
+                    />
+
+                    Swish
+                </label>
+
+
+
+                <p>
+                    Payment method:{" "}
+                    {
+                        paymentMethod === "cod"
+                            ? "Cash on Delivery"
+                            : paymentMethod === "stripe"
+                                ? "Stripe"
+                                : paymentMethod === "klarna"
+                                    ? "Klarna"
+                                    : "Swish"
+                    }
                 </p>
+
 
 
                 <p>
@@ -843,6 +1183,8 @@ function Checkout() {
                     {" "}
                     Pending
                 </p>
+
+
 
 
 
@@ -859,7 +1201,9 @@ function Checkout() {
                 >
                     {isSubmitting
                         ? "Placing Order..."
-                        : "Place Order"}
+                        : paymentMethod === "cod"
+                            ? "Place Order"
+                            : "Continue to Payment"}
                 </button>
 
             </form>

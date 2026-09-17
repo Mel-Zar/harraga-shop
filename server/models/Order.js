@@ -370,6 +370,136 @@ const orderSchema =
                         "pending",
                 },
 
+
+                // =========================
+                // PROVIDER REFERENCE
+                // =========================
+                provider: {
+                    type:
+                        String,
+
+                    enum: [
+                        "cod",
+                        "stripe",
+                        "swish",
+                    ],
+
+                    default:
+                        "cod",
+                },
+
+
+                // Stripe Checkout Session ID
+                stripeSessionId: {
+                    type:
+                        String,
+
+                    default:
+                        null,
+
+                    trim:
+                        true,
+
+                    maxlength:
+                        500,
+                },
+
+
+                // Stripe PaymentIntent ID
+                stripePaymentIntentId: {
+                    type:
+                        String,
+
+                    default:
+                        null,
+
+                    trim:
+                        true,
+
+                    maxlength:
+                        500,
+                },
+
+
+                // Swish payment ID / instruction UUID
+                swishPaymentId: {
+                    type:
+                        String,
+
+                    default:
+                        null,
+
+                    trim:
+                        true,
+
+                    maxlength:
+                        500,
+                },
+
+
+                // External provider status
+                providerStatus: {
+                    type:
+                        String,
+
+                    default:
+                        null,
+
+                    trim:
+                        true,
+
+                    maxlength:
+                        100,
+                },
+
+
+                // Payment failure reason
+                failureReason: {
+                    type:
+                        String,
+
+                    default:
+                        null,
+
+                    trim:
+                        true,
+
+                    maxlength:
+                        1000,
+                },
+
+
+                // When payment became successful
+                paidAt: {
+                    type:
+                        Date,
+
+                    default:
+                        null,
+                },
+
+
+                // Last provider update
+                lastUpdatedAt: {
+                    type:
+                        Date,
+
+                    default:
+                        null,
+                },
+
+            },
+
+
+            // =========================
+            // STOCK RESTORATION
+            // =========================
+            stockRestored: {
+                type:
+                    Boolean,
+
+                default:
+                    false,
             },
 
 
@@ -523,6 +653,19 @@ orderSchema.index({
 orderSchema.index({
     status: 1,
     createdAt: -1,
+});
+
+orderSchema.index({
+    "payment.status": 1,
+    createdAt: -1,
+});
+
+orderSchema.index({
+    "payment.stripeSessionId": 1,
+});
+
+orderSchema.index({
+    "payment.swishPaymentId": 1,
 });
 
 

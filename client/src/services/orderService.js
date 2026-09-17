@@ -172,6 +172,104 @@ export const createOrder = async (
 };
 
 // =========================
+// 💳 CREATE PAYMENT
+// =========================
+export const createPayment =
+    async (
+        id,
+        paymentMethod
+    ) => {
+
+        try {
+
+            if (!id) {
+
+                throw new Error(
+                    "Order ID is required"
+                );
+
+            }
+
+            if (!paymentMethod) {
+
+                throw new Error(
+                    "Payment method is required"
+                );
+
+            }
+
+            const response =
+                await axios.post(
+                    `${API_URL}/${id}/payment`,
+                    {
+                        paymentMethod,
+                    },
+                    {
+                        withCredentials:
+                            true,
+
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
+
+            return response.data;
+
+        } catch (error) {
+
+            console.error(
+                "❌ CREATE PAYMENT ERROR:",
+                error.response?.data ||
+                error.message
+            );
+
+            throw error;
+        }
+    };
+
+// =========================
+// 💳 GET PAYMENT STATUS
+// =========================
+export const getPaymentStatus =
+    async (id) => {
+
+        try {
+
+            if (!id) {
+
+                throw new Error(
+                    "Order ID is required"
+                );
+
+            }
+
+            const response =
+                await axios.get(
+                    `${API_URL}/${id}/payment-status`,
+                    {
+                        withCredentials:
+                            true,
+
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
+
+            return response.data;
+
+        } catch (error) {
+
+            console.error(
+                "❌ GET PAYMENT STATUS ERROR:",
+                error.response?.data ||
+                error.message
+            );
+
+            throw error;
+        }
+    };
+
+// =========================
 // 📦 GET ALL ORDERS
 // ADMIN ONLY
 // =========================
