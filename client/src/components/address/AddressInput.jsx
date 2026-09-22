@@ -53,6 +53,22 @@ export default function AddressInput({
     const lastSelectedRef =
         useRef("");
 
+    const lastRequestKeyRef =
+        useRef("");
+
+    const requestIdRef =
+        useRef(0);
+
+    // =========================
+    // SEARCH CONFIG
+    // =========================
+
+    const SEARCH_DELAY = 600;
+
+    const MIN_SEARCH_LENGTH = 3;
+
+    const MAX_RESULTS = 8;
+
     // =========================
     // NORMALIZE TEXT
     // =========================
@@ -144,7 +160,9 @@ export default function AddressInput({
 
                 return (
                     countryCodeMap[
-                    normalizeText(country)
+                    normalizeText(
+                        country
+                    )
                     ] || ""
                 );
             },
@@ -162,9 +180,17 @@ export default function AddressInput({
         useCallback(
             (value) => {
                 const normalized =
-                    normalizeText(
-                        value
-                    );
+                    normalizeText(value);
+
+                /*
+                 * Supports:
+                 *
+                 * 14
+                 * 14A
+                 * 14-16
+                 * 14A-16B
+                 * 14/16
+                 */
 
                 const match =
                     normalized.match(
@@ -176,6 +202,203 @@ export default function AddressInput({
                     : "";
             },
             [normalizeText]
+        );
+
+    // =========================
+    // GET RESULT HOUSE NUMBER
+    // =========================
+
+    const getResultHouseNumber =
+        useCallback(
+            (place) => {
+                /*
+                 * Google/provider can expose the
+                 * house number under different fields.
+                 */
+
+                const explicitHouseNumber =
+                    place?.housenumber ||
+                    place?.house_number ||
+                    place?.street_number ||
+                    place?.streetNumber ||
+                    place?.houseNumber ||
+                    place?.address?.housenumber ||
+                    place?.address?.house_number ||
+                    place?.address?.street_number ||
+                    place?.address?.streetNumber ||
+                    place?.address?.houseNumber ||
+                    "";
+
+                if (
+                    explicitHouseNumber
+                ) {
+                    return String(
+                        explicitHouseNumber
+                    ).trim();
+                }
+
+                /*
+                 * Google can sometimes return:
+                 *
+                 * Sibeliusgången 14,
+                 * 164 73 Kista
+                 *
+                 * while street_number is not
+                 * present in the returned object.
+                 */
+
+                const formatted =
+                    place?.formatted ||
+                    place?.formattedAddress ||
+                    place?.display_name ||
+                    place?.displayName?.text ||
+                    "";
+
+                const normalized =
+                    normalizeText(
+                        formatted
+                    );
+
+                /*
+                 * First try the address part before
+                 * the comma.
+                 */
+
+                const firstSegment =
+                    normalized
+                        .split(",")[0]
+                        .trim();
+
+                const firstSegmentMatch =
+                    firstSegment.match(
+                        /(?:^|\s)(\d+[a-z]?(?:[-/]\d+[a-z]?)?)\s*$/
+                    );
+
+                if (
+                    firstSegmentMatch
+                ) {
+                    return firstSegmentMatch[1];
+                }
+
+                /*
+                 * Also support a number immediately
+                 * before a comma/end of address.
+                 */
+
+                const match =
+                    normalized.match(
+                        /(?:^|\s)(\d+[a-z]?(?:[-/]\d+[a-z]?)?)(?=\s*(?:,|$))/
+                    );
+
+                if (match) {
+                    return match[1];
+                }
+
+                /*
+                 * Fallback:
+                 * find the first house number.
+                 */
+
+                const fallback =
+                    normalized.match(
+                        /\b(\d+[a-z]?(?:[-/]\d+[a-z]?)?)\b/
+                    );
+
+                return fallback
+                    ? fallback[1]
+                    : "";
+            },
+            [normalizeText]
+        );
+
+    // =========================
+    // GET RESULT STREET
+    // =========================
+
+    const getResultStreet =
+        useCallback(
+            (place) => {
+                return (
+                    place?.street ||
+                    place?.address?.street ||
+                    place?.address?.road ||
+                    ""
+                );
+            },
+            []
+        );
+
+    // =========================
+    // GET RESULT CITY
+    // =========================
+
+    const getResultCity =
+        useCallback(
+            (place) => {
+                return (
+                    place?.city ||
+                    place?.address?.city ||
+                    place?.address?.town ||
+                    place?.address?.village ||
+                    place?.address?.municipality ||
+                    ""
+                );
+            },
+            []
+        );
+
+    // =========================
+    // GET RESULT POSTAL CODE
+    // =========================
+
+    const getResultPostalCode =
+        useCallback(
+            (place) => {
+                return (
+                    place?.postcode ||
+                    place?.postalCode ||
+                    place?.postal_code ||
+                    place?.address?.postcode ||
+                    place?.address?.postalCode ||
+                    place?.address?.postal_code ||
+                    ""
+                );
+            },
+            []
+        );
+
+    // =========================
+    // GET RESULT COUNTRY
+    // =========================
+
+    const getResultCountry =
+        useCallback(
+            (place) => {
+                return (
+                    place?.country ||
+                    place?.address?.country ||
+                    ""
+                );
+            },
+            []
+        );
+
+    // =========================
+    // GET RESULT COUNTRY CODE
+    // =========================
+
+    const getResultCountryCode =
+        useCallback(
+            (place) => {
+                return (
+                    place?.country_code ||
+                    place?.countryCode ||
+                    place?.address?.country_code ||
+                    place?.address?.countryCode ||
+                    ""
+                );
+            },
+            []
         );
 
     // =========================
@@ -236,6 +459,8 @@ export default function AddressInput({
             ) {
                 abortRef.current.abort();
             }
+
+            requestIdRef.current += 1;
         };
     }, []);
 
@@ -269,261 +494,264 @@ export default function AddressInput({
                         form.postalCode
                     );
 
-                return [...items].sort(
-                    (a, b) => {
-                        let scoreA = 0;
-                        let scoreB = 0;
+                return [...items]
+                    .sort(
+                        (a, b) => {
+                            let scoreA = 0;
+                            let scoreB = 0;
 
-                        const labelA =
-                            normalizeText(
-                                a.formatted ||
-                                a.display_name ||
-                                ""
+                            const labelA =
+                                normalizeText(
+                                    a.formatted ||
+                                    a.display_name ||
+                                    a.formattedAddress ||
+                                    ""
+                                );
+
+                            const labelB =
+                                normalizeText(
+                                    b.formatted ||
+                                    b.display_name ||
+                                    b.formattedAddress ||
+                                    ""
+                                );
+
+                            const streetA =
+                                normalizeText(
+                                    getResultStreet(
+                                        a
+                                    )
+                                );
+
+                            const streetB =
+                                normalizeText(
+                                    getResultStreet(
+                                        b
+                                    )
+                                );
+
+                            const houseA =
+                                normalizeText(
+                                    getResultHouseNumber(
+                                        a
+                                    )
+                                );
+
+                            const houseB =
+                                normalizeText(
+                                    getResultHouseNumber(
+                                        b
+                                    )
+                                );
+
+                            const postcodeA =
+                                normalizeText(
+                                    getResultPostalCode(
+                                        a
+                                    )
+                                );
+
+                            const postcodeB =
+                                normalizeText(
+                                    getResultPostalCode(
+                                        b
+                                    )
+                                );
+
+                            const cityA =
+                                normalizeText(
+                                    getResultCity(
+                                        a
+                                    )
+                                );
+
+                            const cityB =
+                                normalizeText(
+                                    getResultCity(
+                                        b
+                                    )
+                                );
+
+                            // =========================
+                            // QUERY
+                            // =========================
+
+                            if (
+                                normalizedQuery &&
+                                labelA.includes(
+                                    normalizedQuery
+                                )
+                            ) {
+                                scoreA += 20;
+                            }
+
+                            if (
+                                normalizedQuery &&
+                                labelB.includes(
+                                    normalizedQuery
+                                )
+                            ) {
+                                scoreB += 20;
+                            }
+
+                            // =========================
+                            // CITY
+                            // =========================
+
+                            if (
+                                requestedCity &&
+                                cityA ===
+                                requestedCity
+                            ) {
+                                scoreA += 50000;
+                            }
+
+                            if (
+                                requestedCity &&
+                                cityB ===
+                                requestedCity
+                            ) {
+                                scoreB += 50000;
+                            }
+
+                            // =========================
+                            // POSTCODE
+                            // =========================
+
+                            if (
+                                requestedPostalCode &&
+                                postcodeA ===
+                                requestedPostalCode
+                            ) {
+                                scoreA += 80000;
+                            }
+
+                            if (
+                                requestedPostalCode &&
+                                postcodeB ===
+                                requestedPostalCode
+                            ) {
+                                scoreB += 80000;
+                            }
+
+                            // =========================
+                            // HOUSE NUMBER
+                            // =========================
+
+                            if (
+                                requestedHouseNumber &&
+                                houseA ===
+                                normalizeText(
+                                    requestedHouseNumber
+                                )
+                            ) {
+                                scoreA += 100000;
+                            }
+
+                            if (
+                                requestedHouseNumber &&
+                                houseB ===
+                                normalizeText(
+                                    requestedHouseNumber
+                                )
+                            ) {
+                                scoreB += 100000;
+                            }
+
+                            // =========================
+                            // STREET
+                            // =========================
+
+                            if (
+                                streetA
+                            ) {
+                                scoreA += 100;
+                            }
+
+                            if (
+                                streetB
+                            ) {
+                                scoreB += 100;
+                            }
+
+                            // =========================
+                            // POSTCODE EXISTS
+                            // =========================
+
+                            if (
+                                postcodeA
+                            ) {
+                                scoreA += 50;
+                            }
+
+                            if (
+                                postcodeB
+                            ) {
+                                scoreB += 50;
+                            }
+
+                            // =========================
+                            // BUILDING / STREET ADDRESS
+                            // =========================
+
+                            const typeA =
+                                String(
+                                    a.result_type ||
+                                    a.match_type ||
+                                    ""
+                                ).toLowerCase();
+
+                            const typeB =
+                                String(
+                                    b.result_type ||
+                                    b.match_type ||
+                                    ""
+                                ).toLowerCase();
+
+                            if (
+                                typeA ===
+                                "building" ||
+                                typeA ===
+                                "street_address" ||
+                                typeA ===
+                                "premise" ||
+                                typeA ===
+                                "subpremise"
+                            ) {
+                                scoreA += 100;
+                            }
+
+                            if (
+                                typeB ===
+                                "building" ||
+                                typeB ===
+                                "street_address" ||
+                                typeB ===
+                                "premise" ||
+                                typeB ===
+                                "subpremise"
+                            ) {
+                                scoreB += 100;
+                            }
+
+                            return (
+                                scoreB -
+                                scoreA
                             );
-
-                        const labelB =
-                            normalizeText(
-                                b.formatted ||
-                                b.display_name ||
-                                ""
-                            );
-
-                        const streetA =
-                            normalizeText(
-                                a.street ||
-                                a.address?.street ||
-                                a.address?.road ||
-                                ""
-                            );
-
-                        const streetB =
-                            normalizeText(
-                                b.street ||
-                                b.address?.street ||
-                                b.address?.road ||
-                                ""
-                            );
-
-                        const houseA =
-                            normalizeText(
-                                a.housenumber ||
-                                a.address?.housenumber ||
-                                a.address?.house_number ||
-                                ""
-                            );
-
-                        const houseB =
-                            normalizeText(
-                                b.housenumber ||
-                                b.address?.housenumber ||
-                                b.address?.house_number ||
-                                ""
-                            );
-
-                        const postcodeA =
-                            normalizeText(
-                                a.postcode ||
-                                a.address?.postcode ||
-                                ""
-                            );
-
-                        const postcodeB =
-                            normalizeText(
-                                b.postcode ||
-                                b.address?.postcode ||
-                                ""
-                            );
-
-                        const cityA =
-                            normalizeText(
-                                a.city ||
-                                a.address?.city ||
-                                a.address?.town ||
-                                a.address?.village ||
-                                ""
-                            );
-
-                        const cityB =
-                            normalizeText(
-                                b.city ||
-                                b.address?.city ||
-                                b.address?.town ||
-                                b.address?.village ||
-                                ""
-                            );
-
-                        // =========================
-                        // QUERY
-                        // =========================
-
-                        if (
-                            normalizedQuery &&
-                            labelA.includes(
-                                normalizedQuery
-                            )
-                        ) {
-                            scoreA += 20;
                         }
-
-                        if (
-                            normalizedQuery &&
-                            labelB.includes(
-                                normalizedQuery
-                            )
-                        ) {
-                            scoreB += 20;
-                        }
-
-                        // =========================
-                        // CITY
-                        // =========================
-
-                        if (
-                            requestedCity &&
-                            cityA ===
-                            requestedCity
-                        ) {
-                            scoreA += 50000;
-                        }
-
-                        if (
-                            requestedCity &&
-                            cityB ===
-                            requestedCity
-                        ) {
-                            scoreB += 50000;
-                        }
-
-                        // =========================
-                        // POSTCODE
-                        // =========================
-
-                        if (
-                            requestedPostalCode &&
-                            postcodeA ===
-                            requestedPostalCode
-                        ) {
-                            scoreA += 80000;
-                        }
-
-                        if (
-                            requestedPostalCode &&
-                            postcodeB ===
-                            requestedPostalCode
-                        ) {
-                            scoreB += 80000;
-                        }
-
-                        // =========================
-                        // HOUSE NUMBER
-                        // =========================
-
-                        if (
-                            requestedHouseNumber &&
-                            houseA ===
-                            normalizeText(
-                                requestedHouseNumber
-                            )
-                        ) {
-                            scoreA += 100000;
-                        }
-
-                        if (
-                            requestedHouseNumber &&
-                            houseB ===
-                            normalizeText(
-                                requestedHouseNumber
-                            )
-                        ) {
-                            scoreB += 100000;
-                        }
-
-                        // =========================
-                        // STREET
-                        // =========================
-
-                        if (
-                            streetA
-                        ) {
-                            scoreA += 100;
-                        }
-
-                        if (
-                            streetB
-                        ) {
-                            scoreB += 100;
-                        }
-
-                        // =========================
-                        // POSTCODE EXISTS
-                        // =========================
-
-                        if (
-                            postcodeA
-                        ) {
-                            scoreA += 50;
-                        }
-
-                        if (
-                            postcodeB
-                        ) {
-                            scoreB += 50;
-                        }
-
-                        // =========================
-                        // BUILDING / STREET ADDRESS
-                        // =========================
-
-                        const typeA =
-                            String(
-                                a.result_type ||
-                                a.match_type ||
-                                ""
-                            ).toLowerCase();
-
-                        const typeB =
-                            String(
-                                b.result_type ||
-                                b.match_type ||
-                                ""
-                            ).toLowerCase();
-
-                        if (
-                            typeA ===
-                            "building" ||
-                            typeA ===
-                            "street_address" ||
-                            typeA ===
-                            "premise" ||
-                            typeA ===
-                            "subpremise"
-                        ) {
-                            scoreA += 100;
-                        }
-
-                        if (
-                            typeB ===
-                            "building" ||
-                            typeB ===
-                            "street_address" ||
-                            typeB ===
-                            "premise" ||
-                            typeB ===
-                            "subpremise"
-                        ) {
-                            scoreB += 100;
-                        }
-
-                        return (
-                            scoreB -
-                            scoreA
-                        );
-                    }
-                );
+                    )
+                    .slice(
+                        0,
+                        MAX_RESULTS
+                    );
             },
             [
                 normalizeText,
                 getHouseNumber,
+                getResultHouseNumber,
+                getResultStreet,
+                getResultCity,
+                getResultPostalCode,
                 form.city,
                 form.postalCode,
             ]
@@ -541,6 +769,35 @@ export default function AddressInput({
                 timeoutRef.current
             );
         }
+
+        /*
+         * Abort the previous request immediately
+         * when the input changes.
+         *
+         * This prevents old Google responses from
+         * competing with newer searches.
+         */
+
+        if (
+            abortRef.current
+        ) {
+            abortRef.current.abort();
+            abortRef.current = null;
+        }
+
+        /*
+         * Increment request id.
+         *
+         * Every search gets its own id.
+         * An old request is never allowed to
+         * update the UI after a newer request
+         * has started.
+         */
+
+        requestIdRef.current += 1;
+
+        const currentRequestId =
+            requestIdRef.current;
 
         timeoutRef.current =
             setTimeout(
@@ -579,8 +836,23 @@ export default function AddressInput({
                     }
 
                     if (
+                        locked
+                    ) {
+                        setResults([]);
+                        setActiveIndex(-1);
+                        setLoading(false);
+                        return;
+                    }
+
+                    /*
+                     * Do not call Google for fewer than
+                     * three characters.
+                     */
+
+                    if (
                         !query ||
-                        query.length < 3 ||
+                        query.length <
+                        MIN_SEARCH_LENGTH ||
                         !country
                     ) {
                         setResults([]);
@@ -589,46 +861,107 @@ export default function AddressInput({
                         return;
                     }
 
-                    if (locked) {
-                        return;
-                    }
+                    /*
+                     * Build one stable key for this exact
+                     * search context.
+                     *
+                     * Same query + same country/city/postal
+                     * code = same search.
+                     */
 
                     const cacheKey =
                         [
-                            country,
                             countryCode,
-                            city,
-                            postalCode,
-                            query.toLowerCase(),
-                        ].join("_");
+                            normalizeText(
+                                city
+                            ),
+                            normalizeText(
+                                postalCode
+                            ),
+                            normalizeText(
+                                query
+                            ),
+                        ].join("|");
+
+                    /*
+                     * Never send the exact same request
+                     * twice in a row.
+                     */
 
                     if (
-                        cacheRef.current[
+                        lastRequestKeyRef.current ===
                         cacheKey
-                        ]
                     ) {
-                        setResults(
+                        return;
+                    }
+
+                    /*
+                     * Return cached results without
+                     * calling Google again.
+                     */
+
+                    if (
+                        Object.prototype.hasOwnProperty.call(
+                            cacheRef.current,
+                            cacheKey
+                        )
+                    ) {
+                        const cachedResults =
                             cacheRef.current[
                             cacheKey
-                            ]
+                            ];
+
+                        setResults(
+                            cachedResults
                         );
 
-                        setActiveIndex(-1);
+                        setActiveIndex(
+                            -1
+                        );
+
+                        setLoading(
+                            false
+                        );
+
+                        if (
+                            cachedResults.length ===
+                            0
+                        ) {
+                            if (
+                                fallbackTimerRef.current
+                            ) {
+                                clearTimeout(
+                                    fallbackTimerRef.current
+                                );
+                            }
+
+                            fallbackTimerRef.current =
+                                setTimeout(
+                                    () => {
+                                        setShowFallback(
+                                            true
+                                        );
+                                    },
+                                    500
+                                );
+                        }
 
                         return;
                     }
 
+                    lastRequestKeyRef.current =
+                        cacheKey;
+
+                    const controller =
+                        new AbortController();
+
+                    abortRef.current =
+                        controller;
+
                     try {
-                        setLoading(true);
-
-                        if (
-                            abortRef.current
-                        ) {
-                            abortRef.current.abort();
-                        }
-
-                        abortRef.current =
-                            new AbortController();
+                        setLoading(
+                            true
+                        );
 
                         console.log(
                             "ADDRESS INPUT SEARCH:",
@@ -651,10 +984,21 @@ export default function AddressInput({
                                 country,
                                 city,
                                 postalCode,
-                                abortRef.current
-                                    .signal,
+                                controller.signal,
                                 countryCode
                             );
+
+                        /*
+                         * If this request is no longer
+                         * the latest request, ignore it.
+                         */
+
+                        if (
+                            currentRequestId !==
+                            requestIdRef.current
+                        ) {
+                            return;
+                        }
 
                         const safeData =
                             Array.isArray(
@@ -694,15 +1038,16 @@ export default function AddressInput({
                                     requestedHouseNumber
                                 );
 
-                            finalResults =
+                            const houseMatches =
                                 ranked.filter(
-                                    (item) => {
+                                    (
+                                        item
+                                    ) => {
                                         const resultHouse =
                                             normalizeText(
-                                                item.housenumber ||
-                                                item.address?.housenumber ||
-                                                item.address?.house_number ||
-                                                ""
+                                                getResultHouseNumber(
+                                                    item
+                                                )
                                             );
 
                                         return (
@@ -711,83 +1056,42 @@ export default function AddressInput({
                                         );
                                     }
                                 );
+
+                            /*
+                             * If Google exposes the exact
+                             * house number, prefer those
+                             * results.
+                             *
+                             * If Google does not expose
+                             * enough house-number data,
+                             * keep the ranked results.
+                             */
+
+                            if (
+                                houseMatches.length >
+                                0
+                            ) {
+                                finalResults =
+                                    houseMatches.slice(
+                                        0,
+                                        MAX_RESULTS
+                                    );
+                            } else {
+                                finalResults =
+                                    ranked;
+                            }
                         }
 
-                        // =========================
-                        // CITY
-                        // =========================
-
-                        if (
-                            city &&
-                            finalResults.length >
-                            0
-                        ) {
-                            const normalizedCity =
-                                normalizeText(
-                                    city
-                                );
-
-                            const cityMatches =
-                                finalResults.filter(
-                                    (item) => {
-                                        const resultCity =
-                                            normalizeText(
-                                                item.city ||
-                                                item.address?.city ||
-                                                item.address?.town ||
-                                                item.address?.village ||
-                                                ""
-                                            );
-
-                                        return (
-                                            resultCity ===
-                                            normalizedCity
-                                        );
-                                    }
-                                );
-
-                            finalResults =
-                                cityMatches;
-                        }
-
-                        // =========================
-                        // POSTAL CODE
-                        // =========================
-
-                        if (
-                            postalCode &&
-                            finalResults.length >
-                            0
-                        ) {
-                            const normalizedPostalCode =
-                                normalizeText(
-                                    postalCode
-                                );
-
-                            const postalMatches =
-                                finalResults.filter(
-                                    (item) => {
-                                        const resultPostalCode =
-                                            normalizeText(
-                                                item.postcode ||
-                                                item.address?.postcode ||
-                                                ""
-                                            );
-
-                                        return (
-                                            resultPostalCode ===
-                                            normalizedPostalCode
-                                        );
-                                    }
-                                );
-
-                            finalResults =
-                                postalMatches;
-                        }
-
-                        // =========================
-                        // NEVER RETURN WRONG HOUSE
-                        // =========================
+                        /*
+                         * City and postal code are NOT
+                         * filtered out here.
+                         *
+                         * They are used for ranking only.
+                         *
+                         * This allows Google to show
+                         * multiple possible addresses
+                         * when city has not been selected.
+                         */
 
                         if (
                             requestedHouseNumber &&
@@ -811,7 +1115,9 @@ export default function AddressInput({
                             finalResults
                         );
 
-                        setActiveIndex(-1);
+                        setActiveIndex(
+                            -1
+                        );
 
                         if (
                             fallbackTimerRef.current
@@ -828,9 +1134,14 @@ export default function AddressInput({
                             fallbackTimerRef.current =
                                 setTimeout(
                                     () => {
-                                        setShowFallback(
-                                            true
-                                        );
+                                        if (
+                                            currentRequestId ===
+                                            requestIdRef.current
+                                        ) {
+                                            setShowFallback(
+                                                true
+                                            );
+                                        }
                                     },
                                     500
                                 );
@@ -843,34 +1154,90 @@ export default function AddressInput({
                             return;
                         }
 
+                        /*
+                         * Ignore errors from old requests.
+                         */
+
+                        if (
+                            currentRequestId !==
+                            requestIdRef.current
+                        ) {
+                            return;
+                        }
+
                         console.error(
                             "ADDRESS SEARCH ERROR:",
                             error
                         );
 
                         setResults([]);
-                        setActiveIndex(-1);
+                        setActiveIndex(
+                            -1
+                        );
+
+                        /*
+                         * Do not repeatedly show fallback
+                         * while the user is typing.
+                         */
+
+                        if (
+                            fallbackTimerRef.current
+                        ) {
+                            clearTimeout(
+                                fallbackTimerRef.current
+                            );
+                        }
 
                         fallbackTimerRef.current =
                             setTimeout(
                                 () => {
-                                    setShowFallback(
-                                        true
-                                    );
+                                    if (
+                                        currentRequestId ===
+                                        requestIdRef.current
+                                    ) {
+                                        setShowFallback(
+                                            true
+                                        );
+                                    }
                                 },
                                 500
                             );
                     } finally {
-                        setLoading(false);
+                        /*
+                         * Only the latest request is
+                         * allowed to change loading state.
+                         */
+
+                        if (
+                            currentRequestId ===
+                            requestIdRef.current
+                        ) {
+                            setLoading(
+                                false
+                            );
+                        }
+
+                        if (
+                            abortRef.current ===
+                            controller
+                        ) {
+                            abortRef.current =
+                                null;
+                        }
                     }
                 },
-                300
+                SEARCH_DELAY
             );
 
-        return () =>
-            clearTimeout(
+        return () => {
+            if (
                 timeoutRef.current
-            );
+            ) {
+                clearTimeout(
+                    timeoutRef.current
+                );
+            }
+        };
     }, [
         form.address,
         form.country,
@@ -882,6 +1249,7 @@ export default function AddressInput({
         getHouseNumber,
         normalizeText,
         getCountryCode,
+        getResultHouseNumber,
     ]);
 
     // =========================
@@ -896,8 +1264,11 @@ export default function AddressInput({
             return text;
         }
 
+        const safeText =
+            String(text || "");
+
         const index =
-            text
+            safeText
                 .toLowerCase()
                 .indexOf(
                     query.toLowerCase()
@@ -906,25 +1277,25 @@ export default function AddressInput({
         if (
             index === -1
         ) {
-            return text;
+            return safeText;
         }
 
         return (
             <>
-                {text.slice(
+                {safeText.slice(
                     0,
                     index
                 )}
 
                 <mark>
-                    {text.slice(
+                    {safeText.slice(
                         index,
                         index +
                         query.length
                     )}
                 </mark>
 
-                {text.slice(
+                {safeText.slice(
                     index +
                     query.length
                 )}
@@ -942,11 +1313,23 @@ export default function AddressInput({
         return (
             place.formatted ||
             place.display_name ||
+            place.formattedAddress ||
             [
-                place.street,
-                place.housenumber,
-                place.postcode,
-                place.city,
+                getResultStreet(
+                    place
+                ),
+                getResultHouseNumber(
+                    place
+                ),
+                getResultPostalCode(
+                    place
+                ),
+                getResultCity(
+                    place
+                ),
+                getResultCountry(
+                    place
+                ),
             ]
                 .filter(Boolean)
                 .join(", ")
@@ -961,39 +1344,36 @@ export default function AddressInput({
         place
     ) => {
         const street =
-            place.street ||
-            place.address?.street ||
-            place.address?.road ||
-            "";
+            getResultStreet(
+                place
+            );
 
         const houseNumber =
-            place.housenumber ||
-            place.address?.housenumber ||
-            place.address?.house_number ||
-            "";
+            getResultHouseNumber(
+                place
+            );
 
         const city =
-            place.city ||
-            place.address?.city ||
-            place.address?.town ||
-            place.address?.village ||
-            "";
+            getResultCity(
+                place
+            );
 
         const postalCode =
-            place.postcode ||
-            place.address?.postcode ||
-            "";
+            getResultPostalCode(
+                place
+            );
 
         const country =
-            place.country ||
-            place.address?.country ||
+            getResultCountry(
+                place
+            ) ||
             form.country ||
             "";
 
         const googleCountryCode =
-            place.country_code ||
-            place.address?.country_code ||
-            "";
+            getResultCountryCode(
+                place
+            );
 
         const fallbackCountryCode =
             getCountryCode(
@@ -1023,37 +1403,118 @@ export default function AddressInput({
             "";
 
         // =========================
-        // NEVER ACCEPT WRONG HOUSE
+        // REQUIRE STREET
         // =========================
 
         if (
-            requestedHouseNumber &&
-            normalizeText(
-                houseNumber
-            ) !==
-            normalizeText(
-                requestedHouseNumber
-            )
+            !street
         ) {
             console.warn(
-                "ADDRESS REJECTED - WRONG HOUSE NUMBER:",
-                {
-                    requested:
-                        requestedHouseNumber,
-
-                    received:
-                        houseNumber,
-
-                    place,
-                }
+                "ADDRESS REJECTED - MISSING STREET:",
+                place
             );
 
             return;
         }
 
         // =========================
+        // HOUSE NUMBER VALIDATION
+        // =========================
+
+        if (
+            requestedHouseNumber
+        ) {
+            const normalizedRequestedHouse =
+                normalizeText(
+                    requestedHouseNumber
+                );
+
+            const normalizedResultHouse =
+                normalizeText(
+                    houseNumber
+                );
+
+            /*
+             * If Google gives us the house number,
+             * it must match.
+             */
+
+            if (
+                normalizedResultHouse &&
+                normalizedResultHouse !==
+                normalizedRequestedHouse
+            ) {
+                console.warn(
+                    "ADDRESS REJECTED - WRONG HOUSE NUMBER:",
+                    {
+                        requested:
+                            requestedHouseNumber,
+
+                        received:
+                            houseNumber,
+
+                        place,
+                    }
+                );
+
+                return;
+            }
+
+            /*
+             * If Google does not expose the house
+             * number separately, check the formatted
+             * address before accepting it.
+             */
+
+            if (
+                !normalizedResultHouse
+            ) {
+                const formattedLabel =
+                    getLabel(
+                        place
+                    );
+
+                const formattedHouse =
+                    getHouseNumber(
+                        formattedLabel
+                    );
+
+                if (
+                    formattedHouse &&
+                    normalizeText(
+                        formattedHouse
+                    ) !==
+                    normalizedRequestedHouse
+                ) {
+                    console.warn(
+                        "ADDRESS REJECTED - WRONG HOUSE NUMBER FROM FORMATTED ADDRESS:",
+                        {
+                            requested:
+                                requestedHouseNumber,
+
+                            received:
+                                formattedHouse,
+
+                            place,
+                        }
+                    );
+
+                    return;
+                }
+            }
+        }
+
+        // =========================
         // CITY VALIDATION
         // =========================
+
+        /*
+         * Only reject if BOTH values exist
+         * and are definitely different.
+         *
+         * If Google does not return a city,
+         * do not reject the address.
+         */
 
         if (
             requestedCity &&
@@ -1085,6 +1546,11 @@ export default function AddressInput({
         // POSTAL CODE VALIDATION
         // =========================
 
+        /*
+         * Only reject if BOTH values exist
+         * and are definitely different.
+         */
+
         if (
             requestedPostalCode &&
             postalCode &&
@@ -1112,34 +1578,6 @@ export default function AddressInput({
         }
 
         // =========================
-        // REQUIRE ADDRESS DATA
-        // =========================
-
-        if (
-            requestedHouseNumber &&
-            (
-                !street ||
-                !houseNumber
-            )
-        ) {
-            console.warn(
-                "ADDRESS REJECTED - INCOMPLETE ADDRESS:",
-                place
-            );
-
-            return;
-        }
-
-        const cleanStreet =
-            [
-                street,
-                houseNumber,
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-
-        // =========================
         // REQUIRE COUNTRY CODE
         // =========================
 
@@ -1148,6 +1586,81 @@ export default function AddressInput({
         ) {
             console.warn(
                 "ADDRESS REJECTED - MISSING COUNTRY CODE:",
+                place
+            );
+
+            return;
+        }
+
+        // =========================
+        // BUILD CLEAN STREET
+        // =========================
+
+        let cleanStreet =
+            street.trim();
+
+        /*
+         * If Google did not expose the house number
+         * separately but the formatted address contains
+         * the requested number, preserve the user's
+         * house number in the final street field.
+         */
+
+        if (
+            requestedHouseNumber &&
+            !houseNumber
+        ) {
+            const formattedLabel =
+                getLabel(
+                    place
+                );
+
+            const formattedHouse =
+                getHouseNumber(
+                    formattedLabel
+                );
+
+            if (
+                formattedHouse &&
+                normalizeText(
+                    formattedHouse
+                ) ===
+                normalizeText(
+                    requestedHouseNumber
+                )
+            ) {
+                cleanStreet =
+                    `${cleanStreet} ${formattedHouse}`
+                        .trim();
+            } else if (
+                !getHouseNumber(
+                    cleanStreet
+                )
+            ) {
+                cleanStreet =
+                    `${cleanStreet} ${requestedHouseNumber}`
+                        .trim();
+            }
+        } else if (
+            houseNumber &&
+            !getHouseNumber(
+                cleanStreet
+            )
+        ) {
+            cleanStreet =
+                `${cleanStreet} ${houseNumber}`
+                    .trim();
+        }
+
+        // =========================
+        // FINAL VALIDATION
+        // =========================
+
+        if (
+            !cleanStreet
+        ) {
+            console.warn(
+                "ADDRESS REJECTED - EMPTY STREET AFTER NORMALIZATION:",
                 place
             );
 
@@ -1170,24 +1683,28 @@ export default function AddressInput({
             }
         );
 
+        // =========================
+        // UPDATE FORM
+        // =========================
+
         setForm(
-            (prev) => ({
-                ...prev,
+            (previous) => ({
+                ...previous,
 
                 address:
                     cleanStreet,
 
                 city:
                     city ||
-                    prev.city,
+                    previous.city,
 
                 postalCode:
                     postalCode ||
-                    prev.postalCode,
+                    previous.postalCode,
 
                 country:
                     country ||
-                    prev.country,
+                    previous.country,
 
                 countryCode:
                     countryCode,
@@ -1205,6 +1722,17 @@ export default function AddressInput({
         setShowFallback(false);
         setResults([]);
         setActiveIndex(-1);
+
+        if (
+            abortRef.current
+        ) {
+            abortRef.current.abort();
+            abortRef.current =
+                null;
+        }
+
+        lastRequestKeyRef.current =
+            "";
     };
 
     // =========================
@@ -1295,7 +1823,9 @@ export default function AddressInput({
             activeIndex
             ];
 
-        if (element) {
+        if (
+            element
+        ) {
             element.scrollIntoView({
                 block:
                     "nearest",
@@ -1318,9 +1848,52 @@ export default function AddressInput({
         ) {
             setSelected(false);
             setLocked(false);
+
+            /*
+             * A manually changed address is no
+             * longer the address that was verified.
+             */
+
+            lastSelectedRef.current =
+                "";
         }
 
         setShowFallback(false);
+        setActiveIndex(-1);
+
+        /*
+         * Clear fallback timer so an old
+         * "No verified address found" message
+         * cannot appear for the new query.
+         */
+
+        if (
+            fallbackTimerRef.current
+        ) {
+            clearTimeout(
+                fallbackTimerRef.current
+            );
+
+            fallbackTimerRef.current =
+                null;
+        }
+
+        /*
+         * Clear old search results immediately
+         * while the user is typing.
+         */
+
+        setResults([]);
+
+        /*
+         * When the user manually edits the
+         * address after selecting a Google result,
+         * the address is no longer verified.
+         *
+         * We deliberately keep city and postal
+         * code because they can help Google
+         * disambiguate addresses.
+         */
 
         setForm(
             (previous) => ({
@@ -1331,6 +1904,12 @@ export default function AddressInput({
 
                 addressVerified:
                     false,
+
+                countryCode:
+                    previous.countryCode ||
+                    getCountryCode(
+                        previous.country
+                    ),
 
                 ...(value.length ===
                     0 && {
@@ -1396,6 +1975,15 @@ export default function AddressInput({
                                         place
                                     )
                                 }
+                                onMouseEnter={() =>
+                                    setActiveIndex(
+                                        index
+                                    )
+                                }
+                                aria-selected={
+                                    activeIndex ===
+                                    index
+                                }
                             >
                                 {highlight(
                                     getLabel(
@@ -1413,7 +2001,7 @@ export default function AddressInput({
                 !selected &&
                 !locked &&
                 form.address.length >=
-                3 &&
+                MIN_SEARCH_LENGTH &&
                 results.length ===
                 0 && (
                     <div>

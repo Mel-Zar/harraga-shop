@@ -22,7 +22,6 @@ import {
 } from "../../services/orderService";
 
 function Checkout() {
-
     const {
         cartItems,
         clearCart,
@@ -30,7 +29,6 @@ function Checkout() {
 
     const navigate =
         useNavigate();
-
 
     // ============================================
     // 👤 AUTHENTICATION
@@ -45,7 +43,6 @@ function Checkout() {
             token !== "null" &&
             token !== "undefined"
         );
-
 
     // ============================================
     // 📍 SAVED ADDRESSES
@@ -69,14 +66,12 @@ function Checkout() {
     const [addressesLoading, setAddressesLoading] =
         useState(false);
 
-
     // ============================================
     // 🌍 COUNTRIES
     // ============================================
 
     const [countries, setCountries] =
         useState([]);
-
 
     // ============================================
     // 📝 CHECKOUT FORM
@@ -95,14 +90,12 @@ function Checkout() {
             addressVerified: false,
         });
 
-
     // ============================================
     // 💳 PAYMENT METHOD
     // ============================================
 
     const [paymentMethod, setPaymentMethod] =
         useState("cod");
-
 
     // ============================================
     // 🔒 SUBMIT STATE
@@ -111,25 +104,61 @@ function Checkout() {
     const [isSubmitting, setIsSubmitting] =
         useState(false);
 
-
     // ============================================
     // 🌍 LOAD COUNTRIES
     // ============================================
 
     useEffect(() => {
+        const controller =
+            new AbortController();
 
         const fetchCountries =
             async () => {
+                const apiBaseUrl =
+                    String(
+                        import.meta.env.VITE_API_URL ||
+                        ""
+                    ).replace(
+                        /\/+$/,
+                        ""
+                    );
+
+                if (!apiBaseUrl) {
+                    console.error(
+                        "VITE_API_URL is not configured."
+                    );
+
+                    toast.error(
+                        "Checkout API is not configured."
+                    );
+
+                    return;
+                }
 
                 try {
-
                     const response =
                         await fetch(
-                            `${import.meta.env.VITE_API_URL}/api/countries`
+                            `${apiBaseUrl}/api/countries`,
+                            {
+                                method:
+                                    "GET",
+
+                                headers: {
+                                    Accept:
+                                        "application/json",
+                                },
+
+                                signal:
+                                    controller.signal,
+                            }
                         );
 
                     const data =
-                        await response.json();
+                        await response
+                            .json()
+                            .catch(
+                                () => null
+                            );
 
                     console.log(
                         "📦 CHECKOUT COUNTRIES:",
@@ -137,66 +166,82 @@ function Checkout() {
                     );
 
                     if (
-                        Array.isArray(data)
+                        !response.ok
                     ) {
+                        throw new Error(
+                            data?.message ||
+                            `Failed to load countries (${response.status}).`
+                        );
+                    }
 
+                    if (
+                        Array.isArray(
+                            data
+                        )
+                    ) {
                         setCountries(
                             data
                         );
-
                     } else if (
                         data &&
                         typeof data ===
                         "object"
                     ) {
-
                         setCountries(
-                            Object.values(data)
+                            Object.values(
+                                data
+                            )
                         );
-
                     } else {
-
-                        setCountries([]);
-
+                        setCountries(
+                            []
+                        );
                     }
-
-                } catch (error) {
+                } catch (
+                error
+                ) {
+                    if (
+                        error?.name ===
+                        "AbortError"
+                    ) {
+                        return;
+                    }
 
                     console.error(
                         "GET CHECKOUT COUNTRIES ERROR:",
                         error
                     );
 
-                    setCountries([]);
-
-                    toast.error(
-                        "Failed to load countries."
+                    setCountries(
+                        []
                     );
 
+                    toast.error(
+                        error?.message ||
+                        "Failed to load countries."
+                    );
                 }
-
             };
 
         fetchCountries();
 
+        return () => {
+            controller.abort();
+        };
     }, []);
-
 
     // ============================================
     // 📍 LOAD SAVED ADDRESSES
     // ============================================
 
     useEffect(() => {
-
         const fetchAddresses =
             async () => {
-
                 if (!isLoggedIn) {
                     return;
                 }
 
                 try {
-
                     setAddressesLoading(
                         true
                     );
@@ -206,43 +251,44 @@ function Checkout() {
                             token
                         );
 
-                    let loadedAddresses = [];
+                    let loadedAddresses =
+                        [];
 
                     if (
-                        Array.isArray(data)
+                        Array.isArray(
+                            data
+                        )
                     ) {
-
                         loadedAddresses =
                             data;
-
                     } else if (
                         Array.isArray(
                             data?.addresses
                         )
                     ) {
-
                         loadedAddresses =
                             data.addresses;
-
                     }
 
                     setAddresses(
                         loadedAddresses
                     );
 
-
                     // ============================================
                     // ⭐ AUTOMATICALLY SELECT PRIMARY ADDRESS
                     // ============================================
 
                     if (
-                        loadedAddresses.length > 0
+                        loadedAddresses.length >
+                        0
                     ) {
-
                         const defaultAddress =
                             loadedAddresses.find(
-                                (address) =>
-                                    address.isDefault === true
+                                (
+                                    address
+                                ) =>
+                                    address.isDefault ===
+                                    true
                             );
 
                         const addressToSelect =
@@ -264,12 +310,18 @@ function Checkout() {
                         );
 
                         setForm(
-                            (previousForm) => ({
+                            (
+                                previousForm
+                            ) => ({
                                 ...previousForm,
 
                                 name:
                                     addressToSelect.fullName ||
                                     previousForm.name,
+
+                                email:
+                                    addressToSelect.email ||
+                                    previousForm.email,
 
                                 phone:
                                     addressToSelect.phone ||
@@ -277,6 +329,7 @@ function Checkout() {
 
                                 address:
                                     addressToSelect.street ||
+                                    addressToSelect.address ||
                                     previousForm.address,
 
                                 city:
@@ -299,17 +352,14 @@ function Checkout() {
                                     true,
                             })
                         );
-
                     } else {
-
                         setUseNewAddress(
                             true
                         );
-
                     }
-
-                } catch (error) {
-
+                } catch (
+                error
+                ) {
                     console.error(
                         "GET CHECKOUT ADDRESSES ERROR:",
                         error
@@ -323,24 +373,18 @@ function Checkout() {
                     setUseNewAddress(
                         true
                     );
-
                 } finally {
-
                     setAddressesLoading(
                         false
                     );
-
                 }
-
             };
 
         fetchAddresses();
-
     }, [
         isLoggedIn,
         token,
     ]);
-
 
     // ============================================
     // 💰 PRICING
@@ -348,7 +392,10 @@ function Checkout() {
 
     const subtotal =
         cartItems.reduce(
-            (total, item) =>
+            (
+                total,
+                item
+            ) =>
                 total +
                 Number(
                     item.price || 0
@@ -359,22 +406,18 @@ function Checkout() {
             0
         );
 
-
     const tax =
         subtotal * 0.25;
-
 
     const shipping =
         cartItems.length > 0
             ? 49
             : 0;
 
-
     const totalPrice =
         subtotal +
         tax +
         shipping;
-
 
     // ============================================
     // 📦 TOTAL ITEMS
@@ -382,14 +425,16 @@ function Checkout() {
 
     const totalItems =
         cartItems.reduce(
-            (total, item) =>
+            (
+                total,
+                item
+            ) =>
                 total +
                 Number(
                     item.quantity || 0
                 ),
             0
         );
-
 
     // ============================================
     // 📝 HANDLE FORM CHANGE
@@ -398,19 +443,31 @@ function Checkout() {
     const handleChange = (
         e
     ) => {
-
         const {
             name,
             value,
         } = e.target;
 
-
         setForm(
-            (previousForm) => ({
+            (
+                previousForm
+            ) => ({
                 ...previousForm,
-                [name]: value,
 
-                ...(name === "address"
+                [name]:
+                    value,
+
+                /*
+                 * AddressInput själv
+                 * hanterar adressfältet.
+                 *
+                 * Vi tömmer inte city/postalCode
+                 * här eftersom de kan hjälpa
+                 * adressökningen att hitta rätt.
+                 */
+
+                ...(name ===
+                    "address"
                     ? {
                         addressVerified:
                             false,
@@ -418,9 +475,7 @@ function Checkout() {
                     : {}),
             })
         );
-
     };
-
 
     // ============================================
     // 🌍 HANDLE COUNTRY CHANGE
@@ -429,12 +484,13 @@ function Checkout() {
     const handleCountryChange = (
         e
     ) => {
-
         const selectedCountry =
             e.target.value;
 
         setForm(
-            (previousForm) => ({
+            (
+                previousForm
+            ) => ({
                 ...previousForm,
 
                 country:
@@ -447,9 +503,7 @@ function Checkout() {
                     false,
             })
         );
-
     };
-
 
     // ============================================
     // 📍 HANDLE SAVED ADDRESS CHANGE
@@ -458,15 +512,12 @@ function Checkout() {
     const handleAddressSelection = (
         e
     ) => {
-
         const value =
             e.target.value;
-
 
         if (
             value === "new"
         ) {
-
             setSelectedAddressId(
                 ""
             );
@@ -476,49 +527,65 @@ function Checkout() {
             );
 
             setForm(
-                (previousForm) => ({
+                (
+                    previousForm
+                ) => ({
                     ...previousForm,
+
+                    address: "",
+                    city: "",
+                    postalCode: "",
+                    countryCode: "",
                     addressVerified:
                         false,
                 })
             );
 
             return;
-
         }
-
 
         const selectedAddress =
             addresses.find(
-                (address) =>
+                (
+                    address
+                ) =>
                     String(
                         address._id ||
                         address.id
                     ) ===
-                    String(value)
+                    String(
+                        value
+                    )
             );
 
-
-        if (!selectedAddress) {
+        if (
+            !selectedAddress
+        ) {
             return;
         }
 
-
         setSelectedAddressId(
-            String(value)
+            String(
+                value
+            )
         );
 
         setUseNewAddress(
             false
         );
 
-
         setForm(
-            (previousForm) => ({
+            (
+                previousForm
+            ) => ({
                 ...previousForm,
 
                 name:
                     selectedAddress.fullName ||
+                    "",
+
+                email:
+                    selectedAddress.email ||
                     "",
 
                 phone:
@@ -527,6 +594,7 @@ function Checkout() {
 
                 address:
                     selectedAddress.street ||
+                    selectedAddress.address ||
                     "",
 
                 city:
@@ -549,47 +617,58 @@ function Checkout() {
                     true,
             })
         );
-
     };
-
 
     // ============================================
     // 🧹 NORMALIZE FORM
     // ============================================
 
     const normalizedForm = {
-
         name:
-            form.name.trim(),
+            String(
+                form.name || ""
+            ).trim(),
 
         email:
-            form.email.trim(),
+            String(
+                form.email || ""
+            ).trim(),
 
         address:
-            form.address.trim(),
+            String(
+                form.address || ""
+            ).trim(),
 
         phone:
-            form.phone.trim(),
+            String(
+                form.phone || ""
+            ).trim(),
 
         city:
-            form.city.trim(),
+            String(
+                form.city || ""
+            ).trim(),
 
         postalCode:
-            form.postalCode.trim(),
+            String(
+                form.postalCode || ""
+            ).trim(),
 
         country:
-            form.country.trim(),
+            String(
+                form.country || ""
+            ).trim(),
 
         countryCode:
-            form.countryCode?.trim() ||
-            "",
+            String(
+                form.countryCode || ""
+            ).trim(),
 
         addressVerified:
             Boolean(
                 form.addressVerified
             ),
     };
-
 
     // ============================================
     // 📧 EMAIL VALIDATION
@@ -598,18 +677,14 @@ function Checkout() {
     const isValidEmail = (
         email
     ) => {
-
         if (!email) {
             return true;
         }
 
-
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             email
         );
-
     };
-
 
     // ============================================
     // 📞 PHONE VALIDATION
@@ -618,13 +693,10 @@ function Checkout() {
     const isValidPhone = (
         phone
     ) => {
-
         return /^[0-9+\s()-]{7,20}$/.test(
             phone
         );
-
     };
-
 
     // ============================================
     // 💾 SAVE NEW ADDRESS
@@ -632,7 +704,6 @@ function Checkout() {
 
     const saveAddressToBook =
         async () => {
-
             if (
                 !isLoggedIn ||
                 !saveNewAddress
@@ -640,11 +711,12 @@ function Checkout() {
                 return;
             }
 
-
             const addressData = {
-
                 fullName:
                     normalizedForm.name,
+
+                email:
+                    normalizedForm.email,
 
                 phone:
                     normalizedForm.phone,
@@ -661,11 +733,17 @@ function Checkout() {
                 country:
                     normalizedForm.country,
 
+                countryCode:
+                    normalizedForm.countryCode,
+
                 isDefault:
                     makeNewAddressDefault,
-
             };
 
+            console.log(
+                "💾 SAVING ADDRESS TO ADDRESS BOOK:",
+                addressData
+            );
 
             const response =
                 await addAddress(
@@ -673,481 +751,419 @@ function Checkout() {
                     addressData
                 );
 
-
-            let savedAddresses = [];
+            let savedAddresses =
+                [];
 
             if (
-                Array.isArray(response)
+                Array.isArray(
+                    response
+                )
             ) {
-
                 savedAddresses =
                     response;
-
             } else if (
                 Array.isArray(
                     response?.addresses
                 )
             ) {
-
                 savedAddresses =
                     response.addresses;
-
             }
 
-
             if (
-                savedAddresses.length > 0
+                savedAddresses.length >
+                0
             ) {
-
                 setAddresses(
                     savedAddresses
                 );
-
             }
-
         };
-
 
     // ============================================
     // 🛒 CREATE ORDER
     // ============================================
 
-    const handleSubmit = async (
-        e
-    ) => {
-
-        e.preventDefault();
-
-
-        // ============================================
-        // 🛒 CART VALIDATION
-        // ============================================
-
-        if (
-            !cartItems.length
-        ) {
-
-            toast.warning(
-                "Your cart is empty!"
-            );
-
-            return;
-        }
-
-
-        // ============================================
-        // 📝 REQUIRED FORM VALIDATION
-        // ============================================
-
-        if (
-            !normalizedForm.name ||
-            !normalizedForm.address ||
-            !normalizedForm.phone ||
-            !normalizedForm.country
-        ) {
-
-            toast.error(
-                "Please fill all required fields."
-            );
-
-            return;
-        }
-
-
-        // ============================================
-        // 📍 GOOGLE ADDRESS VALIDATION
-        // ============================================
-
-        if (
-            useNewAddress &&
-            !normalizedForm.addressVerified
-        ) {
-
-            toast.warning(
-                "Please select a valid address from the address suggestions."
-            );
-
-            return;
-        }
-
-
-        // ============================================
-        // 📧 EMAIL VALIDATION
-        // ============================================
-
-        if (
-            normalizedForm.email &&
-            !isValidEmail(
-                normalizedForm.email
-            )
-        ) {
-
-            toast.error(
-                "Please enter a valid email address."
-            );
-
-            return;
-        }
-
-
-        // ============================================
-        // 📞 PHONE VALIDATION
-        // ============================================
-
-        if (
-            !isValidPhone(
-                normalizedForm.phone
-            )
-        ) {
-
-            toast.error(
-                "Please enter a valid phone number."
-            );
-
-            return;
-        }
-
-
-        // ============================================
-        // 🔒 PREVENT DOUBLE SUBMIT
-        // ============================================
-
-        if (
-            isSubmitting
-        ) {
-
-            return;
-
-        }
-
-
-        setIsSubmitting(
-            true
-        );
-
-
-        try {
+    const handleSubmit =
+        async (
+            e
+        ) => {
+            e.preventDefault();
 
             // ============================================
-            // 💾 SAVE NEW ADDRESS IF REQUESTED
+            // 🛒 CART VALIDATION
+            // ============================================
+
+            if (
+                !cartItems.length
+            ) {
+                toast.warning(
+                    "Your cart is empty!"
+                );
+
+                return;
+            }
+
+            // ============================================
+            // 📝 REQUIRED FORM VALIDATION
+            // ============================================
+
+            if (
+                !normalizedForm.name ||
+                !normalizedForm.address ||
+                !normalizedForm.phone ||
+                !normalizedForm.city ||
+                !normalizedForm.postalCode ||
+                !normalizedForm.country
+            ) {
+                toast.error(
+                    "Please fill all required fields."
+                );
+
+                return;
+            }
+
+            // ============================================
+            // 📍 GOOGLE ADDRESS VALIDATION
             // ============================================
 
             if (
                 useNewAddress &&
-                saveNewAddress &&
-                isLoggedIn
+                !normalizedForm.addressVerified
             ) {
-
-                await saveAddressToBook();
-
-            }
-
-
-            // ============================================
-            // 📦 CREATE SAFE ORDER PAYLOAD
-            // ============================================
-
-            const order = {
-
-                customer: {
-
-                    name:
-                        normalizedForm.name,
-
-                    email:
-                        normalizedForm.email,
-
-                    phone:
-                        normalizedForm.phone,
-
-                    address:
-                        normalizedForm.address,
-
-                    city:
-                        normalizedForm.city,
-
-                    postalCode:
-                        normalizedForm.postalCode,
-
-                    country:
-                        normalizedForm.country,
-
-                },
-
-
-                items:
-                    cartItems.map(
-                        (item) => ({
-
-                            productId:
-                                item._id,
-
-                            name:
-                                item.name,
-
-                            image:
-                                item.images?.[0] ||
-                                item.image ||
-                                "",
-
-                            price:
-                                Number(
-                                    item.price
-                                ),
-
-                            quantity:
-                                Number(
-                                    item.quantity
-                                ) || 1,
-
-                        })
-                    ),
-
-
-                pricing: {
-
-                    subtotal,
-
-                    tax,
-
-                    shipping,
-
-                    total:
-                        totalPrice,
-
-                },
-
-
-                payment: {
-
-                    method:
-                        paymentMethod,
-
-                    status:
-                        "pending",
-
-                },
-
-            };
-
-
-            // ============================================
-            // 🚀 SEND ORDER
-            // ============================================
-
-            const data =
-                await createOrder(
-                    order
+                toast.warning(
+                    "Please select a valid address from the address suggestions."
                 );
 
-
-            console.log(
-                "ORDER CREATED:",
-                data
-            );
-
+                return;
+            }
 
             // ============================================
-            // ❗ VERIFY BACKEND RESPONSE
+            // 📧 EMAIL VALIDATION
             // ============================================
 
             if (
-                !data ||
-                data.success === false
+                normalizedForm.email &&
+                !isValidEmail(
+                    normalizedForm.email
+                )
             ) {
-
-                throw new Error(
-                    data?.message ||
-                    "Failed to create order."
+                toast.error(
+                    "Please enter a valid email address."
                 );
 
+                return;
             }
 
-
             // ============================================
-            // 💳 CREATE PAYMENT
+            // 📞 PHONE VALIDATION
             // ============================================
 
             if (
-                paymentMethod !== "cod"
+                !isValidPhone(
+                    normalizedForm.phone
+                )
             ) {
-
-                const createdOrder =
-                    data.order ||
-                    data.data ||
-                    data;
-
-
-                const orderId =
-                    createdOrder?._id ||
-                    createdOrder?.id;
-
-
-                if (!orderId) {
-
-                    throw new Error(
-                        "Order was created, but no order ID was returned."
-                    );
-
-                }
-
-
-                const paymentData =
-                    await createPayment(
-                        orderId,
-                        paymentMethod
-                    );
-
-
-                console.log(
-                    "PAYMENT RESPONSE:",
-                    paymentData
+                toast.error(
+                    "Please enter a valid phone number."
                 );
 
-
-                // ============================================
-                // ❗ VERIFY PAYMENT RESPONSE
-                // ============================================
-
-                if (
-                    !paymentData ||
-                    paymentData.success === false
-                ) {
-
-                    throw new Error(
-                        paymentData?.message ||
-                        "Failed to create payment."
-                    );
-
-                }
-
-
-                // ============================================
-                // 💳 STRIPE / KLARNA
-                // ============================================
-
-                if (
-                    paymentData.checkoutUrl
-                ) {
-
-                    toast.success(
-                        "Order created. Redirecting to payment..."
-                    );
-
-
-                    window.location.href =
-                        paymentData.checkoutUrl;
-
-
-                    return;
-
-                }
-
-
-                // ============================================
-                // 📱 SWISH
-                // ============================================
-
-                if (
-                    paymentMethod === "swish"
-                ) {
-
-                    toast.success(
-                        "Swish payment created. Please complete your payment."
-                    );
-
-
-                    clearCart(
-                        false
-                    );
-
-
-                    navigate(
-                        `/orders/${orderId}`
-                    );
-
-
-                    return;
-
-                }
-
-
-                throw new Error(
-                    "Payment was created but no payment URL was returned."
-                );
-
+                return;
             }
 
-
             // ============================================
-            // ✅ COD SUCCESS
-            // ============================================
-
-            toast.success(
-                "Order placed successfully!"
-            );
-
-
-            // ============================================
-            // 🧹 CLEAR CART
+            // 🔒 PREVENT DOUBLE SUBMIT
             // ============================================
 
-            clearCart(
-                false
-            );
-
-
-            // ============================================
-            // 🏠 GO HOME
-            // ============================================
-
-            navigate(
-                "/"
-            );
-
-
-        } catch (
-        error
-        ) {
-
-            console.error(
-                "ORDER ERROR:",
-                error
-            );
-
-
-            const message =
-                error?.response?.data
-                    ?.message ||
-                error?.message ||
-                "Failed to place order. Please try again.";
-
-
-            toast.error(
-                message
-            );
-
-        } finally {
-
-            // ============================================
-            // 🔓 ENABLE SUBMIT AGAIN
-            // ============================================
+            if (
+                isSubmitting
+            ) {
+                return;
+            }
 
             setIsSubmitting(
-                false
+                true
             );
 
-        }
+            try {
+                // ============================================
+                // 💾 SAVE NEW ADDRESS IF REQUESTED
+                // ============================================
 
-    };
+                if (
+                    useNewAddress &&
+                    saveNewAddress &&
+                    isLoggedIn
+                ) {
+                    await saveAddressToBook();
+                }
 
+                // ============================================
+                // 📦 CREATE SAFE ORDER PAYLOAD
+                // ============================================
+
+                const order = {
+                    customer: {
+                        name:
+                            normalizedForm.name,
+
+                        email:
+                            normalizedForm.email,
+
+                        phone:
+                            normalizedForm.phone,
+
+                        address:
+                            normalizedForm.address,
+
+                        city:
+                            normalizedForm.city,
+
+                        postalCode:
+                            normalizedForm.postalCode,
+
+                        country:
+                            normalizedForm.country,
+
+                        countryCode:
+                            normalizedForm.countryCode,
+                    },
+
+                    items:
+                        cartItems.map(
+                            (
+                                item
+                            ) => ({
+                                productId:
+                                    item._id,
+
+                                name:
+                                    item.name,
+
+                                image:
+                                    item.images?.[0] ||
+                                    item.image ||
+                                    "",
+
+                                price:
+                                    Number(
+                                        item.price
+                                    ),
+
+                                quantity:
+                                    Number(
+                                        item.quantity
+                                    ) || 1,
+                            })
+                        ),
+
+                    pricing: {
+                        subtotal,
+
+                        tax,
+
+                        shipping,
+
+                        total:
+                            totalPrice,
+                    },
+
+                    payment: {
+                        method:
+                            paymentMethod,
+
+                        status:
+                            "pending",
+                    },
+                };
+
+                // ============================================
+                // 🚀 SEND ORDER
+                // ============================================
+
+                const data =
+                    await createOrder(
+                        order
+                    );
+
+                console.log(
+                    "ORDER CREATED:",
+                    data
+                );
+
+                // ============================================
+                // ❗ VERIFY BACKEND RESPONSE
+                // ============================================
+
+                if (
+                    !data ||
+                    data.success ===
+                    false
+                ) {
+                    throw new Error(
+                        data?.message ||
+                        "Failed to create order."
+                    );
+                }
+
+                // ============================================
+                // 💳 CREATE PAYMENT
+                // ============================================
+
+                if (
+                    paymentMethod !==
+                    "cod"
+                ) {
+                    const createdOrder =
+                        data.order ||
+                        data.data ||
+                        data;
+
+                    const orderId =
+                        createdOrder?._id ||
+                        createdOrder?.id;
+
+                    if (!orderId) {
+                        throw new Error(
+                            "Order was created, but no order ID was returned."
+                        );
+                    }
+
+                    const paymentData =
+                        await createPayment(
+                            orderId,
+                            paymentMethod
+                        );
+
+                    console.log(
+                        "PAYMENT RESPONSE:",
+                        paymentData
+                    );
+
+                    // ============================================
+                    // ❗ VERIFY PAYMENT RESPONSE
+                    // ============================================
+
+                    if (
+                        !paymentData ||
+                        paymentData.success ===
+                        false
+                    ) {
+                        throw new Error(
+                            paymentData?.message ||
+                            "Failed to create payment."
+                        );
+                    }
+
+                    // ============================================
+                    // 💳 STRIPE / KLARNA
+                    // ============================================
+
+                    if (
+                        paymentData.checkoutUrl
+                    ) {
+                        toast.success(
+                            "Order created. Redirecting to payment..."
+                        );
+
+                        /*
+                         * Do NOT clear the cart here.
+                         *
+                         * PaymentSuccess.jsx clears the cart
+                         * after confirmed successful payment.
+                         */
+
+                        window.location.href =
+                            paymentData.checkoutUrl;
+
+                        return;
+                    }
+
+                    // ============================================
+                    // 📱 SWISH
+                    // ============================================
+
+                    if (
+                        paymentMethod ===
+                        "swish"
+                    ) {
+                        toast.success(
+                            "Swish payment created. Please complete your payment."
+                        );
+
+                        /*
+                         * Swish implementation currently
+                         * redirects to the order page.
+                         *
+                         * The cart is kept until payment
+                         * confirmation is implemented.
+                         */
+
+                        navigate(
+                            `/orders/${orderId}`
+                        );
+
+                        return;
+                    }
+
+                    throw new Error(
+                        "Payment was created but no payment URL was returned."
+                    );
+                }
+
+                // ============================================
+                // ✅ COD SUCCESS
+                // ============================================
+
+                toast.success(
+                    "Order placed successfully!"
+                );
+
+                // ============================================
+                // 🧹 CLEAR CART
+                // ============================================
+
+                clearCart(
+                    false
+                );
+
+                // ============================================
+                // 🏠 GO HOME
+                // ============================================
+
+                navigate(
+                    "/"
+                );
+            } catch (
+            error
+            ) {
+                console.error(
+                    "ORDER ERROR:",
+                    error
+                );
+
+                const message =
+                    error?.response
+                        ?.data
+                        ?.message ||
+                    error?.message ||
+                    "Failed to place order. Please try again.";
+
+                toast.error(
+                    message
+                );
+            } finally {
+                setIsSubmitting(
+                    false
+                );
+            }
+        };
 
     // ============================================
     // 🧾 CHECKOUT PAGE
     // ============================================
 
     return (
-
         <div
             style={{
                 maxWidth:
@@ -1160,11 +1176,9 @@ function Checkout() {
                     "20px",
             }}
         >
-
             <h1>
                 Checkout 🧾
             </h1>
-
 
             <form
                 onSubmit={
@@ -1172,8 +1186,6 @@ function Checkout() {
                 }
                 noValidate
             >
-
-
                 {/* ============================================
                     👤 CUSTOMER INFORMATION
                 ============================================ */}
@@ -1181,7 +1193,6 @@ function Checkout() {
                 <h2>
                     Customer Information
                 </h2>
-
 
                 <input
                     name="name"
@@ -1196,7 +1207,6 @@ function Checkout() {
                     required
                 />
 
-
                 <input
                     name="email"
                     type="email"
@@ -1208,7 +1218,6 @@ function Checkout() {
                         handleChange
                     }
                 />
-
 
                 <input
                     name="phone"
@@ -1223,7 +1232,6 @@ function Checkout() {
                     required
                 />
 
-
                 {/* ============================================
                     📍 SHIPPING INFORMATION
                 ============================================ */}
@@ -1231,7 +1239,6 @@ function Checkout() {
                 <h2>
                     Shipping Information
                 </h2>
-
 
                 {/* ============================================
                     📍 SAVED ADDRESS SELECTOR
@@ -1244,22 +1251,17 @@ function Checkout() {
                                 "20px",
                         }}
                     >
-
                         <h3>
                             Saved Addresses
                         </h3>
 
-
                         {addressesLoading ? (
-
                             <p>
                                 Loading saved addresses...
                             </p>
-
-                        ) : addresses.length > 0 ? (
-
+                        ) : addresses.length >
+                            0 ? (
                             <>
-
                                 <select
                                     value={
                                         useNewAddress
@@ -1270,16 +1272,15 @@ function Checkout() {
                                         handleAddressSelection
                                     }
                                 >
-
                                     {addresses.map(
-                                        (address) => {
-
+                                        (
+                                            address
+                                        ) => {
                                             const addressId =
                                                 address._id ||
                                                 address.id;
 
                                             return (
-
                                                 <option
                                                     key={
                                                         addressId
@@ -1288,58 +1289,54 @@ function Checkout() {
                                                         addressId
                                                     }
                                                 >
-                                                    {address.fullName}
+                                                    {
+                                                        address.fullName
+                                                    }
                                                     {" - "}
-                                                    {address.street}
+                                                    {
+                                                        address.street
+                                                    }
                                                     {" - "}
-                                                    {address.city}
+                                                    {
+                                                        address.city
+                                                    }
                                                     {
                                                         address.isDefault
                                                             ? " (Primary)"
                                                             : ""
                                                     }
                                                 </option>
-
                                             );
-
                                         }
                                     )}
-
 
                                     <option
                                         value="new"
                                     >
                                         Use a new address
                                     </option>
-
                                 </select>
 
-
                                 {addresses.some(
-                                    (address) =>
+                                    (
+                                        address
+                                    ) =>
                                         address.isDefault ===
                                         true
-                                ) && !useNewAddress && (
-
+                                ) &&
+                                    !useNewAddress && (
                                         <p>
                                             ★ Primary address selected
                                         </p>
-
                                     )}
-
                             </>
-
                         ) : (
-
                             <p>
                                 No saved addresses. Enter a new address below.
                             </p>
-
                         )}
-
                     </div>
                 )}
-
 
                 {/* ============================================
                     🌍 COUNTRY
@@ -1357,29 +1354,33 @@ function Checkout() {
                     disabled={
                         isLoggedIn &&
                         !useNewAddress &&
-                        Boolean(selectedAddressId)
+                        Boolean(
+                            selectedAddressId
+                        )
                     }
                 >
-
                     <option value="">
                         Select country
                     </option>
 
                     {countries.map(
-                        (country, index) => (
-
+                        (
+                            country,
+                            index
+                        ) => (
                             <option
                                 key={`${country}-${index}`}
-                                value={country}
+                                value={
+                                    country
+                                }
                             >
-                                {country}
+                                {
+                                    country
+                                }
                             </option>
-
                         )
                     )}
-
                 </select>
-
 
                 {/* ============================================
                     📍 GOOGLE ADDRESS SEARCH
@@ -1390,15 +1391,18 @@ function Checkout() {
                     useNewAddress ||
                     !selectedAddressId
                 ) ? (
-
                     <AddressInput
-                        form={form}
-                        setForm={setForm}
-                        loading={false}
+                        form={
+                            form
+                        }
+                        setForm={
+                            setForm
+                        }
+                        loading={
+                            false
+                        }
                     />
-
                 ) : (
-
                     <input
                         name="address"
                         type="text"
@@ -1412,9 +1416,7 @@ function Checkout() {
                         required
                         disabled
                     />
-
                 )}
-
 
                 <input
                     name="city"
@@ -1430,10 +1432,11 @@ function Checkout() {
                     disabled={
                         isLoggedIn &&
                         !useNewAddress &&
-                        Boolean(selectedAddressId)
+                        Boolean(
+                            selectedAddressId
+                        )
                     }
                 />
-
 
                 <input
                     name="postalCode"
@@ -1449,10 +1452,11 @@ function Checkout() {
                     disabled={
                         isLoggedIn &&
                         !useNewAddress &&
-                        Boolean(selectedAddressId)
+                        Boolean(
+                            selectedAddressId
+                        )
                     }
                 />
-
 
                 {/* ============================================
                     🆕 NEW ADDRESS OPTIONS
@@ -1460,25 +1464,24 @@ function Checkout() {
 
                 {isLoggedIn &&
                     useNewAddress && (
-
                         <div
                             style={{
                                 marginTop:
                                     "15px",
+
                                 marginBottom:
                                     "25px",
                             }}
                         >
-
                             <label
                                 style={{
                                     display:
                                         "block",
+
                                     marginBottom:
                                         "10px",
                                 }}
                             >
-
                                 <input
                                     type="checkbox"
                                     checked={
@@ -1495,19 +1498,15 @@ function Checkout() {
 
                                 {" "}
                                 Save this address to my Address Book
-
                             </label>
 
-
                             {saveNewAddress && (
-
                                 <label
                                     style={{
                                         display:
                                             "block",
                                     }}
                                 >
-
                                     <input
                                         type="checkbox"
                                         checked={
@@ -1524,15 +1523,10 @@ function Checkout() {
 
                                     {" "}
                                     Make this my primary address
-
                                 </label>
-
                             )}
-
                         </div>
-
                     )}
-
 
                 {/* ============================================
                     🧾 ORDER SUMMARY
@@ -1542,41 +1536,38 @@ function Checkout() {
                     Order Summary
                 </h2>
 
-
                 <p>
                     {cartItems.length}{" "}
                     {
-                        cartItems.length === 1
+                        cartItems.length ===
+                            1
                             ? "product"
                             : "products"
-                    }{" "}
-                    ·{" "}
+                    }
+                    {" · "}
                     {totalItems}{" "}
                     {
-                        totalItems === 1
+                        totalItems ===
+                            1
                             ? "item"
                             : "items"
                     }
                 </p>
 
-
                 {!cartItems.length ? (
-
                     <p>
                         Your cart is empty.
                     </p>
-
                 ) : (
-
                     cartItems.map(
-                        (item) => {
-
+                        (
+                            item
+                        ) => {
                             const itemPrice =
                                 Number(
                                     item.price ||
                                     0
                                 );
-
 
                             const itemQuantity =
                                 Number(
@@ -1584,40 +1575,42 @@ function Checkout() {
                                     0
                                 );
 
-
                             const itemTotal =
                                 itemPrice *
                                 itemQuantity;
-
 
                             const image =
                                 item.images?.[0] ||
                                 item.image ||
                                 "";
 
+                            const apiBaseUrl =
+                                String(
+                                    import.meta.env.VITE_API_URL ||
+                                    ""
+                                ).replace(
+                                    /\/+$/,
+                                    ""
+                                );
 
                             const imageUrl =
                                 image.startsWith(
                                     "http"
                                 )
                                     ? image
-                                    : `${import.meta.env.VITE_API_URL}${image}`;
-
+                                    : `${apiBaseUrl}${image}`;
 
                             return (
-
                                 <div
                                     key={
                                         item._id
                                     }
                                 >
-
                                     {/* ============================================
                                         🖼️ PRODUCT
                                     ============================================ */}
 
                                     {image ? (
-
                                         <img
                                             src={
                                                 imageUrl
@@ -1628,15 +1621,11 @@ function Checkout() {
                                             width="100"
                                             height="100"
                                         />
-
                                     ) : (
-
                                         <div>
                                             No image
                                         </div>
-
                                     )}
-
 
                                     {/* ============================================
                                         📦 PRODUCT INFORMATION
@@ -1648,14 +1637,12 @@ function Checkout() {
                                         }
                                     </h3>
 
-
                                     <p>
                                         Price per item: $
                                         {itemPrice.toFixed(
                                             2
                                         )}
                                     </p>
-
 
                                     <p>
                                         Quantity:{" "}
@@ -1664,7 +1651,6 @@ function Checkout() {
                                         }
                                     </p>
 
-
                                     <p>
                                         Product total: $
                                         {itemTotal.toFixed(
@@ -1672,18 +1658,12 @@ function Checkout() {
                                         )}
                                     </p>
 
-
                                     <hr />
-
                                 </div>
-
                             );
-
                         }
                     )
-
                 )}
-
 
                 {/* ============================================
                     💰 PRICE BREAKDOWN
@@ -1693,14 +1673,12 @@ function Checkout() {
                     Price Summary
                 </h2>
 
-
                 <p>
                     Subtotal: $
                     {subtotal.toFixed(
                         2
                     )}
                 </p>
-
 
                 <p>
                     Tax (25%): $
@@ -1709,7 +1687,6 @@ function Checkout() {
                     )}
                 </p>
 
-
                 <p>
                     Shipping: $
                     {shipping.toFixed(
@@ -1717,9 +1694,7 @@ function Checkout() {
                     )}
                 </p>
 
-
                 <hr />
-
 
                 <h2>
                     Total: $
@@ -1727,7 +1702,6 @@ function Checkout() {
                         2
                     )}
                 </h2>
-
 
                 {/* ============================================
                     📍 DELIVERY SUMMARY
@@ -1737,13 +1711,11 @@ function Checkout() {
                     Delivery Information
                 </h2>
 
-
                 <p>
                     Name:{" "}
                     {normalizedForm.name ||
                         "Not provided"}
                 </p>
-
 
                 <p>
                     Phone:{" "}
@@ -1751,13 +1723,11 @@ function Checkout() {
                         "Not provided"}
                 </p>
 
-
                 <p>
                     Address:{" "}
                     {normalizedForm.address ||
                         "Not provided"}
                 </p>
-
 
                 <p>
                     City:{" "}
@@ -1765,20 +1735,17 @@ function Checkout() {
                         "Not provided"}
                 </p>
 
-
                 <p>
                     Postal Code:{" "}
                     {normalizedForm.postalCode ||
                         "Not provided"}
                 </p>
 
-
                 <p>
                     Country:{" "}
                     {normalizedForm.country ||
                         "Not provided"}
                 </p>
-
 
                 {/* ============================================
                     💳 PAYMENT
@@ -1788,14 +1755,14 @@ function Checkout() {
                     Payment
                 </h2>
 
-
                 <label>
                     <input
                         type="radio"
                         name="paymentMethod"
                         value="cod"
                         checked={
-                            paymentMethod === "cod"
+                            paymentMethod ===
+                            "cod"
                         }
                         onChange={() =>
                             setPaymentMethod(
@@ -1807,9 +1774,7 @@ function Checkout() {
                     Cash on Delivery
                 </label>
 
-
                 <br />
-
 
                 <label>
                     <input
@@ -1817,7 +1782,8 @@ function Checkout() {
                         name="paymentMethod"
                         value="stripe"
                         checked={
-                            paymentMethod === "stripe"
+                            paymentMethod ===
+                            "stripe"
                         }
                         onChange={() =>
                             setPaymentMethod(
@@ -1829,9 +1795,7 @@ function Checkout() {
                     Stripe
                 </label>
 
-
                 <br />
-
 
                 <label>
                     <input
@@ -1839,7 +1803,8 @@ function Checkout() {
                         name="paymentMethod"
                         value="klarna"
                         checked={
-                            paymentMethod === "klarna"
+                            paymentMethod ===
+                            "klarna"
                         }
                         onChange={() =>
                             setPaymentMethod(
@@ -1851,9 +1816,7 @@ function Checkout() {
                     Klarna
                 </label>
 
-
                 <br />
-
 
                 <label>
                     <input
@@ -1861,7 +1824,8 @@ function Checkout() {
                         name="paymentMethod"
                         value="swish"
                         checked={
-                            paymentMethod === "swish"
+                            paymentMethod ===
+                            "swish"
                         }
                         onChange={() =>
                             setPaymentMethod(
@@ -1873,27 +1837,25 @@ function Checkout() {
                     Swish
                 </label>
 
-
                 <p>
                     Payment method:{" "}
                     {
-                        paymentMethod === "cod"
+                        paymentMethod ===
+                            "cod"
                             ? "Cash on Delivery"
-                            : paymentMethod === "stripe"
+                            : paymentMethod ===
+                                "stripe"
                                 ? "Stripe"
-                                : paymentMethod === "klarna"
+                                : paymentMethod ===
+                                    "klarna"
                                     ? "Klarna"
                                     : "Swish"
                     }
                 </p>
 
-
                 <p>
-                    Payment status:
-                    {" "}
-                    Pending
+                    Payment status: Pending
                 </p>
-
 
                 {/* ============================================
                     🚀 PLACE ORDER
@@ -1908,15 +1870,13 @@ function Checkout() {
                 >
                     {isSubmitting
                         ? "Placing Order..."
-                        : paymentMethod === "cod"
+                        : paymentMethod ===
+                            "cod"
                             ? "Place Order"
                             : "Continue to Payment"}
                 </button>
-
             </form>
-
         </div>
-
     );
 }
 

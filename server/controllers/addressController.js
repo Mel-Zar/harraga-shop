@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+
 dotenv.config();
 
 import User from "../models/User.js";
@@ -60,6 +61,16 @@ const countryCodeMap = {
 };
 
 // =========================
+// ADDRESS SEARCH CACHE
+// =========================
+
+const addressSearchCache =
+    new Map();
+
+const ADDRESS_CACHE_TTL =
+    5 * 60 * 1000;
+
+// =========================
 // NORMALIZE TEXT
 // =========================
 
@@ -89,11 +100,12 @@ const normalize = (
 const normalizeHouseNumber = (
     value
 ) => {
-    return normalize(value)
-        .replace(
-            /\s+/g,
-            ""
-        );
+    return normalize(
+        value
+    ).replace(
+        /\s+/g,
+        ""
+    );
 };
 
 // =========================
@@ -106,14 +118,105 @@ const getHouseNumber = (
     const normalized =
         normalize(value);
 
+    /*
+     * Supports:
+     *
+     * 14
+     * 14A
+     * 14-16
+     * 14A-16B
+     * 14/16
+     */
+
     const match =
         normalized.match(
-            /(?:^|\s)(\d+[a-z]?(?:[-/]\d+[a-z]?)?)$/
+            /(?:^|\s)(\d+[a-z]?(?:[-/]\d+[a-z]?)?)\s*$/
         );
 
     return match
         ? match[1]
         : "";
+};
+
+// =========================
+// EXTRACT HOUSE NUMBER
+// FROM FORMATTED ADDRESS
+// =========================
+
+const getHouseNumberFromFormatted = (
+    value
+) => {
+    const text =
+        String(
+            value || ""
+        ).trim();
+
+    if (!text) {
+        return "";
+    }
+
+    const normalized =
+        normalize(text);
+
+    const beforeComma =
+        normalized
+            .split(",")[0]
+            .trim();
+
+    const match =
+        beforeComma.match(
+            /(?:^|\s)(\d+[a-z]?(?:[-/]\d+[a-z]?)?)\s*$/
+        );
+
+    if (match) {
+        return match[1];
+    }
+
+    const fallback =
+        beforeComma.match(
+            /\b(\d+[a-z]?(?:[-/]\d+[a-z]?)?)\b/
+        );
+
+    return fallback
+        ? fallback[1]
+        : "";
+};
+
+// =========================
+// GET RESULT HOUSE NUMBER
+// =========================
+
+const getResultHouseNumber = (
+    place
+) => {
+    const explicitHouseNumber =
+        place?.housenumber ||
+        place?.house_number ||
+        place?.street_number ||
+        place?.streetNumber ||
+        place?.houseNumber ||
+        place?.address?.housenumber ||
+        place?.address?.house_number ||
+        place?.address?.street_number ||
+        place?.address?.streetNumber ||
+        place?.address?.houseNumber ||
+        "";
+
+    if (
+        explicitHouseNumber
+    ) {
+        return String(
+            explicitHouseNumber
+        ).trim();
+    }
+
+    return getHouseNumberFromFormatted(
+        place?.formatted ||
+        place?.formattedAddress ||
+        place?.display_name ||
+        place?.displayName?.text ||
+        ""
+    );
 };
 
 // =========================
@@ -338,9 +441,7 @@ const requestGoogle = async (
         try {
             data =
                 text
-                    ? JSON.parse(
-                        text
-                    )
+                    ? JSON.parse(text)
                     : null;
         } catch {
             data = null;
@@ -392,6 +493,41 @@ const getAddressComponent = (
 };
 
 // =========================
+// GET GOOGLE COUNTRY CODE
+// =========================
+
+const getGoogleCountryCode = (
+    components
+) => {
+    if (
+        !Array.isArray(
+            components
+        )
+    ) {
+        return "";
+    }
+
+    const countryComponent =
+        components.find(
+            (item) =>
+                Array.isArray(
+                    item.types
+                ) &&
+                item.types.includes(
+                    "country"
+                )
+        );
+
+    return (
+        countryComponent?.shortText ||
+        countryComponent?.longText ||
+        ""
+    )
+        .trim()
+        .toLowerCase();
+};
+
+// =========================
 // CLEAN GOOGLE PLACE
 // =========================
 
@@ -407,13 +543,13 @@ const cleanGooglePlace = (
         place.addressComponents ||
         [];
 
-    const street =
+    let street =
         getAddressComponent(
             components,
             "route"
         );
 
-    const housenumber =
+    let housenumber =
         getAddressComponent(
             components,
             "street_number"
@@ -451,31 +587,10 @@ const cleanGooglePlace = (
         fallbackCountry ||
         "";
 
-    // =========================
-    // IMPORTANT:
-    // GET ISO COUNTRY CODE
-    // FROM GOOGLE shortText
-    // =========================
-
-    const countryComponent =
-        Array.isArray(
-            components
-        )
-            ? components.find(
-                (item) =>
-                    Array.isArray(
-                        item.types
-                    ) &&
-                    item.types.includes(
-                        "country"
-                    )
-            )
-            : null;
-
     const countryCode =
-        countryComponent?.shortText
-            ?.toLowerCase() ||
-        "";
+        getGoogleCountryCode(
+            components
+        );
 
     const formatted =
         place.formattedAddress ||
@@ -489,20 +604,56 @@ const cleanGooglePlace = (
             .filter(Boolean)
             .join(", ");
 
+    if (!housenumber) {
+        housenumber =
+            getHouseNumberFromFormatted(
+                formatted
+            );
+    }
+
+    if (
+        !street &&
+        formatted
+    ) {
+        const firstPart =
+            formatted
+                .split(",")[0]
+                .trim();
+
+        if (housenumber) {
+            const escapedHouse =
+                String(
+                    housenumber
+                ).replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    "\\$&"
+                );
+
+            street =
+                firstPart
+                    .replace(
+                        new RegExp(
+                            `\\s*${escapedHouse}\\s*$`,
+                            "i"
+                        ),
+                        ""
+                    )
+                    .trim();
+        } else {
+            street =
+                firstPart;
+        }
+    }
+
     const placeId =
-        place.id ||
-        "";
+        place.id || "";
 
     return {
         id:
-            String(
-                placeId
-            ),
+            String(placeId),
 
         place_id:
-            String(
-                placeId
-            ),
+            String(placeId),
 
         display_name:
             formatted,
@@ -516,20 +667,15 @@ const cleanGooglePlace = (
             house_number:
                 housenumber,
 
-            street:
-                street,
+            street,
 
-            housenumber:
-                housenumber,
+            housenumber,
 
-            postcode:
-                postcode,
+            postcode,
 
-            city:
-                city,
+            city,
 
-            country:
-                country,
+            country,
 
             country_code:
                 countryCode,
@@ -549,11 +695,13 @@ const cleanGooglePlace = (
         housenumber,
 
         lat:
-            place.location?.latitude ??
+            place.location
+                ?.latitude ??
             null,
 
         lon:
-            place.location?.longitude ??
+            place.location
+                ?.longitude ??
             null,
 
         result_type:
@@ -574,9 +722,7 @@ const cleanGooglePlace = (
             1,
 
         confidence_city_level:
-            city
-                ? 1
-                : null,
+            city ? 1 : null,
 
         confidence_building_level:
             housenumber
@@ -595,7 +741,8 @@ const cleanGooglePlace = (
             placeId,
 
         google_name:
-            place.displayName?.text ||
+            place.displayName
+                ?.text ||
             "",
     };
 };
@@ -667,6 +814,468 @@ const getGooglePlaceDetails =
     };
 
 // =========================
+// GOOGLE GEOCODING SEARCH
+// =========================
+
+const searchGoogleGeocoding =
+    async (
+        query,
+        apiKey,
+        countryCode
+    ) => {
+        if (
+            !query ||
+            !apiKey
+        ) {
+            return [];
+        }
+
+        const params =
+            new URLSearchParams();
+
+        params.set(
+            "address",
+            query
+        );
+
+        params.set(
+            "language",
+            "sv"
+        );
+
+        // FIX:
+        // Send the Google API key with
+        // every Geocoding API request.
+        params.set(
+            "key",
+            apiKey
+        );
+
+        if (
+            countryCode
+        ) {
+            params.set(
+                "components",
+                `country:${countryCode}`
+            );
+        }
+
+        const url =
+            `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`;
+
+        const {
+            response,
+            data,
+        } =
+            await requestGoogle(
+                url,
+                {
+                    method:
+                        "GET",
+                }
+            );
+
+        if (
+            !response.ok
+        ) {
+            console.error(
+                "GOOGLE GEOCODING FAILED:",
+                response.status,
+                data
+            );
+
+            return [];
+        }
+
+        /*
+         * Do not throw on quota errors.
+         *
+         * SearchText can still be used
+         * as a fallback if appropriate.
+         */
+
+        if (
+            data?.status !==
+            "OK"
+        ) {
+            console.log(
+                "GOOGLE GEOCODING STATUS:",
+                data?.status,
+                data?.error_message ||
+                ""
+            );
+
+            return [];
+        }
+
+        return Array.isArray(
+            data?.results
+        )
+            ? data.results.map(
+                (item) => {
+                    const components =
+                        item.address_components ||
+                        [];
+
+                    const getComponent =
+                        (type) => {
+                            const component =
+                                components.find(
+                                    (
+                                        currentComponent
+                                    ) =>
+                                        Array.isArray(
+                                            currentComponent.types
+                                        ) &&
+                                        currentComponent.types.includes(
+                                            type
+                                        )
+                                );
+
+                            return (
+                                component?.long_name ||
+                                component?.short_name ||
+                                ""
+                            );
+                        };
+
+                    const street =
+                        getComponent(
+                            "route"
+                        );
+
+                    const housenumber =
+                        getComponent(
+                            "street_number"
+                        );
+
+                    const postcode =
+                        getComponent(
+                            "postal_code"
+                        );
+
+                    const city =
+                        getComponent(
+                            "postal_town"
+                        ) ||
+                        getComponent(
+                            "locality"
+                        ) ||
+                        getComponent(
+                            "administrative_area_level_2"
+                        ) ||
+                        getComponent(
+                            "administrative_area_level_1"
+                        );
+
+                    const country =
+                        getComponent(
+                            "country"
+                        );
+
+                    const resultCountryCode =
+                        components
+                            .find(
+                                (
+                                    component
+                                ) =>
+                                    Array.isArray(
+                                        component.types
+                                    ) &&
+                                    component.types.includes(
+                                        "country"
+                                    )
+                            )
+                            ?.short_name
+                            ?.toLowerCase() ||
+                        "";
+
+                    return {
+                        id:
+                            item.place_id,
+
+                        place_id:
+                            item.place_id,
+
+                        google_place_id:
+                            item.place_id,
+
+                        display_name:
+                            item.formatted_address,
+
+                        formatted:
+                            item.formatted_address,
+
+                        address: {
+                            road:
+                                street,
+
+                            street,
+
+                            house_number:
+                                housenumber,
+
+                            housenumber,
+
+                            postcode,
+
+                            city,
+
+                            country,
+
+                            country_code:
+                                resultCountryCode,
+                        },
+
+                        street,
+
+                        housenumber,
+
+                        postcode,
+
+                        city,
+
+                        country,
+
+                        country_code:
+                            resultCountryCode,
+
+                        lat:
+                            item.geometry
+                                ?.location
+                                ?.lat ??
+                            null,
+
+                        lon:
+                            item.geometry
+                                ?.location
+                                ?.lng ??
+                            null,
+
+                        result_type:
+                            Array.isArray(
+                                item.types
+                            )
+                                ? item.types[0] ||
+                                null
+                                : null,
+
+                        match_type:
+                            Array.isArray(
+                                item.types
+                            )
+                                ? item.types[0] ||
+                                null
+                                : null,
+
+                        confidence:
+                            1,
+
+                        confidence_city_level:
+                            city
+                                ? 1
+                                : null,
+
+                        confidence_building_level:
+                            housenumber
+                                ? 1
+                                : null,
+                    };
+                }
+            )
+            : [];
+    };
+
+// =========================
+// MERGE ADDRESS RESULTS
+// =========================
+
+const mergeAddressResults = (
+    places
+) => {
+    const unique =
+        new Map();
+
+    for (
+        const place of places
+    ) {
+        if (!place) {
+            continue;
+        }
+
+        const street =
+            normalize(
+                place.street ||
+                place.address
+                    ?.street ||
+                place.address
+                    ?.road ||
+                ""
+            );
+
+        const house =
+            normalizeHouseNumber(
+                getResultHouseNumber(
+                    place
+                )
+            );
+
+        const city =
+            normalize(
+                place.city ||
+                place.address
+                    ?.city ||
+                ""
+            );
+
+        const postalCode =
+            normalize(
+                place.postcode ||
+                place.address
+                    ?.postcode ||
+                ""
+            );
+
+        const googleId =
+            String(
+                place.google_place_id ||
+                place.place_id ||
+                place.id ||
+                ""
+            );
+
+        const key =
+            [
+                street,
+                house,
+                postalCode,
+                city,
+                googleId
+                    ? ""
+                    : "nogoogleid",
+            ].join("|");
+
+        const existing =
+            unique.get(key);
+
+        if (!existing) {
+            unique.set(
+                key,
+                place
+            );
+
+            continue;
+        }
+
+        const existingScore =
+            [
+                existing.street,
+                existing.housenumber,
+                existing.postcode,
+                existing.city,
+                existing.country,
+                existing.google_place_id,
+            ]
+                .filter(Boolean)
+                .length;
+
+        const newScore =
+            [
+                place.street,
+                place.housenumber,
+                place.postcode,
+                place.city,
+                place.country,
+                place.google_place_id,
+            ]
+                .filter(Boolean)
+                .length;
+
+        if (
+            newScore >
+            existingScore
+        ) {
+            unique.set(
+                key,
+                place
+            );
+        }
+    }
+
+    return Array.from(
+        unique.values()
+    );
+};
+
+// =========================
+// CACHE HELPERS
+// =========================
+
+const getCachedResults = (
+    key
+) => {
+    const cached =
+        addressSearchCache.get(
+            key
+        );
+
+    if (!cached) {
+        return null;
+    }
+
+    if (
+        Date.now() -
+        cached.timestamp >
+        ADDRESS_CACHE_TTL
+    ) {
+        addressSearchCache.delete(
+            key
+        );
+
+        return null;
+    }
+
+    return cached.results;
+};
+
+const setCachedResults = (
+    key,
+    results
+) => {
+    addressSearchCache.set(
+        key,
+        {
+            timestamp:
+                Date.now(),
+
+            results,
+        }
+    );
+
+    /*
+     * Prevent unlimited memory
+     * growth on a long-running server.
+     */
+
+    if (
+        addressSearchCache.size >
+        500
+    ) {
+        const firstKey =
+            addressSearchCache
+                .keys()
+                .next()
+                .value;
+
+        if (firstKey) {
+            addressSearchCache.delete(
+                firstKey
+            );
+        }
+    }
+};
+
+// =========================
 // SEARCH ADDRESS
 // =========================
 
@@ -680,35 +1289,54 @@ export const searchAddress = async (
             country = "",
             city = "",
             postalCode = "",
-            countryCode: requestedCountryCode = "",
+            countryCode:
+            requestedCountryCode = "",
         } = req.query;
 
         const apiKey =
-            process.env.GOOGLE_MAPS_API_KEY ||
-            process.env.GOOGLE_PLACES_API_KEY ||
+            process.env
+                .GOOGLE_MAPS_API_KEY ||
+            process.env
+                .GOOGLE_PLACES_API_KEY ||
             "";
 
         if (!apiKey) {
-            return res.status(500).json({
-                message:
-                    "Google Maps API key is not configured.",
-            });
+            console.error(
+                "GOOGLE ADDRESS SEARCH ERROR: Google API key is missing."
+            );
+
+            return res
+                .status(500)
+                .json({
+                    message:
+                        "Google Maps API key is not configured.",
+                });
         }
 
         const query =
-            String(q || "").trim();
+            String(
+                q || ""
+            ).trim();
 
-        if (!query || query.length < 3) {
-            return res.status(200).json([]);
+        if (
+            !query ||
+            query.length < 3
+        ) {
+            return res
+                .status(200)
+                .json([]);
         }
 
         const fallbackCountryCode =
-            getCountryCode(country);
+            getCountryCode(
+                country
+            );
 
-        const countryCode =
+        const resolvedCountryCode =
             /^[a-z]{2}$/i.test(
                 String(
-                    requestedCountryCode || ""
+                    requestedCountryCode ||
+                    ""
                 ).trim()
             )
                 ? String(
@@ -719,7 +1347,9 @@ export const searchAddress = async (
                 : fallbackCountryCode;
 
         const requestedHouseNumber =
-            getHouseNumber(query);
+            getHouseNumber(
+                query
+            );
 
         const requestedStreet =
             getStreetFromQuery(
@@ -749,166 +1379,137 @@ export const searchAddress = async (
                 ""
             ).trim();
 
-        // =====================================================
-        // GOOGLE PLACES API
-        // =====================================================
+        // =========================
+        // SERVER CACHE
+        // =========================
 
-        const searchUrl =
-            "https://places.googleapis.com/v1/places:searchText";
+        const cacheKey =
+            [
+                normalize(query),
+                normalize(country),
+                normalize(resolvedCountryCode),
+                normalize(requestedCity),
+                normalize(requestedPostalCode),
+            ].join("|");
 
-        const requestBody = {
-            textQuery: query,
-
-            languageCode:
-                "en",
-
-            pageSize:
-                10,
-        };
-
-        if (countryCode) {
-            requestBody.regionCode =
-                countryCode.toUpperCase();
-        }
-
-        if (requestedCity) {
-            requestBody.textQuery =
-                `${query}, ${requestedCity}`;
-        }
-
-        const {
-            response,
-            data,
-        } =
-            await requestGoogle(
-                searchUrl,
-                {
-                    method:
-                        "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "X-Goog-Api-Key":
-                            apiKey,
-
-                        "X-Goog-FieldMask":
-                            [
-                                "places.id",
-                                "places.displayName",
-                                "places.formattedAddress",
-                                "places.addressComponents",
-                                "places.location",
-                                "places.types",
-                            ].join(","),
-                    },
-
-                    body:
-                        JSON.stringify(
-                            requestBody
-                        ),
-                }
+        const cachedResults =
+            getCachedResults(
+                cacheKey
             );
 
-        if (!response.ok) {
-            console.error(
-                "GOOGLE PLACES SEARCH FAILED:",
-                response.status,
-                data
-            );
-
-            return res.status(502).json({
-                message:
-                    "Google address search failed.",
-            });
-        }
-
-        const places =
-            Array.isArray(
-                data?.places
-            )
-                ? data.places
-                : [];
-
-        // =====================================================
-        // CLEAN GOOGLE RESULTS
-        // =====================================================
-
-        let results =
-            places
-                .map(
-                    (place) =>
-                        cleanGooglePlace(
-                            place,
-                            country
-                        )
-                )
-                .filter(Boolean);
-
-        // =====================================================
-        // FILTER COUNTRY
-        // =====================================================
-
-        if (countryCode) {
-            results =
-                results.filter(
-                    (place) => {
-                        const resultCountryCode =
-                            String(
-                                place.country_code ||
-                                place.address
-                                    ?.country_code ||
-                                ""
-                            )
-                                .trim()
-                                .toLowerCase();
-
-                        return (
-                            !resultCountryCode ||
-                            resultCountryCode ===
-                            countryCode
-                        );
-                    }
+        if (
+            cachedResults
+        ) {
+            return res
+                .status(200)
+                .json(
+                    cachedResults
                 );
         }
 
+        console.log(
+            "GOOGLE ADDRESS REQUEST:",
+            {
+                query,
+                country,
+                countryCode:
+                    resolvedCountryCode,
+                requestedStreet,
+                requestedHouseNumber,
+                requestedCity,
+                requestedPostalCode,
+            }
+        );
+
         // =====================================================
-        // FILTER HOUSE NUMBER
+        // GOOGLE GEOCODING FIRST
         // =====================================================
 
+        let geocodingResults =
+            [];
+
+        /*
+         * Geocoding is used first.
+         *
+         * This is important because
+         * Places Search Text is much more
+         * expensive / quota-sensitive.
+         */
+
+        try {
+            const geocodingQuery =
+                [
+                    requestedStreet,
+                    requestedHouseNumber,
+                    requestedPostalCode,
+                    requestedCity,
+                ]
+                    .filter(Boolean)
+                    .join(" ");
+
+            geocodingResults =
+                await searchGoogleGeocoding(
+                    geocodingQuery ||
+                    query,
+                    apiKey,
+                    resolvedCountryCode
+                );
+        } catch (error) {
+            console.error(
+                "GOOGLE GEOCODING REQUEST ERROR:",
+                error
+            );
+
+            geocodingResults =
+                [];
+        }
+
+        // =====================================================
+        // FILTER / RANK GEOCODING
+        // =====================================================
+
+        let results =
+            mergeAddressResults(
+                geocodingResults
+            );
+
+        // =========================
+        // HOUSE NUMBER
+        // =========================
+
         if (
-            requestedHouseNumber
+            requestedHouseNumber &&
+            results.length > 0
         ) {
             const normalizedRequestedHouse =
                 normalizeHouseNumber(
                     requestedHouseNumber
                 );
 
-            results =
+            const houseMatches =
                 results.filter(
-                    (place) => {
-                        const resultHouse =
-                            normalizeHouseNumber(
-                                place.housenumber ||
-                                place.address
-                                    ?.housenumber ||
-                                place.address
-                                    ?.house_number ||
-                                ""
-                            );
-
-                        return (
-                            resultHouse ===
-                            normalizedRequestedHouse
-                        );
-                    }
+                    (
+                        place
+                    ) =>
+                        normalizeHouseNumber(
+                            getResultHouseNumber(
+                                place
+                            )
+                        ) ===
+                        normalizedRequestedHouse
                 );
+
+            if (
+                houseMatches.length > 0
+            ) {
+                results =
+                    houseMatches;
+            }
         }
 
-        // =====================================================
-        // FILTER CITY
-        // =====================================================
+        // =========================
+        // CITY
+        // =========================
 
         if (
             requestedCity &&
@@ -921,12 +1522,18 @@ export const searchAddress = async (
 
             const cityMatches =
                 results.filter(
-                    (place) => {
+                    (
+                        place
+                    ) => {
                         const resultCity =
                             normalize(
                                 place.city ||
                                 place.address
                                     ?.city ||
+                                place.address
+                                    ?.town ||
+                                place.address
+                                    ?.village ||
                                 ""
                             );
 
@@ -945,9 +1552,9 @@ export const searchAddress = async (
             }
         }
 
-        // =====================================================
-        // FILTER POSTAL CODE
-        // =====================================================
+        // =========================
+        // POSTAL CODE
+        // =========================
 
         if (
             requestedPostalCode &&
@@ -960,20 +1567,16 @@ export const searchAddress = async (
 
             const postalMatches =
                 results.filter(
-                    (place) => {
-                        const resultPostal =
-                            normalize(
-                                place.postcode ||
-                                place.address
-                                    ?.postcode ||
-                                ""
-                            );
-
-                        return (
-                            resultPostal ===
-                            normalizedRequestedPostal
-                        );
-                    }
+                    (
+                        place
+                    ) =>
+                        normalize(
+                            place.postcode ||
+                            place.address
+                                ?.postcode ||
+                            ""
+                        ) ===
+                        normalizedRequestedPostal
                 );
 
             if (
@@ -985,13 +1588,167 @@ export const searchAddress = async (
         }
 
         // =====================================================
-        // SORT RESULTS
+        // PLACES FALLBACK
+        // =====================================================
+
+        /*
+         * Only call Places Search Text when
+         * Geocoding could not provide a useful
+         * result.
+         *
+         * This is the most important quota
+         * protection in this version.
+         */
+
+        if (
+            results.length === 0
+        ) {
+            const searchUrl =
+                "https://places.googleapis.com/v1/places:searchText";
+
+            const requestBody = {
+                textQuery:
+                    query,
+
+                languageCode:
+                    "sv",
+
+                pageSize:
+                    10,
+            };
+
+            if (
+                resolvedCountryCode
+            ) {
+                requestBody.includedRegionCodes =
+                    [
+                        resolvedCountryCode
+                            .toUpperCase(),
+                    ];
+            }
+
+            /*
+             * If the user explicitly supplied
+             * a city, use it to improve the
+             * fallback search.
+             *
+             * We do NOT automatically add
+             * arbitrary city data when none
+             * was supplied.
+             */
+
+            if (
+                requestedCity
+            ) {
+                requestBody.textQuery =
+                    `${query}, ${requestedCity}`;
+            }
+
+            const {
+                response,
+                data,
+            } =
+                await requestGoogle(
+                    searchUrl,
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "X-Goog-Api-Key":
+                                apiKey,
+
+                            "X-Goog-FieldMask":
+                                [
+                                    "places.id",
+                                    "places.displayName",
+                                    "places.formattedAddress",
+                                    "places.addressComponents",
+                                    "places.location",
+                                    "places.types",
+                                ].join(","),
+                        },
+
+                        body:
+                            JSON.stringify(
+                                requestBody
+                            ),
+                    }
+                );
+
+            if (
+                response.ok
+            ) {
+                const places =
+                    Array.isArray(
+                        data?.places
+                    )
+                        ? data.places
+                        : [];
+
+                const placesResults =
+                    places
+                        .map(
+                            (
+                                place
+                            ) =>
+                                cleanGooglePlace(
+                                    place,
+                                    country
+                                )
+                        )
+                        .filter(Boolean);
+
+                results =
+                    mergeAddressResults(
+                        placesResults
+                    );
+            } else {
+                /*
+                 * IMPORTANT:
+                 *
+                 * Quota errors should not
+                 * crash the checkout.
+                 *
+                 * AddressInput will simply
+                 * receive an empty result.
+                 */
+
+                console.error(
+                    "GOOGLE PLACES FALLBACK FAILED:",
+                    {
+                        status:
+                            response.status,
+
+                        statusText:
+                            response.statusText,
+
+                        data,
+                    }
+                );
+
+                results =
+                    [];
+            }
+        }
+
+        // =====================================================
+        // FINAL SORT
         // =====================================================
 
         results.sort(
-            (a, b) => {
-                let scoreA = 0;
-                let scoreB = 0;
+            (
+                a,
+                b
+            ) => {
+                let scoreA =
+                    0;
+
+                let scoreB =
+                    0;
 
                 const streetA =
                     normalize(
@@ -1005,12 +1762,16 @@ export const searchAddress = async (
 
                 const houseA =
                     normalizeHouseNumber(
-                        a.housenumber
+                        getResultHouseNumber(
+                            a
+                        )
                     );
 
                 const houseB =
                     normalizeHouseNumber(
-                        b.housenumber
+                        getResultHouseNumber(
+                            b
+                        )
                     );
 
                 const cityA =
@@ -1040,7 +1801,8 @@ export const searchAddress = async (
                         requestedStreet
                     )
                 ) {
-                    scoreA += 100;
+                    scoreA +=
+                        1000;
                 }
 
                 if (
@@ -1050,7 +1812,8 @@ export const searchAddress = async (
                         requestedStreet
                     )
                 ) {
-                    scoreB += 100;
+                    scoreB +=
+                        1000;
                 }
 
                 if (
@@ -1060,7 +1823,8 @@ export const searchAddress = async (
                         requestedHouseNumber
                     )
                 ) {
-                    scoreA += 1000;
+                    scoreA +=
+                        10000;
                 }
 
                 if (
@@ -1070,7 +1834,8 @@ export const searchAddress = async (
                         requestedHouseNumber
                     )
                 ) {
-                    scoreB += 1000;
+                    scoreB +=
+                        10000;
                 }
 
                 if (
@@ -1080,7 +1845,8 @@ export const searchAddress = async (
                         requestedCity
                     )
                 ) {
-                    scoreA += 500;
+                    scoreA +=
+                        5000;
                 }
 
                 if (
@@ -1090,7 +1856,8 @@ export const searchAddress = async (
                         requestedCity
                     )
                 ) {
-                    scoreB += 500;
+                    scoreB +=
+                        5000;
                 }
 
                 if (
@@ -1100,7 +1867,8 @@ export const searchAddress = async (
                         requestedPostalCode
                     )
                 ) {
-                    scoreA += 800;
+                    scoreA +=
+                        8000;
                 }
 
                 if (
@@ -1110,19 +1878,50 @@ export const searchAddress = async (
                         requestedPostalCode
                     )
                 ) {
-                    scoreB += 800;
+                    scoreB +=
+                        8000;
+                }
+
+                if (
+                    a.street
+                ) {
+                    scoreA +=
+                        100;
+                }
+
+                if (
+                    b.street
+                ) {
+                    scoreB +=
+                        100;
                 }
 
                 if (
                     a.housenumber
                 ) {
-                    scoreA += 50;
+                    scoreA +=
+                        200;
                 }
 
                 if (
                     b.housenumber
                 ) {
-                    scoreB += 50;
+                    scoreB +=
+                        200;
+                }
+
+                if (
+                    a.postcode
+                ) {
+                    scoreA +=
+                        50;
+                }
+
+                if (
+                    b.postcode
+                ) {
+                    scoreB +=
+                        50;
                 }
 
                 return (
@@ -1132,20 +1931,56 @@ export const searchAddress = async (
             }
         );
 
-        return res.status(200).json(
+        /*
+         * Maximum 8 suggestions.
+         */
+
+        results =
+            results.slice(
+                0,
+                8
+            );
+
+        setCachedResults(
+            cacheKey,
             results
         );
 
-    } catch (error) {
+        console.log(
+            "GOOGLE ADDRESS SEARCH:",
+            {
+                query,
+                country,
+                countryCode:
+                    resolvedCountryCode,
+                requestedStreet,
+                requestedHouseNumber,
+                requestedCity,
+                requestedPostalCode,
+                geocodingCount:
+                    geocodingResults.length,
+                resultCount:
+                    results.length,
+            }
+        );
+
+        return res
+            .status(200)
+            .json(results);
+    } catch (
+    error
+    ) {
         console.error(
             "SEARCH ADDRESS ERROR:",
             error
         );
 
-        return res.status(500).json({
-            message:
-                "Failed to search addresses.",
-        });
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to search addresses.",
+            });
     }
 };
 
@@ -1164,10 +1999,12 @@ export const addAddress = async (
             );
 
         if (!user) {
-            return res.status(404).json({
-                message:
-                    "User not found.",
-            });
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "User not found.",
+                });
         }
 
         const {
@@ -1180,49 +2017,65 @@ export const addAddress = async (
             postalCode,
             country,
             countryCode,
-            isDefault = false,
+            isDefault =
+            false,
         } = req.body;
 
         if (
             !street &&
             !address
         ) {
-            return res.status(400).json({
-                message:
-                    "Street address is required.",
-            });
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Street address is required.",
+                });
         }
 
         if (!city) {
-            return res.status(400).json({
-                message:
-                    "City is required.",
-            });
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "City is required.",
+                });
         }
 
         if (!postalCode) {
-            return res.status(400).json({
-                message:
-                    "Postal code is required.",
-            });
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Postal code is required.",
+                });
         }
 
         if (!country) {
-            return res.status(400).json({
-                message:
-                    "Country is required.",
-            });
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "Country is required.",
+                });
         }
 
         if (
             user.addresses &&
-            user.addresses.length >= 5
+            user.addresses.length >=
+            5
         ) {
-            return res.status(400).json({
-                message:
-                    "You can save a maximum of 5 addresses.",
-            });
+            return res
+                .status(400)
+                .json({
+                    message:
+                        "You can save a maximum of 5 addresses.",
+                });
         }
+
+        // =========================
+        // SET DEFAULT
+        // =========================
 
         if (
             isDefault &&
@@ -1231,7 +2084,9 @@ export const addAddress = async (
             )
         ) {
             user.addresses.forEach(
-                (savedAddress) => {
+                (
+                    savedAddress
+                ) => {
                     savedAddress.isDefault =
                         false;
                 }
@@ -1241,12 +2096,19 @@ export const addAddress = async (
         const shouldBeDefault =
             user.addresses.length ===
             0 ||
-            Boolean(isDefault);
+            Boolean(
+                isDefault
+            );
+
+        // =========================
+        // PUSH ADDRESS
+        // =========================
 
         user.addresses.push({
             fullName:
                 fullName ||
-                `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+                `${user.firstName || ""} ${user.lastName || ""}`
+                    .trim(),
 
             email:
                 typeof email ===
@@ -1265,13 +2127,19 @@ export const addAddress = async (
                 "",
 
             city:
-                city.trim(),
+                String(
+                    city
+                ).trim(),
 
             postalCode:
-                postalCode.trim(),
+                String(
+                    postalCode
+                ).trim(),
 
             country:
-                country.trim(),
+                String(
+                    country
+                ).trim(),
 
             countryCode:
                 countryCode
@@ -1290,20 +2158,25 @@ export const addAddress = async (
 
         await user.save();
 
-        return res.status(201).json(
-            user.addresses
-        );
-
-    } catch (error) {
+        return res
+            .status(201)
+            .json(
+                user.addresses
+            );
+    } catch (
+    error
+    ) {
         console.error(
             "ADD ADDRESS ERROR:",
             error
         );
 
-        return res.status(500).json({
-            message:
-                "Failed to add address.",
-        });
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to add address.",
+            });
     }
 };
 
@@ -1322,10 +2195,12 @@ export const getAddresses = async (
             );
 
         if (!user) {
-            return res.status(404).json({
-                message:
-                    "User not found.",
-            });
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "User not found.",
+                });
         }
 
         if (
@@ -1333,14 +2208,25 @@ export const getAddresses = async (
                 user.addresses
             )
         ) {
-            user.addresses = [];
+            user.addresses =
+                [];
         }
 
-        let defaultCount =
+        const defaultAddresses =
             user.addresses.filter(
-                (address) =>
+                (
+                    address
+                ) =>
                     address.isDefault
-            ).length;
+            );
+
+        const defaultCount =
+            defaultAddresses.length;
+
+        /*
+         * Exactly one primary address
+         * when addresses exist.
+         */
 
         if (
             user.addresses.length >
@@ -1351,7 +2237,6 @@ export const getAddresses = async (
                 true;
 
             await user.save();
-
         } else if (
             defaultCount > 1
         ) {
@@ -1359,7 +2244,9 @@ export const getAddresses = async (
                 false;
 
             user.addresses.forEach(
-                (address) => {
+                (
+                    address
+                ) => {
                     if (
                         address.isDefault &&
                         !foundDefault
@@ -1376,20 +2263,25 @@ export const getAddresses = async (
             await user.save();
         }
 
-        return res.status(200).json(
-            user.addresses
-        );
-
-    } catch (error) {
+        return res
+            .status(200)
+            .json(
+                user.addresses
+            );
+    } catch (
+    error
+    ) {
         console.error(
             "GET ADDRESSES ERROR:",
             error
         );
 
-        return res.status(500).json({
-            message:
-                "Failed to fetch addresses.",
-        });
+        return res
+            .status(500)
+            .json({
+                message:
+                    "Failed to fetch addresses.",
+            });
     }
 };
 
@@ -1409,10 +2301,12 @@ export const setDefaultAddress =
                 );
 
             if (!user) {
-                return res.status(404).json({
-                    message:
-                        "User not found.",
-                });
+                return res
+                    .status(404)
+                    .json({
+                        message:
+                            "User not found.",
+                    });
             }
 
             const address =
@@ -1421,10 +2315,12 @@ export const setDefaultAddress =
                 );
 
             if (!address) {
-                return res.status(404).json({
-                    message:
-                        "Address not found.",
-                });
+                return res
+                    .status(404)
+                    .json({
+                        message:
+                            "Address not found.",
+                    });
             }
 
             user.addresses.forEach(
@@ -1432,27 +2328,36 @@ export const setDefaultAddress =
                     savedAddress
                 ) => {
                     savedAddress.isDefault =
-                        savedAddress._id.toString() ===
-                        req.params.id;
+                        String(
+                            savedAddress._id
+                        ) ===
+                        String(
+                            req.params.id
+                        );
                 }
             );
 
             await user.save();
 
-            return res.status(200).json(
-                user.addresses
-            );
-
-        } catch (error) {
+            return res
+                .status(200)
+                .json(
+                    user.addresses
+                );
+        } catch (
+        error
+        ) {
             console.error(
                 "SET DEFAULT ADDRESS ERROR:",
                 error
             );
 
-            return res.status(500).json({
-                message:
-                    "Failed to set primary address.",
-            });
+            return res
+                .status(500)
+                .json({
+                    message:
+                        "Failed to set primary address.",
+                });
         }
     };
 
@@ -1460,66 +2365,76 @@ export const setDefaultAddress =
 // DELETE ADDRESS
 // =========================
 
-export const deleteAddress = async (
-    req,
-    res
-) => {
-    try {
-        const user =
-            await User.findById(
-                req.user._id
-            );
+export const deleteAddress =
+    async (
+        req,
+        res
+    ) => {
+        try {
+            const user =
+                await User.findById(
+                    req.user._id
+                );
 
-        if (!user) {
-            return res.status(404).json({
-                message:
-                    "User not found.",
-            });
-        }
+            if (!user) {
+                return res
+                    .status(404)
+                    .json({
+                        message:
+                            "User not found.",
+                    });
+            }
 
-        const address =
-            user.addresses.id(
-                req.params.id
-            );
+            const address =
+                user.addresses.id(
+                    req.params.id
+                );
 
-        if (!address) {
-            return res.status(404).json({
-                message:
-                    "Address not found.",
-            });
-        }
+            if (!address) {
+                return res
+                    .status(404)
+                    .json({
+                        message:
+                            "Address not found.",
+                    });
+            }
 
-        const wasDefault =
-            Boolean(
-                address.isDefault
-            );
+            const wasDefault =
+                Boolean(
+                    address.isDefault
+                );
 
-        address.deleteOne();
+            address.deleteOne();
 
-        if (
-            wasDefault &&
-            user.addresses.length >
-            0
+            if (
+                wasDefault &&
+                user.addresses.length >
+                0
+            ) {
+                user.addresses[0].isDefault =
+                    true;
+            }
+
+            await user.save();
+
+            return res
+                .status(200)
+                .json(
+                    user.addresses
+                );
+        } catch (
+        error
         ) {
-            user.addresses[0].isDefault =
-                true;
+            console.error(
+                "DELETE ADDRESS ERROR:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    message:
+                        "Failed to delete address.",
+                });
         }
-
-        await user.save();
-
-        return res.status(200).json(
-            user.addresses
-        );
-
-    } catch (error) {
-        console.error(
-            "DELETE ADDRESS ERROR:",
-            error
-        );
-
-        return res.status(500).json({
-            message:
-                "Failed to delete address.",
-        });
-    }
-};
+    };
