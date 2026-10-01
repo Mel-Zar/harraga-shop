@@ -11,6 +11,7 @@ export default function Register() {
         firstName: "",
         lastName: "",
         email: "",
+        phone: "",
         password: "",
         confirmPassword: "",
         address: "",
@@ -282,6 +283,20 @@ export default function Register() {
             return;
         }
 
+        // =================================================
+        // 📱 PHONE VALIDATION
+        // =================================================
+
+        if (!form.phone.trim()) {
+            const message =
+                "Phone number is required";
+
+            setError(message);
+            toast.error(message);
+
+            return;
+        }
+
         if (!form.password) {
             const message =
                 "Password is required";
@@ -433,6 +448,7 @@ export default function Register() {
                 firstName: "",
                 lastName: "",
                 email: "",
+                phone: "",
                 password: "",
                 confirmPassword: "",
                 address: "",
@@ -515,6 +531,15 @@ export default function Register() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
+            />
+
+            <input
+                name="phone"
+                type="tel"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="Phone Number"
+                autoComplete="tel"
             />
 
             <input

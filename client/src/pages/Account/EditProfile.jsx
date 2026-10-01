@@ -2,12 +2,33 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 
 function EditProfile() {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(
+        localStorage.getItem("user")
+    );
 
-    const [firstName, setFirstName] = useState(user?.firstName || "");
-    const [lastName, setLastName] = useState(user?.lastName || "");
-    const [username, setUsername] = useState(user?.username || "");
-    const [email] = useState(user?.email || "");
+    const [firstName, setFirstName] = useState(
+        user?.firstName || ""
+    );
+
+    const [lastName, setLastName] = useState(
+        user?.lastName || ""
+    );
+
+    const [username, setUsername] = useState(
+        user?.username || ""
+    );
+
+    const [email] = useState(
+        user?.email || ""
+    );
+
+    // =====================================================
+    // 📱 PHONE NUMBER
+    // =====================================================
+
+    const [phone, setPhone] = useState(
+        user?.phone || ""
+    );
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
@@ -21,33 +42,49 @@ function EditProfile() {
         setError("");
 
         try {
-            const token = localStorage.getItem("token");
+            const token =
+                localStorage.getItem("token");
 
             if (!token) {
-                setError("You are not logged in.");
-                toast.error("You are not logged in.");
+                setError(
+                    "You are not logged in."
+                );
+
+                toast.error(
+                    "You are not logged in."
+                );
+
                 setLoading(false);
+
                 return;
             }
 
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/users/profile`,
+                `${import.meta.env.VITE_API_URL}/api/users/me`,
                 {
                     method: "PUT",
+
                     headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
+                        "Content-Type":
+                            "application/json",
+
+                        Authorization:
+                            `Bearer ${token}`,
                     },
+
                     credentials: "include",
+
                     body: JSON.stringify({
                         firstName,
                         lastName,
                         username,
+                        phone,
                     }),
                 }
             );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -56,19 +93,31 @@ function EditProfile() {
                 );
             }
 
+            // =================================================
+            // 💾 UPDATE LOCAL USER
+            // =================================================
+
             localStorage.setItem(
                 "user",
-                JSON.stringify(data.user)
+                JSON.stringify(
+                    data.user
+                )
             );
 
-            window.dispatchEvent(new Event("authChanged"));
+            window.dispatchEvent(
+                new Event("authChanged")
+            );
 
-            setMessage("Profile updated successfully!");
+            setMessage(
+                "Profile updated successfully!"
+            );
 
             toast.success(
                 "Profile updated successfully!"
             );
+
         } catch (err) {
+
             setError(
                 err.message ||
                 "Something went wrong"
@@ -78,8 +127,11 @@ function EditProfile() {
                 err.message ||
                 "Something went wrong"
             );
+
         } finally {
+
             setLoading(false);
+
         }
     };
 
@@ -93,17 +145,34 @@ function EditProfile() {
                 borderRadius: "12px",
             }}
         >
-            <h1>Edit Profile</h1>
+            <h1>
+                Edit Profile
+            </h1>
 
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: 20 }}>
-                    <label>First Name</label>
+            <form
+                onSubmit={handleSubmit}
+            >
+
+                {/* =================================================
+                    FIRST NAME
+                ================================================= */}
+
+                <div
+                    style={{
+                        marginBottom: 20
+                    }}
+                >
+                    <label>
+                        First Name
+                    </label>
 
                     <input
                         type="text"
                         value={firstName}
                         onChange={(e) =>
-                            setFirstName(e.target.value)
+                            setFirstName(
+                                e.target.value
+                            )
                         }
                         style={{
                             width: "100%",
@@ -113,14 +182,26 @@ function EditProfile() {
                     />
                 </div>
 
-                <div style={{ marginBottom: 20 }}>
-                    <label>Last Name</label>
+                {/* =================================================
+                    LAST NAME
+                ================================================= */}
+
+                <div
+                    style={{
+                        marginBottom: 20
+                    }}
+                >
+                    <label>
+                        Last Name
+                    </label>
 
                     <input
                         type="text"
                         value={lastName}
                         onChange={(e) =>
-                            setLastName(e.target.value)
+                            setLastName(
+                                e.target.value
+                            )
                         }
                         style={{
                             width: "100%",
@@ -130,14 +211,26 @@ function EditProfile() {
                     />
                 </div>
 
-                <div style={{ marginBottom: 20 }}>
-                    <label>Username</label>
+                {/* =================================================
+                    USERNAME
+                ================================================= */}
+
+                <div
+                    style={{
+                        marginBottom: 20
+                    }}
+                >
+                    <label>
+                        Username
+                    </label>
 
                     <input
                         type="text"
                         value={username}
                         onChange={(e) =>
-                            setUsername(e.target.value)
+                            setUsername(
+                                e.target.value
+                            )
                         }
                         style={{
                             width: "100%",
@@ -147,8 +240,18 @@ function EditProfile() {
                     />
                 </div>
 
-                <div style={{ marginBottom: 20 }}>
-                    <label>Email</label>
+                {/* =================================================
+                    EMAIL
+                ================================================= */}
+
+                <div
+                    style={{
+                        marginBottom: 20
+                    }}
+                >
+                    <label>
+                        Email
+                    </label>
 
                     <input
                         type="email"
@@ -162,6 +265,41 @@ function EditProfile() {
                         }}
                     />
                 </div>
+
+                {/* =================================================
+                    📱 PHONE NUMBER
+                ================================================= */}
+
+                <div
+                    style={{
+                        marginBottom: 20
+                    }}
+                >
+                    <label>
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) =>
+                            setPhone(
+                                e.target.value
+                            )
+                        }
+                        placeholder="Phone Number"
+                        autoComplete="tel"
+                        style={{
+                            width: "100%",
+                            padding: "10px",
+                            marginTop: "6px",
+                        }}
+                    />
+                </div>
+
+                {/* =================================================
+                    SAVE BUTTON
+                ================================================= */}
 
                 <button
                     type="submit"
@@ -177,6 +315,10 @@ function EditProfile() {
                         : "Save Changes"}
                 </button>
 
+                {/* =================================================
+                    SUCCESS MESSAGE
+                ================================================= */}
+
                 {message && (
                     <p
                         style={{
@@ -188,6 +330,10 @@ function EditProfile() {
                     </p>
                 )}
 
+                {/* =================================================
+                    ERROR MESSAGE
+                ================================================= */}
+
                 {error && (
                     <p
                         style={{
@@ -198,6 +344,7 @@ function EditProfile() {
                         {error}
                     </p>
                 )}
+
             </form>
         </div>
     );

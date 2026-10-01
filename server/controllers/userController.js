@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+
 import bcrypt from "bcryptjs";
 
 // =====================================================
@@ -99,6 +100,7 @@ export const getUserById = async (
                 .lean();
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found",
@@ -142,6 +144,7 @@ export const updateUser = async (
             lastName,
             username,
             email,
+            phone,
             address,
             postalCode,
             city,
@@ -154,6 +157,7 @@ export const updateUser = async (
             await User.findById(id);
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found",
@@ -167,9 +171,12 @@ export const updateUser = async (
         if (
             req.user?.id?.toString() ===
             user._id.toString() &&
+
             isAdmin !== undefined &&
+
             Boolean(isAdmin) === false
         ) {
+
             return res.status(400).json({
                 message:
                     "You cannot remove your own admin access.",
@@ -199,6 +206,15 @@ export const updateUser = async (
                 : undefined;
 
         // =================================================
+        // 📱 CLEAN PHONE
+        // =================================================
+
+        const cleanPhone =
+            phone !== undefined
+                ? String(phone).trim()
+                : undefined;
+
+        // =================================================
         // 📧 EMAIL VALIDATION
         // =================================================
 
@@ -211,6 +227,7 @@ export const updateUser = async (
                     cleanEmail
                 )
             ) {
+
                 return res.status(400).json({
                     message:
                         "Invalid email format",
@@ -234,6 +251,7 @@ export const updateUser = async (
                     });
 
                 if (exists) {
+
                     return res.status(400).json({
                         message:
                             "Email already exists",
@@ -250,14 +268,14 @@ export const updateUser = async (
         // =================================================
 
         if (
-            cleanUsername !==
-            undefined
+            cleanUsername !== undefined
         ) {
 
             if (
                 cleanUsername.length <
                 3
             ) {
+
                 return res.status(400).json({
                     message:
                         "Username must be at least 3 characters.",
@@ -281,6 +299,7 @@ export const updateUser = async (
                     });
 
                 if (exists) {
+
                     return res.status(400).json({
                         message:
                             "Username already exists",
@@ -300,6 +319,7 @@ export const updateUser = async (
             firstName !==
             undefined
         ) {
+
             user.firstName =
                 cleanString(
                     firstName
@@ -310,10 +330,34 @@ export const updateUser = async (
             lastName !==
             undefined
         ) {
+
             user.lastName =
                 cleanString(
                     lastName
                 );
+        }
+
+        // =================================================
+        // 📱 PHONE NUMBER
+        // =================================================
+
+        if (
+            cleanPhone !==
+            undefined
+        ) {
+
+            if (
+                !cleanPhone
+            ) {
+
+                return res.status(400).json({
+                    message:
+                        "Phone number is required",
+                });
+            }
+
+            user.phone =
+                cleanPhone;
         }
 
         // =================================================
@@ -324,6 +368,7 @@ export const updateUser = async (
             address !==
             undefined
         ) {
+
             user.address =
                 cleanString(
                     address
@@ -334,6 +379,7 @@ export const updateUser = async (
             postalCode !==
             undefined
         ) {
+
             user.postalCode =
                 cleanString(
                     postalCode
@@ -344,6 +390,7 @@ export const updateUser = async (
             city !==
             undefined
         ) {
+
             user.city =
                 cleanString(
                     city
@@ -354,6 +401,7 @@ export const updateUser = async (
             country !==
             undefined
         ) {
+
             user.country =
                 cleanString(
                     country
@@ -368,6 +416,7 @@ export const updateUser = async (
             isAdmin !==
             undefined
         ) {
+
             user.isAdmin =
                 Boolean(
                     isAdmin
@@ -382,6 +431,7 @@ export const updateUser = async (
             isVerified !==
             undefined
         ) {
+
             user.isVerified =
                 Boolean(
                     isVerified
@@ -467,6 +517,7 @@ export const deleteUser = async (
             id.toString() ===
             req.user.id.toString()
         ) {
+
             return res.status(400).json({
                 message:
                     "You cannot delete your own account.",
@@ -477,6 +528,7 @@ export const deleteUser = async (
             await User.findById(id);
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found",
@@ -525,6 +577,7 @@ export const getProfile = async (
             );
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found",
@@ -565,6 +618,7 @@ export const updateProfile = async (
             lastName,
             username,
             email,
+            phone,
             address,
             postalCode,
             city,
@@ -577,6 +631,7 @@ export const updateProfile = async (
             );
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found",
@@ -601,6 +656,11 @@ export const updateProfile = async (
                     .trim()
                 : undefined;
 
+        const cleanPhone =
+            phone !== undefined
+                ? String(phone).trim()
+                : undefined;
+
         // =================================================
         // 📧 EMAIL VALIDATION
         // =================================================
@@ -615,6 +675,7 @@ export const updateProfile = async (
                     cleanEmail
                 )
             ) {
+
                 return res.status(400).json({
                     message:
                         "Invalid email format",
@@ -638,6 +699,7 @@ export const updateProfile = async (
                     });
 
                 if (exists) {
+
                     return res.status(400).json({
                         message:
                             "Email already exists",
@@ -662,6 +724,7 @@ export const updateProfile = async (
                 cleanUsername.length <
                 3
             ) {
+
                 return res.status(400).json({
                     message:
                         "Username must be at least 3 characters.",
@@ -685,6 +748,7 @@ export const updateProfile = async (
                     });
 
                 if (exists) {
+
                     return res.status(400).json({
                         message:
                             "Username already exists",
@@ -697,6 +761,29 @@ export const updateProfile = async (
         }
 
         // =================================================
+        // 📱 PHONE NUMBER
+        // =================================================
+
+        if (
+            cleanPhone !==
+            undefined
+        ) {
+
+            if (
+                !cleanPhone
+            ) {
+
+                return res.status(400).json({
+                    message:
+                        "Phone number is required",
+                });
+            }
+
+            user.phone =
+                cleanPhone;
+        }
+
+        // =================================================
         // 👤 BASIC INFO
         // =================================================
 
@@ -704,6 +791,7 @@ export const updateProfile = async (
             firstName !==
             undefined
         ) {
+
             user.firstName =
                 cleanString(
                     firstName
@@ -714,6 +802,7 @@ export const updateProfile = async (
             lastName !==
             undefined
         ) {
+
             user.lastName =
                 cleanString(
                     lastName
@@ -728,6 +817,7 @@ export const updateProfile = async (
             address !==
             undefined
         ) {
+
             user.address =
                 cleanString(
                     address
@@ -738,6 +828,7 @@ export const updateProfile = async (
             postalCode !==
             undefined
         ) {
+
             user.postalCode =
                 cleanString(
                     postalCode
@@ -748,6 +839,7 @@ export const updateProfile = async (
             city !==
             undefined
         ) {
+
             user.city =
                 cleanString(
                     city
@@ -758,6 +850,7 @@ export const updateProfile = async (
             country !==
             undefined
         ) {
+
             user.country =
                 cleanString(
                     country
@@ -771,6 +864,7 @@ export const updateProfile = async (
         // =================================================
 
         const safeUser = {
+
             id:
                 user._id,
 
@@ -785,6 +879,13 @@ export const updateProfile = async (
 
             email:
                 user.email,
+
+            // =================================================
+            // 📱 PHONE NUMBER
+            // =================================================
+
+            phone:
+                user.phone,
 
             address:
                 user.address,
@@ -806,6 +907,7 @@ export const updateProfile = async (
         };
 
         return res.status(200).json({
+
             message:
                 "Profile updated",
 
@@ -873,6 +975,7 @@ export const changePassword = async (
             !newPassword ||
             !confirmPassword
         ) {
+
             return res.status(400).json({
                 message:
                     "All fields are required.",
@@ -887,6 +990,7 @@ export const changePassword = async (
             newPassword !==
             confirmPassword
         ) {
+
             return res.status(400).json({
                 message:
                     "Passwords do not match.",
@@ -900,6 +1004,7 @@ export const changePassword = async (
         if (
             newPassword.length < 6
         ) {
+
             return res.status(400).json({
                 message:
                     "New password must be at least 6 characters.",
@@ -916,6 +1021,7 @@ export const changePassword = async (
             );
 
         if (!user) {
+
             return res.status(404).json({
                 message:
                     "User not found.",
@@ -933,6 +1039,7 @@ export const changePassword = async (
             );
 
         if (!passwordMatches) {
+
             return res.status(400).json({
                 message:
                     "Current password is incorrect.",
@@ -950,6 +1057,7 @@ export const changePassword = async (
             );
 
         if (samePassword) {
+
             return res.status(400).json({
                 message:
                     "New password must be different from your current password.",
