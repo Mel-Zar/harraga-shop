@@ -138,7 +138,7 @@ function Checkout() {
                 try {
                     const response =
                         await fetch(
-                            `${apiBaseUrl}/api/countries`,
+                            `${apiBaseUrl}/countries`,
                             {
                                 method:
                                     "GET",

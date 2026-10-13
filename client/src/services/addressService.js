@@ -11,7 +11,7 @@ const API_BASE_URL =
     );
 
 const API_URL =
-    `${API_BASE_URL}/api/address`;
+    `${API_BASE_URL}/address`;
 
 // =========================
 // GET API ERROR MESSAGE

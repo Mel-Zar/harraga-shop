@@ -32,7 +32,7 @@ function AddressBook() {
         const loadCountries = async () => {
             try {
                 const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/countries`
+                    `${import.meta.env.VITE_API_URL}/countries`
                 );
 
                 const data = await res.json();

@@ -4,17 +4,21 @@ import axios from "axios";
 // 🔗 API URL
 // =====================================================
 
-const API_URL =
-    import.meta.env.VITE_API_URL;
+const BASE_URL = (
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5050/api"
+).replace(/\/+$/, "");
+
+// Backendens user-routes ligger under /api/users
+const USERS_API_URL = `${BASE_URL}/users`;
+
+console.log("👤 USERS API:", USERS_API_URL);
 
 // =====================================================
 // 🔐 AUTH HEADERS
 // =====================================================
 
-const authHeaders = (
-    token
-) => {
-
+const authHeaders = (token) => {
     if (
         !token ||
         token === "null" ||
@@ -27,13 +31,9 @@ const authHeaders = (
 
     return {
         headers: {
-            Authorization:
-                `Bearer ${token}`,
-
-            "Content-Type":
-                "application/json",
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
         },
-
         withCredentials: true,
     };
 };
@@ -42,11 +42,7 @@ const authHeaders = (
 // ❌ AXIOS ERROR HELPER
 // =====================================================
 
-const getErrorMessage = (
-    error,
-    fallback
-) => {
-
+const getErrorMessage = (error, fallback) => {
     return (
         error?.response?.data?.message ||
         error?.message ||
@@ -58,22 +54,15 @@ const getErrorMessage = (
 // 👑 ADMIN - GET ALL USERS
 // =====================================================
 
-export const getUsers = async (
-    token
-) => {
-
+export const getUsers = async (token) => {
     try {
-
-        const res =
-            await axios.get(
-                `${API_URL}/api/users`,
-                authHeaders(token)
-            );
+        const res = await axios.get(
+            USERS_API_URL,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -87,29 +76,19 @@ export const getUsers = async (
 // 👑 ADMIN - GET SINGLE USER
 // =====================================================
 
-export const getUserById = async (
-    token,
-    id
-) => {
-
+export const getUserById = async (token, id) => {
     if (!id) {
-        throw new Error(
-            "User ID is required."
-        );
+        throw new Error("User ID is required.");
     }
 
     try {
-
-        const res =
-            await axios.get(
-                `${API_URL}/api/users/${id}`,
-                authHeaders(token)
-            );
+        const res = await axios.get(
+            `${USERS_API_URL}/${encodeURIComponent(id)}`,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -123,31 +102,20 @@ export const getUserById = async (
 // 👑 ADMIN - UPDATE USER
 // =====================================================
 
-export const updateUser = async (
-    token,
-    id,
-    data
-) => {
-
+export const updateUser = async (token, id, data) => {
     if (!id) {
-        throw new Error(
-            "User ID is required."
-        );
+        throw new Error("User ID is required.");
     }
 
     try {
-
-        const res =
-            await axios.put(
-                `${API_URL}/api/users/${id}`,
-                data,
-                authHeaders(token)
-            );
+        const res = await axios.put(
+            `${USERS_API_URL}/${encodeURIComponent(id)}`,
+            data,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -161,29 +129,19 @@ export const updateUser = async (
 // 👑 ADMIN - DELETE USER
 // =====================================================
 
-export const deleteUser = async (
-    token,
-    id
-) => {
-
+export const deleteUser = async (token, id) => {
     if (!id) {
-        throw new Error(
-            "User ID is required."
-        );
+        throw new Error("User ID is required.");
     }
 
     try {
-
-        const res =
-            await axios.delete(
-                `${API_URL}/api/users/${id}`,
-                authHeaders(token)
-            );
+        const res = await axios.delete(
+            `${USERS_API_URL}/${encodeURIComponent(id)}`,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -197,22 +155,15 @@ export const deleteUser = async (
 // 👤 GET PROFILE
 // =====================================================
 
-export const getProfile = async (
-    token
-) => {
-
+export const getProfile = async (token) => {
     try {
-
-        const res =
-            await axios.get(
-                `${API_URL}/api/users/me`,
-                authHeaders(token)
-            );
+        const res = await axios.get(
+            `${USERS_API_URL}/me`,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -226,24 +177,16 @@ export const getProfile = async (
 // 👤 UPDATE PROFILE
 // =====================================================
 
-export const updateProfile = async (
-    token,
-    data
-) => {
-
+export const updateProfile = async (token, data) => {
     try {
-
-        const res =
-            await axios.put(
-                `${API_URL}/api/users/me`,
-                data,
-                authHeaders(token)
-            );
+        const res = await axios.put(
+            `${USERS_API_URL}/me`,
+            data,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -257,24 +200,16 @@ export const updateProfile = async (
 // 🔐 CHANGE PASSWORD
 // =====================================================
 
-export const changePassword = async (
-    token,
-    data
-) => {
-
+export const changePassword = async (token, data) => {
     try {
-
-        const res =
-            await axios.put(
-                `${API_URL}/api/users/change-password`,
-                data,
-                authHeaders(token)
-            );
+        const res = await axios.put(
+            `${USERS_API_URL}/change-password`,
+            data,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -288,22 +223,15 @@ export const changePassword = async (
 // 📍 GET ADDRESSES
 // =====================================================
 
-export const getAddresses = async (
-    token
-) => {
-
+export const getAddresses = async (token) => {
     try {
-
-        const res =
-            await axios.get(
-                `${API_URL}/api/users/me/addresses`,
-                authHeaders(token)
-            );
+        const res = await axios.get(
+            `${USERS_API_URL}/me/addresses`,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -317,24 +245,16 @@ export const getAddresses = async (
 // 📍 ADD ADDRESS
 // =====================================================
 
-export const addAddress = async (
-    token,
-    data
-) => {
-
+export const addAddress = async (token, data) => {
     try {
-
-        const res =
-            await axios.post(
-                `${API_URL}/api/users/me/addresses`,
-                data,
-                authHeaders(token)
-            );
+        const res = await axios.post(
+            `${USERS_API_URL}/me/addresses`,
+            data,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -348,32 +268,20 @@ export const addAddress = async (
 // ⭐ SET PRIMARY / DEFAULT ADDRESS
 // =====================================================
 
-export const setDefaultAddress = async (
-    token,
-    id
-) => {
-
+export const setDefaultAddress = async (token, id) => {
     if (!id) {
-
-        throw new Error(
-            "Address ID is required."
-        );
-
+        throw new Error("Address ID is required.");
     }
 
     try {
-
-        const res =
-            await axios.put(
-                `${API_URL}/api/users/me/addresses/${id}/default`,
-                {},
-                authHeaders(token)
-            );
+        const res = await axios.put(
+            `${USERS_API_URL}/me/addresses/${encodeURIComponent(id)}/default`,
+            {},
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,
@@ -387,29 +295,19 @@ export const setDefaultAddress = async (
 // 📍 DELETE ADDRESS
 // =====================================================
 
-export const deleteAddress = async (
-    token,
-    id
-) => {
-
+export const deleteAddress = async (token, id) => {
     if (!id) {
-        throw new Error(
-            "Address ID is required."
-        );
+        throw new Error("Address ID is required.");
     }
 
     try {
-
-        const res =
-            await axios.delete(
-                `${API_URL}/api/users/me/addresses/${id}`,
-                authHeaders(token)
-            );
+        const res = await axios.delete(
+            `${USERS_API_URL}/me/addresses/${encodeURIComponent(id)}`,
+            authHeaders(token)
+        );
 
         return res.data;
-
     } catch (error) {
-
         throw new Error(
             getErrorMessage(
                 error,

@@ -9,7 +9,7 @@ export const getProtectedData = async () => {
         throw new Error("No token found. Please login again.");
     }
 
-    const res = await fetch(`${API_URL}/api/protected`, {
+    const res = await fetch(`${API_URL}/protected`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
