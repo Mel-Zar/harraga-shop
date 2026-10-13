@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -16,33 +15,19 @@ import rateLimit from "express-rate-limit";
 // SAFETY CHECK (VIKTIGT)
 // =========================
 if (!process.env.MONGO_URI) {
-    console.error(
-        "❌ MONGO_URI saknas i .env"
-    );
-
+    console.error("❌ MONGO_URI saknas i .env");
     process.exit(1);
 }
 
 if (
-    !process.env.MONGO_URI.startsWith(
-        "mongodb://"
-    ) &&
-    !process.env.MONGO_URI.startsWith(
-        "mongodb+srv://"
-    )
+    !process.env.MONGO_URI.startsWith("mongodb://") &&
+    !process.env.MONGO_URI.startsWith("mongodb+srv://")
 ) {
-    console.error(
-        "❌ MONGO_URI har fel format."
-    );
-
+    console.error("❌ MONGO_URI har fel format.");
     console.error(
         "MONGO_URI börjar med:",
-        process.env.MONGO_URI.slice(
-            0,
-            20
-        )
+        process.env.MONGO_URI.slice(0, 20)
     );
-
     process.exit(1);
 }
 
@@ -54,49 +39,46 @@ const app = express();
 // =========================
 // FIX __dirname (ESM)
 // =========================
-const __filename =
-    fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const __dirname =
-    path.dirname(__filename);
+// =========================
+// UPLOADS DIRECTORY
+// =========================
+const uploadsPath = path.join(__dirname, "uploads");
+
+console.log("📁 UPLOADS DIRECTORY:", uploadsPath);
 
 // =========================
 // TRUST PROXY
 // =========================
-app.set(
-    "trust proxy",
-    1
-);
+app.set("trust proxy", 1);
 
 // =========================
 // SECURITY
 // =========================
 app.use(
-    helmet()
+    helmet({
+        crossOriginResourcePolicy: {
+            policy: "cross-origin",
+        },
+    })
 );
 
 // =========================
 // CORS
 // =========================
-const allowedOrigins =
-    process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN
-            .split(",")
-            .map(
-                (o) =>
-                    o.trim()
-            )
-            .filter(Boolean)
-        : [
-            "http://localhost:5173",
-        ];
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : ["http://localhost:5173"];
 
 app.use(
     cors({
-        origin:
-            allowedOrigins,
-        credentials:
-            true,
+        origin: allowedOrigins,
+        credentials: true,
     })
 );
 
@@ -118,61 +100,78 @@ app.use(
 // =========================
 // BODY PARSING
 // =========================
-app.use(
-    express.json()
-);
+app.use(express.json());
 
-app.use(
-    cookieParser()
-);
+app.use(cookieParser());
 
 // =========================
 // RATE LIMIT
 // =========================
 app.use(
     rateLimit({
-        windowMs:
-            15 * 60 * 1000,
-
+        windowMs: 15 * 60 * 1000,
         max: 300,
-
-        standardHeaders:
-            true,
-
-        legacyHeaders:
-            false,
+        standardHeaders: true,
+        legacyHeaders: false,
     })
 );
 
 // =========================
-// STATIC FILES
+// STATIC FILES - IMAGE HEADERS
+// =========================
+const uploadStaticOptions = {
+    setHeaders: (res) => {
+        res.setHeader(
+            "Cross-Origin-Resource-Policy",
+            "cross-origin"
+        );
+
+        res.setHeader(
+            "Access-Control-Allow-Origin",
+            "*"
+        );
+    },
+};
+
+// =========================
+// STATIC FILES - ORIGINAL URL
+// /uploads/filename.jpeg
 // =========================
 app.use(
     "/uploads",
     express.static(
-        path.join(
-            __dirname,
-            "uploads"
-        ),
-        {
-            setHeaders: (
-                res
-            ) => {
-                res.setHeader(
-                    "Cross-Origin-Resource-Policy",
-                    "cross-origin"
-                );
-            },
-        }
+        uploadsPath,
+        uploadStaticOptions
     )
 );
 
+// =========================
+// STATIC FILES - API URL
+// /api/uploads/filename.jpeg
+// =========================
+app.use(
+    "/api/uploads",
+    express.static(
+        uploadsPath,
+        uploadStaticOptions
+    )
+);
+
+// =========================
+// EXISTING UPLOAD HEADERS
+// BEHÅLLEN
+// =========================
 app.use(
     "/uploads",
     (req, res, next) => {
         res.setHeader(
             "Access-Control-Allow-Origin",
             "*"
+        );
+
+        res.setHeader(
+            "Cross-Origin-Resource-Policy",
+            "cross-origin"
         );
 
         next();
@@ -262,11 +261,8 @@ app.get(
 app.use(
     (req, res) => {
         res.status(404).json({
-            message:
-                "Route not found",
-
-            path:
-                req.originalUrl,
+            message: "Route not found",
+            path: req.originalUrl,
         });
     }
 );
@@ -275,20 +271,11 @@ app.use(
 // ERROR HANDLER
 // =========================
 app.use(
-    (
-        err,
-        req,
-        res,
-        next
-    ) => {
-        console.error(
-            "❌ Server error:",
-            err
-        );
+    (err, req, res, next) => {
+        console.error("❌ Server error:", err);
 
         res.status(500).json({
-            message:
-                "Server error",
+            message: "Server error",
         });
     }
 );
@@ -296,9 +283,7 @@ app.use(
 // =========================
 // START SERVER
 // =========================
-const PORT =
-    process.env.PORT ||
-    5050;
+const PORT = process.env.PORT || 5050;
 
 app.listen(
     PORT,
