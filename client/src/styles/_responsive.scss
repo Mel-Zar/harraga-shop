@@ -1,5 +1,9 @@
 @use "./variables" as *;
 
+/* ==============================
+   SURFPLATTA OCH MINDRE SKÄRMAR
+============================== */
+
 @media (max-width: 900px) {
   .products-grid,
   .product-grid,
@@ -16,17 +20,29 @@
   }
 }
 
-@media (max-width: 480px) {
+/* ==============================
+   MOBIL: EN PRODUKT PER RAD
+============================== */
+
+@media (max-width: 600px) {
   .products-grid,
   .product-grid,
   .products-container {
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .hero,
+  .hero-section,
+  .home-hero {
+    min-height: 340px;
+    padding: 24px 16px;
   }
 
   .product-card h3,
   .product-item h3 {
     padding: 0 9px;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
   }
 
   .product-card p,
@@ -40,6 +56,28 @@
     width: 100%;
   }
 }
+
+/* ==============================
+   MYCKET SMÅ MOBILSKÄRMAR
+============================== */
+
+@media (max-width: 360px) {
+  .products-grid,
+  .product-grid,
+  .products-container {
+    gap: 12px;
+  }
+
+  .hero,
+  .hero-section,
+  .home-hero {
+    padding: 20px 12px;
+  }
+}
+
+/* ==============================
+   TILLGÄNGLIGHET
+============================== */
 
 @media (prefers-reduced-motion: reduce) {
   *,

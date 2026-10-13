@@ -1,102 +1,81 @@
 import { useEffect, useState } from "react";
 import HomeProductCard from "../../components/HomeProductCard/HomeProductCard";
 import { getProducts } from "../../services/productService";
+import "./Home.scss";
 
 function Home() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // =========================
-    // GET FEATURED PRODUCTS
-    // =========================
-
     useEffect(() => {
+        let cancelled = false;
+
         const fetchProducts = async () => {
             try {
                 const data = await getProducts({
                     sort: "newest",
                 });
 
-                // Visa bara de 4 nyaste produkterna
-                setProducts(
-                    Array.isArray(data)
-                        ? data.slice(0, 4)
-                        : []
-                );
-
+                if (!cancelled) {
+                    setProducts(
+                        Array.isArray(data)
+                            ? data.slice(0, 4)
+                            : []
+                    );
+                }
             } catch (error) {
-                console.error(
-                    "HOME PRODUCTS ERROR:",
-                    error
-                );
+                console.error("HOME PRODUCTS ERROR:", error);
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchProducts();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    // =========================
-    // LOADING
-    // =========================
-
-    if (loading) {
-        return (
-            <div
-                style={{
-                    padding: "20px",
-                }}
-            >
-                <h2>
-                    Loading...
-                </h2>
-            </div>
-        );
-    }
-
     return (
-        <div
-            style={{
-                padding: "20px",
-            }}
-        >
-            {/* =========================
-                FEATURED PRODUCTS
-            ========================= */}
+        <main className="home-page">
+            <section className="home-products">
+                <div className="home-products__heading">
+                    <p className="home-products__eyebrow">
+                        HARRAGA · STREETWEAR
+                    </p>
 
-            <h1>
-                Featured Products
-            </h1>
+                    <h1>
+                        FEATURED <span>PRODUCTS</span>
+                    </h1>
 
-            {products.length === 0 ? (
-                <p>
-                    No products found.
-                </p>
-            ) : (
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fill, minmax(300px, 1fr))",
-                        gap: "20px",
-                    }}
-                >
-                    {products.map(
-                        (product) => (
-                            <HomeProductCard
-                                key={
-                                    product._id
-                                }
-                                product={
-                                    product
-                                }
-                            />
-                        )
-                    )}
+                    <p className="home-products__intro">
+                        Svart design. Silverdetaljer. Hitta dina favoriter.
+                    </p>
                 </div>
-            )}
-        </div>
+
+                {loading ? (
+                    <p className="home-products__message">
+                        Laddar produkter...
+                    </p>
+                ) : products.length === 0 ? (
+                    <p className="home-products__message">
+                        No products found.
+                    </p>
+                ) : (
+                    <div className="home-products__grid">
+                        {products.map((product) => (
+                            <HomeProductCard
+                                key={product._id}
+                                product={product}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
+        </main>
     );
 }
 
