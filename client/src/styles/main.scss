@@ -1,10 +1,5 @@
-$primary-color: #111827;
-$accent-color: #d4af37;
-
-body {
-  color: $primary-color;
-}
-
-button {
-  background-color: $accent-color;
-}
+@use "./variables";
+@use "./global";
+@use "./header";
+@use "./products";
+@use "./responsive";

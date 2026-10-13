@@ -1,0 +1,80 @@
+@use "./variables" as *;
+
+.products-grid,
+.product-grid,
+.products-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.product-card,
+.product-item {
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(145deg, #171717, #090909);
+  border: 1px solid $silver-border;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.product-card:hover,
+.product-item:hover {
+  transform: translateY(-5px);
+  border-color: $silver-bright;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 12px 35px rgba(0, 0, 0, 0.7),
+    $silver-glow;
+}
+
+.product-card img,
+.product-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: #171717;
+}
+
+.product-card h3,
+.product-item h3 {
+  padding: 0 14px;
+  color: $text-color;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.product-card p,
+.product-item p {
+  padding: 0 14px;
+  color: $muted-color;
+}
+
+.product-card .price,
+.product-item .price {
+  color: $silver-bright;
+  font-weight: 800;
+}
+
+.btn-primary,
+.button-primary {
+  padding: 14px 26px;
+  border: 1px solid #f4f4f6;
+  border-radius: 2px;
+  background: $chrome-gradient;
+  color: #080808;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: 0.2s ease;
+}
+
+.btn-primary:hover,
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: $silver-glow;
+}

@@ -1,0 +1,28 @@
+// Harraga Shop — Chrome Silver
+
+$black: #050505;
+$black-light: #101010;
+$silver: #d8d8dc;
+$silver-bright: #ffffff;
+$silver-dark: #77777e;
+$text-color: #eeeeef;
+$muted-color: #bdbdc4;
+$silver-border: rgba(220, 220, 230, 0.42);
+
+$chrome-gradient: linear-gradient(
+  135deg,
+  #55555b 0%,
+  #f5f5f7 12%,
+  #88888f 23%,
+  #ffffff 36%,
+  #77777e 49%,
+  #eeeeef 62%,
+  #77777e 76%,
+  #ffffff 90%,
+  #55555b 100%
+);
+
+$silver-glow: 0 0 18px rgba(220, 220, 230, 0.2);
+
+$font-body: "Inter", sans-serif;
+$font-heading: "Orbitron", sans-serif;

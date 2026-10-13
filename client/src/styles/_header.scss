@@ -1,0 +1,36 @@
+@use "./variables" as *;
+
+header,
+.site-header,
+.navbar {
+  position: relative;
+  z-index: 100;
+  background: rgba(5, 5, 5, 0.97);
+  border-bottom: 1px solid $silver-border;
+}
+
+header a,
+.site-header a,
+.navbar a {
+  transition: color 0.2s ease;
+}
+
+header a:hover,
+.site-header a:hover,
+.navbar a:hover {
+  color: $silver-bright;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+}
+
+.logo,
+.site-logo,
+.brand-name {
+  color: $silver-bright;
+  font-family: $font-heading;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 1px 0 #77777e,
+    0 2px 0 #55555b,
+    0 0 14px rgba(255, 255, 255, 0.3);
+}

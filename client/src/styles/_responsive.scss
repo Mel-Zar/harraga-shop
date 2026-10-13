@@ -1,0 +1,51 @@
+@use "./variables" as *;
+
+@media (max-width: 900px) {
+  .products-grid,
+  .product-grid,
+  .products-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .hero,
+  .hero-section,
+  .home-hero {
+    min-height: 420px;
+    padding: 32px 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid,
+  .product-grid,
+  .products-container {
+    gap: 10px;
+  }
+
+  .product-card h3,
+  .product-item h3 {
+    padding: 0 9px;
+    font-size: 0.85rem;
+  }
+
+  .product-card p,
+  .product-item p {
+    padding: 0 9px;
+    font-size: 0.85rem;
+  }
+
+  .btn-primary,
+  .button-primary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
