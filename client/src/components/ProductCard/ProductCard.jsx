@@ -28,6 +28,22 @@ function ProductCard({
 
     const stockStatus = getStockStatus();
 
+    // Stöd för både nya och gamla produkter.
+    const categoryPath =
+        Array.isArray(product.categoryPath) &&
+            product.categoryPath.length > 0
+            ? product.categoryPath
+            : product.category
+                ? [product.category]
+                : [];
+
+    const mainCategory = categoryPath[0] || "Uncategorized";
+
+    const subCategory =
+        categoryPath.length > 1
+            ? categoryPath[categoryPath.length - 1]
+            : product.subCategory || "";
+
     return (
         <div
             style={{
@@ -36,8 +52,7 @@ function ProductCard({
                 marginBottom: "15px",
                 borderRadius: "8px",
                 backgroundColor: "#fff",
-                boxShadow:
-                    "0 2px 8px rgba(0,0,0,0.08)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             }}
         >
             <h3
@@ -52,14 +67,92 @@ function ProductCard({
             <p>{product.description}</p>
 
             <p>
-                <strong>Price:</strong> $
-                {product.price}
+                <strong>Price:</strong> ${product.price}
             </p>
 
+            {/* Huvudkategori */}
             <p>
-                <strong>Category:</strong>{" "}
-                {product.category}
+                <strong>Main Category:</strong>{" "}
+                {mainCategory}
             </p>
+
+            {/* Hela kategorisökvägen */}
+            <div
+                style={{
+                    marginBottom: "12px",
+                    padding: "10px",
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                }}
+            >
+                <p
+                    style={{
+                        margin: "0 0 6px",
+                        fontWeight: "bold",
+                    }}
+                >
+                    Category Path:
+                </p>
+
+                <div
+                    style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: "6px",
+                    }}
+                >
+                    {categoryPath.length > 0 ? (
+                        categoryPath.map((category, index) => (
+                            <span
+                                key={`${category}-${index}`}
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        padding: "4px 8px",
+                                        backgroundColor:
+                                            index === categoryPath.length - 1
+                                                ? "#dbeafe"
+                                                : "#e5e7eb",
+                                        color: "#1f2937",
+                                        borderRadius: "5px",
+                                        fontSize: "13px",
+                                    }}
+                                >
+                                    {category}
+                                </span>
+
+                                {index < categoryPath.length - 1 && (
+                                    <span
+                                        style={{
+                                            color: "#64748b",
+                                        }}
+                                        aria-hidden="true"
+                                    >
+                                        →
+                                    </span>
+                                )}
+                            </span>
+                        ))
+                    ) : (
+                        <span>Uncategorized</span>
+                    )}
+                </div>
+            </div>
+
+            {/* Sista underkategorin */}
+            {subCategory && (
+                <p>
+                    <strong>Subcategory:</strong>{" "}
+                    {subCategory}
+                </p>
+            )}
 
             <p>
                 <strong>Stock:</strong>{" "}
@@ -78,6 +171,7 @@ function ProductCard({
                 </span>
             </p>
 
+            {/* Befintligt bildgalleri behålls */}
             <ProductGallery
                 images={product.images}
                 productName={product.name}
@@ -91,12 +185,14 @@ function ProductCard({
 
             <br />
 
+            {/* Befintlig redigering behålls */}
             <button onClick={onEdit}>
                 Edit
             </button>
 
             {" "}
 
+            {/* Befintlig borttagning behålls */}
             <button onClick={onDelete}>
                 Delete
             </button>

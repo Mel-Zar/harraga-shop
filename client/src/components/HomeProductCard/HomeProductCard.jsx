@@ -9,29 +9,34 @@ function HomeProductCard({ product }) {
 
     if (!product) return null;
 
-    const images = Array.isArray(product.images) ? product.images : [];
-    const safeActiveImage = images.length > 0
+    const images = Array.isArray(product.images)
+        ? product.images.filter((image) => {
+            if (typeof image === "string") return Boolean(image.trim());
+
+            return Boolean(
+                image &&
+                typeof image === "object" &&
+                (image.url || image.path || image.filename)
+            );
+        })
+        : [];
+
+    const safeActiveImage = images.length
         ? activeImage % images.length
         : 0;
 
     const openProduct = () => {
-        navigate(`/products/${product._id}`);
-    };
+        const id = product._id || product.id;
 
-    const changeImage = (event) => {
-        event.stopPropagation();
-
-        if (images.length > 1) {
-            setActiveImage((current) => (current + 1) % images.length);
-        }
+        if (id) navigate(`/products/${id}`);
     };
 
     const previousImage = (event) => {
         event.stopPropagation();
 
         if (images.length > 1) {
-            setActiveImage((current) =>
-                (current - 1 + images.length) % images.length
+            setActiveImage(
+                (current) => (current - 1 + images.length) % images.length
             );
         }
     };
@@ -40,48 +45,54 @@ function HomeProductCard({ product }) {
         event.stopPropagation();
 
         if (images.length > 1) {
-            setActiveImage((current) =>
-                (current + 1) % images.length
-            );
+            setActiveImage((current) => (current + 1) % images.length);
         }
     };
+
+    const handleGalleryKeyDown = (event) => {
+        if (event.target !== event.currentTarget) return;
+
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+
+            if (images.length > 1) {
+                setActiveImage((current) => (current + 1) % images.length);
+            } else {
+                openProduct();
+            }
+        }
+    };
+
+    const price = Number(product.price);
+
+    const formattedPrice =
+        product.price !== null &&
+            product.price !== undefined &&
+            product.price !== "" &&
+            Number.isFinite(price)
+            ? `${price.toLocaleString("sv-SE")} kr`
+            : "";
+
+    const description =
+        product.shortDescription ||
+        product.description ||
+        "Upptäck produkten från Harraga Shop.";
 
     return (
         <article className="home-product-card">
             <div
                 className="home-product-card__gallery"
-                onClick={images.length > 1 ? changeImage : openProduct}
+                onClick={openProduct}
+                onKeyDown={handleGalleryKeyDown}
                 role="button"
                 tabIndex={0}
-                aria-label={
-                    images.length > 1
-                        ? `Byt bild för ${product.name}`
-                        : `Visa ${product.name}`
-                }
-                onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-
-                        if (images.length > 1) {
-                            changeImage(event);
-                        } else {
-                            openProduct();
-                        }
-                    }
-                }}
+                aria-label={`Visa ${product.name || "produkt"}`}
             >
                 {images.length > 0 ? (
                     <>
                         <ProductGallery
                             images={[images[safeActiveImage]]}
                             productName={product.name}
-                            imageStyle={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                                padding: "8px",
-                                boxSizing: "border-box",
-                            }}
                         />
 
                         {images.length > 1 && (
@@ -104,44 +115,43 @@ function HomeProductCard({ product }) {
                                     ›
                                 </button>
 
-                                <div
+                                <span
                                     className="home-product-card__image-indicator"
                                     aria-live="polite"
                                 >
                                     {safeActiveImage + 1} / {images.length}
-                                </div>
+                                </span>
                             </>
                         )}
                     </>
                 ) : (
-                    <button
-                        type="button"
-                        className="home-product-card__button"
-                        onClick={openProduct}
-                    >
-                        Visa produkt
-                    </button>
+                    <div className="home-product-card__no-image">
+                        <span>HARRAGA</span>
+                        <p>Ingen produktbild tillgänglig</p>
+                    </div>
                 )}
             </div>
 
             <div className="home-product-card__content">
-                <h2>{product.name}</h2>
+                <h2>{product.name || "Produkt"}</h2>
 
                 <p className="home-product-card__description">
-                    {product.description}
+                    {description}
                 </p>
 
                 <div className="home-product-card__bottom">
-                    <p className="home-product-card__price">
-                        ${product.price}
-                    </p>
+                    {formattedPrice && (
+                        <p className="home-product-card__price">
+                            {formattedPrice}
+                        </p>
+                    )}
 
                     <button
                         type="button"
                         className="home-product-card__button"
                         onClick={openProduct}
                     >
-                        View Product <span aria-hidden="true">↗</span>
+                        Visa produkt <span aria-hidden="true">↗</span>
                     </button>
                 </div>
             </div>

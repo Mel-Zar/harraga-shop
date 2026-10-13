@@ -1,459 +1,1009 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import { toast } from "react-toastify";
 
+
+
+const MAX_IMAGES = 4;
+
+const MAX_CATEGORY_LEVELS = 20;
+
+
+
+const inputStyle = {
+
+    width: "100%",
+
+    boxSizing: "border-box",
+
+    padding: "11px 12px",
+
+    border: "1px solid #d1d5db",
+
+    borderRadius: "8px",
+
+    fontSize: "14px",
+
+    background: "#fff",
+
+    color: "#111827",
+
+};
+
+
+
+const labelStyle = {
+
+    display: "flex",
+
+    flexDirection: "column",
+
+    gap: "7px",
+
+    fontSize: "14px",
+
+    fontWeight: 600,
+
+    color: "#111827",
+
+};
+
+
+
+const helpStyle = { color: "#6b7280", fontSize: "12px", fontWeight: 400 };
+
+
+
+function Section({ title, description, children }) {
+
+    return (
+
+        <section
+
+            style={{
+
+                display: "flex",
+
+                flexDirection: "column",
+
+                gap: "16px",
+
+                padding: "20px",
+
+                border: "1px solid #e5e7eb",
+
+                borderRadius: "12px",
+
+                background: "#fff",
+
+            }}
+
+        >
+
+            <div>
+
+                <h3 style={{ margin: 0, fontSize: "17px", color: "#111827" }}>{title}</h3>
+
+                {description && (
+
+                    <p style={{ margin: "5px 0 0", color: "#6b7280", fontSize: "13px" }}>
+
+                        {description}
+
+                    </p>
+
+                )}
+
+            </div>
+
+            {children}
+
+        </section>
+
+    );
+
+}
+
+
+
+function Field({ label, required, help, children }) {
+
+    return (
+
+        <label style={labelStyle}>
+
+            <span>
+
+                {label} {required && <span style={{ color: "#dc2626" }}>*</span>}
+
+            </span>
+
+            {children}
+
+            {help && <span style={helpStyle}>{help}</span>}
+
+        </label>
+
+    );
+
+}
+
+
+
 function ProductForm({ onSubmit }) {
+
     const [name, setName] = useState("");
-    const [description, setDescription] =
-        useState("");
+
+    const [description, setDescription] = useState("");
+
+    const [shortDescription, setShortDescription] = useState("");
+
+    const [brand, setBrand] = useState("");
+
+    const [sku, setSku] = useState("");
+
+    const [barcode, setBarcode] = useState("");
+
     const [price, setPrice] = useState("");
-    const [category, setCategory] =
-        useState("");
-    const [stock, setStock] = useState("");
+
+    const [compareAtPrice, setCompareAtPrice] = useState("");
+
+    const [costPrice, setCostPrice] = useState("");
+
+    const [stock, setStock] = useState("0");
+
+    const [lowStockThreshold, setLowStockThreshold] = useState("5");
+
+    const [categoryLevels, setCategoryLevels] = useState([""]);
+
+    const [tags, setTags] = useState("");
+
+    const [sizes, setSizes] = useState([]);
+
+    const [customSize, setCustomSize] = useState("");
+
+    const [colors, setColors] = useState([]);
+
+    const [customColor, setCustomColor] = useState("");
+
+    const [material, setMaterial] = useState("");
+
+    const [fit, setFit] = useState("");
+
+    const [targetGroup, setTargetGroup] = useState("Unisex");
+
+    const [weight, setWeight] = useState("");
+
+    const [length, setLength] = useState("");
+
+    const [width, setWidth] = useState("");
+
+    const [height, setHeight] = useState("");
+
+    const [shippingClass, setShippingClass] = useState("");
+
+    const [status, setStatus] = useState("draft");
+
+    const [featured, setFeatured] = useState(false);
+
+    const [allowBackorders, setAllowBackorders] = useState(false);
+
+    const [seoTitle, setSeoTitle] = useState("");
+
+    const [metaDescription, setMetaDescription] = useState("");
+
+    const [slug, setSlug] = useState("");
 
     const [images, setImages] = useState([]);
-    const [imagePreviews, setImagePreviews] =
-        useState([]);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const [imagePreviews, setImagePreviews] = useState([]);
 
-        // =========================
-        // REQUIRED FIELDS
-        // =========================
+    const [submitting, setSubmitting] = useState(false);
 
-        if (!name.trim()) {
-            toast.error(
-                "Product name is required."
-            );
+    const fileInputRef = useRef(null);
+
+
+
+    useEffect(() => {
+
+        return () => imagePreviews.forEach((item) => URL.revokeObjectURL(item.preview));
+
+    }, [imagePreviews]);
+
+
+
+    const updateCategoryLevel = (index, value) => {
+
+        setCategoryLevels((previous) =>
+
+            previous.map((category, i) => (i === index ? value : category))
+
+        );
+
+    };
+
+
+
+    const addCategoryLevel = () => {
+
+        if (categoryLevels.length >= MAX_CATEGORY_LEVELS) {
+
+            toast.error(`Maximum ${MAX_CATEGORY_LEVELS} category levels allowed.`);
+
             return;
+
         }
 
-        if (!description.trim()) {
-            toast.error(
-                "Description is required."
-            );
+        if (!categoryLevels[categoryLevels.length - 1].trim()) {
+
+            toast.error("Fill in the current category first.");
+
             return;
+
         }
 
-        if (!category.trim()) {
-            toast.error(
-                "Category is required."
-            );
+        setCategoryLevels((previous) => [...previous, ""]);
+
+    };
+
+
+
+    const removeCategoryLevel = (index) => {
+
+        setCategoryLevels((previous) =>
+
+            previous.length === 1 ? [""] : previous.filter((_, i) => i !== index)
+
+        );
+
+    };
+
+
+
+    const handleImageChange = (event) => {
+
+        const files = Array.from(event.target.files || []);
+
+        if (!files.length) return;
+
+
+
+        if (files.some((file) => !file.type.startsWith("image/"))) {
+
+            toast.error("Only image files are allowed.");
+
+            event.target.value = "";
+
             return;
+
         }
 
-        // =========================
-        // PRICE VALIDATION
-        // =========================
+        if (images.length + files.length > MAX_IMAGES) {
 
-        if (
-            price === "" ||
-            !Number.isFinite(
-                Number(price)
-            ) ||
-            Number(price) < 0
-        ) {
-            toast.error(
-                "Please enter a valid price."
-            );
+            toast.error(`You can only upload ${MAX_IMAGES} images.`);
+
+            event.target.value = "";
+
             return;
+
         }
 
-        // =========================
-        // STOCK VALIDATION
-        // =========================
+        if (files.some((file) => file.size > 10 * 1024 * 1024)) {
 
-        if (
-            stock === "" ||
-            !Number.isFinite(
-                Number(stock)
-            ) ||
-            Number(stock) < 0 ||
-            !Number.isInteger(
-                Number(stock)
-            )
-        ) {
-            toast.error(
-                "Please enter a valid stock amount."
-            );
+            toast.error("Each image must be smaller than 10 MB.");
+
+            event.target.value = "";
+
             return;
+
         }
 
-        // =========================
-        // IMAGE VALIDATION
-        // =========================
 
-        if (images.length === 0) {
-            toast.error(
-                "Please upload at least one product image."
-            );
-            return;
+
+        const newPreviews = files.map((file) => ({
+
+            file,
+
+            preview: URL.createObjectURL(file),
+
+            id: `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`,
+
+        }));
+
+        setImages((previous) => [...previous, ...files]);
+
+        setImagePreviews((previous) => [...previous, ...newPreviews]);
+
+        event.target.value = "";
+
+    };
+
+
+
+    const handleRemoveImage = (index) => {
+
+        setImagePreviews((previous) => {
+
+            const item = previous[index];
+
+            if (item?.preview) URL.revokeObjectURL(item.preview);
+
+            return previous.filter((_, i) => i !== index);
+
+        });
+
+        setImages((previous) => previous.filter((_, i) => i !== index));
+
+    };
+
+
+
+    const toggleListValue = (value, setter, current) => {
+
+        setter(current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+
+    };
+
+
+
+    const resetForm = () => {
+
+        setName("");
+
+        setDescription("");
+
+        setShortDescription("");
+
+        setBrand("");
+
+        setSku("");
+
+        setBarcode("");
+
+        setPrice("");
+
+        setCompareAtPrice("");
+
+        setCostPrice("");
+
+        setStock("0");
+
+        setLowStockThreshold("5");
+
+        setCategoryLevels([""]);
+
+        setTags("");
+
+        setSizes([]);
+
+        setCustomSize("");
+
+        setColors([]);
+
+        setCustomColor("");
+
+        setMaterial("");
+
+        setFit("");
+
+        setTargetGroup("Unisex");
+
+        setWeight("");
+
+        setLength("");
+
+        setWidth("");
+
+        setHeight("");
+
+        setShippingClass("");
+
+        setStatus("draft");
+
+        setFeatured(false);
+
+        setAllowBackorders(false);
+
+        setSeoTitle("");
+
+        setMetaDescription("");
+
+        setSlug("");
+
+        imagePreviews.forEach((item) => URL.revokeObjectURL(item.preview));
+
+        setImages([]);
+
+        setImagePreviews([]);
+
+        if (fileInputRef.current) fileInputRef.current.value = "";
+
+    };
+
+
+
+    const handleSubmit = async (event) => {
+
+        event.preventDefault();
+
+        if (submitting) return;
+
+
+
+        if (!name.trim()) return toast.error("Product name is required.");
+
+        if (!description.trim()) return toast.error("Full description is required.");
+
+        if (name.trim().length > 200) return toast.error("Product name must be 200 characters or fewer.");
+
+        if (description.trim().length > 5000) return toast.error("Description must be 5000 characters or fewer.");
+
+
+
+        const categoryPath = categoryLevels.map((value) => value.trim());
+
+        if (!categoryPath.length || categoryPath.some((value) => !value)) {
+
+            return toast.error("Complete every category level.");
+
         }
 
-        if (images.length > 4) {
-            toast.error(
-                "You can only upload 4 images."
-            );
-            return;
+        if (categoryPath.length > MAX_CATEGORY_LEVELS || categoryPath.some((value) => value.length > 100)) {
+
+            return toast.error("Check category levels. Each level must be 100 characters or fewer.");
+
         }
 
-        // =========================
-        // CREATE FORM DATA
-        // =========================
+
+
+        const numericFields = [
+
+            ["Price", price, true],
+
+            ["Compare-at price", compareAtPrice, false],
+
+            ["Purchase cost", costPrice, false],
+
+            ["Stock", stock, true],
+
+            ["Low-stock threshold", lowStockThreshold, true],
+
+            ["Weight", weight, false],
+
+            ["Length", length, false],
+
+            ["Width", width, false],
+
+            ["Height", height, false],
+
+        ];
+
+        for (const [label, value, required] of numericFields) {
+
+            if (value === "" && !required) continue;
+
+            const number = Number(value);
+
+            if (!Number.isFinite(number) || number < 0) {
+
+                return toast.error(`${label} must be a valid non-negative number.`);
+
+            }
+
+            if (["Stock", "Low-stock threshold"].includes(label) && !Number.isInteger(number)) {
+
+                return toast.error(`${label} must be a whole number.`);
+
+            }
+
+        }
+
+        if (images.length === 0) return toast.error("Please upload at least one product image.");
+
+        if (images.length > MAX_IMAGES) return toast.error(`You can only upload ${MAX_IMAGES} images.`);
+
+        if (sizes.length === 0) return toast.error("Select at least one size, or add One size.");
+
+        if (colors.length === 0) return toast.error("Select at least one color.");
+
+
+
+        const finalSlug = (slug.trim() || name.trim())
+
+            .toLowerCase()
+
+            .normalize("NFD")
+
+            .replace(/[\u0300-\u036f]/g, "")
+
+            .replace(/[^a-z0-9]+/g, "-")
+
+            .replace(/^-+|-+$/g, "");
+
+
 
         const formData = new FormData();
 
-        formData.append(
-            "name",
-            name.trim()
-        );
+        const fields = {
 
-        formData.append(
-            "description",
-            description.trim()
-        );
+            name: name.trim(),
 
-        formData.append(
-            "price",
-            price
-        );
+            description: description.trim(),
 
-        formData.append(
-            "category",
-            category.trim()
-        );
+            shortDescription: shortDescription.trim(),
 
-        formData.append(
-            "stock",
-            stock
-        );
+            brand: brand.trim(),
 
-        images.forEach((image) => {
-            formData.append(
-                "images",
-                image
-            );
-        });
+            sku: sku.trim(),
 
-        // =========================
-        // SUBMIT
-        // =========================
+            barcode: barcode.trim(),
 
-        onSubmit(formData);
+            price: String(Number(price)),
 
-        // =========================
-        // RESET FORM
-        // =========================
+            compareAtPrice: compareAtPrice === "" ? "" : String(Number(compareAtPrice)),
 
-        setName("");
-        setDescription("");
-        setPrice("");
-        setCategory("");
-        setStock("");
+            costPrice: costPrice === "" ? "" : String(Number(costPrice)),
 
-        setImages([]);
-        setImagePreviews([]);
+            stock: String(Number(stock)),
+
+            lowStockThreshold: String(Number(lowStockThreshold)),
+
+            category: categoryPath[0],
+
+            categoryPath: JSON.stringify(categoryPath),
+
+            subCategory: categoryPath[categoryPath.length - 1],
+
+            tags: JSON.stringify(tags.split(",").map((tag) => tag.trim()).filter(Boolean)),
+
+            sizes: JSON.stringify(sizes),
+
+            colors: JSON.stringify(colors),
+
+            material: material.trim(),
+
+            fit: fit.trim(),
+
+            targetGroup,
+
+            weight: weight === "" ? "" : String(Number(weight)),
+
+            dimensions: JSON.stringify({
+
+                length: length === "" ? null : Number(length),
+
+                width: width === "" ? null : Number(width),
+
+                height: height === "" ? null : Number(height),
+
+            }),
+
+            shippingClass: shippingClass.trim(),
+
+            status,
+
+            isActive: String(status === "published"),
+
+            isFeatured: String(featured),
+
+            allowBackorders: String(allowBackorders),
+
+            seoTitle: seoTitle.trim() || name.trim(),
+
+            metaDescription: metaDescription.trim() || shortDescription.trim() || description.trim().slice(0, 160),
+
+            slug: finalSlug,
+
+        };
+
+
+
+        Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+
+        images.forEach((image) => formData.append("images", image));
+
+
+
+        try {
+
+            setSubmitting(true);
+
+            await onSubmit(formData);
+
+            resetForm();
+
+        } catch (error) {
+
+            console.error("PRODUCT FORM SUBMIT ERROR:", error);
+
+            toast.error(error?.response?.data?.message || error?.message || "Could not save product.");
+
+        } finally {
+
+            setSubmitting(false);
+
+        }
+
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(
-            e.target.files || []
-        );
 
-        if (files.length === 0) {
-            return;
-        }
 
-        // =========================
-        // CHECK IMAGE TYPE
-        // =========================
+    const addCustomSize = () => {
 
-        const invalidFile =
-            files.find(
-                (file) =>
-                    !file.type.startsWith(
-                        "image/"
-                    )
-            );
+        const value = customSize.trim();
 
-        if (invalidFile) {
-            toast.error(
-                "Only image files are allowed."
-            );
+        if (!value) return;
 
-            e.target.value = "";
+        if (!sizes.includes(value)) setSizes((previous) => [...previous, value]);
 
-            return;
-        }
+        setCustomSize("");
 
-        // =========================
-        // CHECK IMAGE COUNT
-        // =========================
-
-        const totalImages =
-            images.length +
-            files.length;
-
-        if (totalImages > 4) {
-            toast.error(
-                `You can only upload 4 images. You already have ${images.length} selected.`
-            );
-
-            e.target.value = "";
-
-            return;
-        }
-
-        // =========================
-        // CREATE PREVIEWS
-        // =========================
-
-        const previews =
-            files.map((file) => ({
-                file,
-                preview:
-                    URL.createObjectURL(
-                        file
-                    ),
-            }));
-
-        setImages((prev) => [
-            ...prev,
-            ...files,
-        ]);
-
-        setImagePreviews((prev) => [
-            ...prev,
-            ...previews,
-        ]);
-
-        e.target.value = "";
     };
 
-    const handleRemoveImage = (index) => {
-        const previewToRemove =
-            imagePreviews[index];
 
-        if (previewToRemove?.preview) {
-            URL.revokeObjectURL(
-                previewToRemove.preview
-            );
-        }
 
-        setImagePreviews((prev) =>
-            prev.filter(
-                (_, i) => i !== index
-            )
-        );
+    const addCustomColor = () => {
 
-        setImages((prev) =>
-            prev.filter(
-                (_, i) => i !== index
-            )
-        );
+        const value = customColor.trim();
+
+        if (!value) return;
+
+        if (!colors.includes(value)) setColors((previous) => [...previous, value]);
+
+        setCustomColor("");
+
     };
+
+
+
+    const sizesOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One size"];
+
+    const colorsOptions = ["Black", "White", "Grey", "Navy", "Blue", "Red", "Green", "Beige", "Brown"];
+
+
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            noValidate
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                maxWidth: "600px",
-                padding: "20px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                marginBottom: "20px",
-            }}
-        >
-            <input
-                type="text"
-                placeholder="Product name"
-                value={name}
-                onChange={(e) =>
-                    setName(
-                        e.target.value
-                    )
-                }
-                required
-                style={{
-                    padding: "10px",
-                }}
-            />
 
-            <textarea
-                placeholder="Description"
-                value={description}
-                onChange={(e) =>
-                    setDescription(
-                        e.target.value
-                    )
-                }
-                required
-                style={{
-                    padding: "10px",
-                    minHeight: "100px",
-                }}
-            />
+        <form onSubmit={handleSubmit} noValidate style={{ maxWidth: 980, margin: "0 auto 28px", color: "#111827" }}>
 
-            <input
-                type="number"
-                placeholder="Price"
-                value={price}
-                min="0"
-                step="0.01"
-                onChange={(e) =>
-                    setPrice(
-                        e.target.value
-                    )
-                }
-                required
-                style={{
-                    padding: "10px",
-                }}
-            />
+            <header style={{ marginBottom: 22 }}>
 
-            <input
-                type="text"
-                placeholder="Category"
-                value={category}
-                onChange={(e) =>
-                    setCategory(
-                        e.target.value
-                    )
-                }
-                required
-                style={{
-                    padding: "10px",
-                }}
-            />
+                <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 700, letterSpacing: 1.5, color: "#6b7280", textTransform: "uppercase" }}>
 
-            <input
-                type="number"
-                placeholder="Stock"
-                value={stock}
-                min="0"
-                onChange={(e) =>
-                    setStock(
-                        e.target.value
-                    )
-                }
-                required
-                style={{
-                    padding: "10px",
-                }}
-            />
+                    HARRAGA SHOP · CATALOG
 
-            <p
-                style={{
-                    margin: 0,
-                    fontSize: "14px",
-                }}
-            >
-                Max 4 images (
-                {images.length}/4)
+                </p>
+
+                <h2 style={{ margin: 0, fontSize: 28, letterSpacing: -0.6 }}>Create product</h2>
+
+                <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 14 }}>
+
+                    Add product details, variants, images and search information.
+
+                </p>
+
+            </header>
+
+
+
+            <div style={{ display: "grid", gap: 16 }}>
+
+                <Section title="1. Basic information" description="The details customers see on the product page.">
+
+                    <Field label="Product name" required>
+
+                        <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="e.g. Premium Essential Tracksuit" required />
+
+                    </Field>
+
+                    <Field label="Short description" help="A concise summary for product cards (recommended).">
+
+                        <textarea style={{ ...inputStyle, minHeight: 72, resize: "vertical" }} value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} maxLength={300} placeholder="A short summary of the product" />
+
+                    </Field>
+
+                    <Field label="Full description" required>
+
+                        <textarea style={{ ...inputStyle, minHeight: 130, resize: "vertical" }} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} placeholder="Describe the product, fit, features and care instructions..." required />
+
+                    </Field>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+
+                        <Field label="Brand"><input style={inputStyle} value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={100} placeholder="e.g. Harraga" /></Field>
+
+                        <Field label="SKU / product code"><input style={inputStyle} value={sku} onChange={(e) => setSku(e.target.value)} maxLength={100} placeholder="e.g. HRG-TRK-001" /></Field>
+
+                        <Field label="Barcode / EAN"><input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} maxLength={100} placeholder="Optional" /></Field>
+
+                    </div>
+
+                </Section>
+
+
+
+                <Section title="2. Categories" description="Build the full category path, from the broad category to the most specific one.">
+
+                    {categoryLevels.map((category, index) => (
+
+                        <div key={index} style={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr) auto", gap: 8, alignItems: "center" }}>
+
+                            <span style={{ color: "#6b7280", fontSize: 13 }}>{index + 1}.</span>
+
+                            <input style={inputStyle} value={category} onChange={(e) => updateCategoryLevel(index, e.target.value)} maxLength={100} placeholder={index === 0 ? "Main category, e.g. Clothing" : `Category level ${index + 1}`} required />
+
+                            <button type="button" onClick={() => removeCategoryLevel(index)} aria-label={`Remove category level ${index + 1}`} style={{ ...inputStyle, width: 42, padding: 9, cursor: "pointer" }}>×</button>
+
+                        </div>
+
+                    ))}
+
+                    <button type="button" onClick={addCategoryLevel} disabled={categoryLevels.length >= MAX_CATEGORY_LEVELS} style={{ justifySelf: "start", padding: "10px 14px", border: "1px solid #d1d5db", background: "#fff", borderRadius: 8, cursor: "pointer" }}>
+
+                        \+ Add subcategory
+
+                    </button>
+
+                    <Field label="Tags" help="Separate tags with commas, e.g. streetwear, new collection, sportswear.">
+
+                        <input style={inputStyle} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="streetwear, new collection" />
+
+                    </Field>
+
+                    <div style={{ padding: 12, borderRadius: 8, background: "#f9fafb", color: "#374151", fontSize: 13, overflowWrap: "anywhere" }}>
+
+                        <strong>Category path:</strong> {categoryLevels.filter((item) => item.trim()).join(" → ") || "Not set"}
+
+                    </div>
+
+                </Section>
+
+
+
+                <Section title="3. Pricing and inventory" description="Prices are non-negative. Keep internal costs for administration only.">
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+
+                        <Field label="Selling price" required><input style={inputStyle} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" required /></Field>
+
+                        <Field label="Original / compare-at price" help="Optional crossed-out price."><input style={inputStyle} type="number" min="0" step="0.01" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} placeholder="0.00" /></Field>
+
+                        <Field label="Purchase cost" help="Internal admin information."><input style={inputStyle} type="number" min="0" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0.00" /></Field>
+
+                        <Field label="Stock quantity" required><input style={inputStyle} type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} required /></Field>
+
+                        <Field label="Low-stock alert at"><input style={inputStyle} type="number" min="0" step="1" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} /></Field>
+
+                    </div>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14 }}>
+
+                        <input type="checkbox" checked={allowBackorders} onChange={(e) => setAllowBackorders(e.target.checked)} />
+
+                        Allow orders when out of stock
+
+                    </label>
+
+                </Section>
+
+
+
+                <Section title="4. Size and colour variants" description="Select all options that apply. For true variant-level stock and prices, the backend must store each combination separately.">
+
+                    <div>
+
+                        <p style={{ margin: "0 0 9px", fontSize: 14, fontWeight: 600 }}>Sizes *</p>
+
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+
+                            {sizesOptions.map((size) => (
+
+                                <label key={size} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", border: `1px solid ${sizes.includes(size) ? "#111827" : "#d1d5db"}`, borderRadius: 8, background: sizes.includes(size) ? "#f3f4f6" : "#fff", fontSize: 13 }}>
+
+                                    <input type="checkbox" checked={sizes.includes(size)} onChange={() => toggleListValue(size, setSizes, sizes)} />{size}
+
+                                </label>
+
+                            ))}
+
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+
+                            <input style={inputStyle} value={customSize} onChange={(e) => setCustomSize(e.target.value)} placeholder="Add custom size" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} />
+
+                            <button type="button" onClick={addCustomSize} style={{ padding: "0 14px", border: "1px solid #d1d5db", borderRadius: 8, background: "#fff" }}>Add</button>
+
+                        </div>
+
+                        {sizes.filter((size) => !sizesOptions.includes(size)).map((size) => <button type="button" key={size} onClick={() => setSizes((previous) => previous.filter((item) => item !== size))} style={{ margin: "8px 8px 0 0", padding: "5px 9px", borderRadius: 20, border: "1px solid #d1d5db", background: "#fff" }}>{size} ×</button>)}
+
+                    </div>
+
+                    <div>
+
+                        <p style={{ margin: "0 0 9px", fontSize: 14, fontWeight: 600 }}>Colours *</p>
+
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+
+                            {colorsOptions.map((color) => (
+
+                                <label key={color} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", border: `1px solid ${colors.includes(color) ? "#111827" : "#d1d5db"}`, borderRadius: 8, background: colors.includes(color) ? "#f3f4f6" : "#fff", fontSize: 13 }}>
+
+                                    <input type="checkbox" checked={colors.includes(color)} onChange={() => toggleListValue(color, setColors, colors)} />{color}
+
+                                </label>
+
+                            ))}
+
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+
+                            <input style={inputStyle} value={customColor} onChange={(e) => setCustomColor(e.target.value)} placeholder="Add custom colour" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomColor(); } }} />
+
+                            <button type="button" onClick={addCustomColor} style={{ padding: "0 14px", border: "1px solid #d1d5db", borderRadius: 8, background: "#fff" }}>Add</button>
+
+                        </div>
+
+                        {colors.filter((color) => !colorsOptions.includes(color)).map((color) => <button type="button" key={color} onClick={() => setColors((previous) => previous.filter((item) => item !== color))} style={{ margin: "8px 8px 0 0", padding: "5px 9px", borderRadius: 20, border: "1px solid #d1d5db", background: "#fff" }}>{color} ×</button>)}
+
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+
+                        <Field label="Material"><input style={inputStyle} value={material} onChange={(e) => setMaterial(e.target.value)} placeholder="e.g. 80% cotton, 20% polyester" /></Field>
+
+                        <Field label="Fit / style"><input style={inputStyle} value={fit} onChange={(e) => setFit(e.target.value)} placeholder="Regular, slim, oversized..." /></Field>
+
+                        <Field label="Target group">
+
+                            <select style={inputStyle} value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)}>
+
+                                <option>Unisex</option><option>Men</option><option>Women</option><option>Kids</option><option>Baby</option>
+
+                            </select>
+
+                        </Field>
+
+                    </div>
+
+                </Section>
+
+
+
+                <Section title="5. Product images" description="Use clear product photography. The first image is treated as the main image.">
+
+                    <div style={{ padding: 18, border: "1px dashed #9ca3af", borderRadius: 10, background: "#f9fafb" }}>
+
+                        <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} disabled={images.length >= MAX_IMAGES} />
+
+                        <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 12 }}>Maximum 4 images, 10 MB per image. Supported formats depend on your server configuration.</p>
+
+                        <p style={{ margin: "6px 0 0", fontSize: 13, fontWeight: 600 }}>Selected: {images.length}/{MAX_IMAGES}</p>
+
+                    </div>
+
+                    {imagePreviews.length > 0 && (
+
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(125px, 1fr))", gap: 12 }}>
+
+                            {imagePreviews.map((item, index) => (
+
+                                <div key={item.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 8 }}>
+
+                                    <img src={item.preview} alt={`Product preview ${index + 1}`} style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 7 }} />
+
+                                    <p style={{ margin: "7px 0", fontSize: 11, color: "#6b7280", overflowWrap: "anywhere" }}>{index === 0 ? "Main image" : `Image ${index + 1}`}</p>
+
+                                    <button type="button" onClick={() => handleRemoveImage(index)} style={{ width: "100%", padding: 7, border: "1px solid #d1d5db", borderRadius: 7, background: "#fff", cursor: "pointer" }}>Remove</button>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    )}
+
+                </Section>
+
+
+
+                <Section title="6. Shipping details" description="Optional information for shipping calculations.">
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14 }}>
+
+                        <Field label="Weight (grams)"><input style={inputStyle} type="number" min="0" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 650" /></Field>
+
+                        <Field label="Length (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={length} onChange={(e) => setLength(e.target.value)} /></Field>
+
+                        <Field label="Width (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
+
+                        <Field label="Height (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} /></Field>
+
+                    </div>
+
+                    <Field label="Shipping class"><input style={inputStyle} value={shippingClass} onChange={(e) => setShippingClass(e.target.value)} placeholder="e.g. standard, bulky" /></Field>
+
+                </Section>
+
+
+
+                <Section title="7. Search engine and visibility" description="Improve how the product appears in your store and search results.">
+
+                    <Field label="URL slug" help="Generated from the product name if left blank.">
+
+                        <input style={inputStyle} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="premium-essential-tracksuit" />
+
+                    </Field>
+
+                    <Field label="SEO title" help="Defaults to the product name.">
+
+                        <input style={inputStyle} value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={70} placeholder="Product title for search engines" />
+
+                    </Field>
+
+                    <Field label="Meta description" help="Defaults to the short description or the beginning of the full description.">
+
+                        <textarea style={{ ...inputStyle, minHeight: 75, resize: "vertical" }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} maxLength={320} placeholder="Short search-result description" />
+
+                    </Field>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14 }}>
+
+                        <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+
+                        Feature this product in the store
+
+                    </label>
+
+                    <Field label="Publication status" required>
+
+                        <select style={inputStyle} value={status} onChange={(e) => setStatus(e.target.value)}>
+
+                            <option value="draft">Draft — save without publishing</option>
+
+                            <option value="published">Published — visible in the store</option>
+
+                        </select>
+
+                    </Field>
+
+                </Section>
+
+
+
+                <footer style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "flex-end", padding: "4px 0 10px" }}>
+
+                    <button type="button" onClick={resetForm} disabled={submitting} style={{ padding: "12px 16px", border: "1px solid #d1d5db", borderRadius: 9, background: "#fff", cursor: "pointer" }}>
+
+                        Reset form
+
+                    </button>
+
+                    <button type="submit" disabled={submitting} style={{ padding: "12px 20px", border: "none", borderRadius: 9, background: submitting ? "#6b7280" : "#111827", color: "#fff", fontWeight: 700, cursor: submitting ? "wait" : "pointer" }}>
+
+                        {submitting ? "Saving product…" : status === "published" ? "Publish product" : "Save as draft"}
+
+                    </button>
+
+                </footer>
+
+            </div>
+
+            <p style={{ marginTop: 8, color: "#6b7280", fontSize: 12, lineHeight: 1.5 }}>
+
+                Note: This form sends additional fields such as variants, SEO, shipping and publication status. Your Express controller and Product model must explicitly support these fields for them to be saved. The current basic Product schema may ignore fields it does not define.
+
             </p>
 
-            <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={
-                    handleImageChange
-                }
-            />
-
-            {imagePreviews.length >
-                0 && (
-                    <div
-                        style={{
-                            display:
-                                "flex",
-                            gap: "10px",
-                            flexWrap:
-                                "wrap",
-                            marginTop:
-                                "10px",
-                        }}
-                    >
-                        {imagePreviews.map(
-                            (
-                                image,
-                                index
-                            ) => (
-                                <div
-                                    key={
-                                        index
-                                    }
-                                    style={{
-                                        display:
-                                            "flex",
-                                        flexDirection:
-                                            "column",
-                                        alignItems:
-                                            "center",
-                                    }}
-                                >
-                                    <img
-                                        src={
-                                            image.preview
-                                        }
-                                        alt=""
-                                        style={{
-                                            width:
-                                                "120px",
-                                            height:
-                                                "120px",
-                                            objectFit:
-                                                "cover",
-                                            border:
-                                                "1px solid #ddd",
-                                            borderRadius:
-                                                "8px",
-                                        }}
-                                    />
-
-                                    <button
-                                        type="button"
-                                        style={{
-                                            marginTop:
-                                                "5px",
-                                            padding:
-                                                "5px 10px",
-                                            cursor:
-                                                "pointer",
-                                        }}
-                                        onClick={() =>
-                                            handleRemoveImage(
-                                                index
-                                            )
-                                        }
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            )
-                        )}
-                    </div>
-                )}
-
-            <button
-                type="submit"
-                style={{
-                    padding:
-                        "12px",
-                    cursor:
-                        "pointer",
-                    fontWeight:
-                        "bold",
-                }}
-            >
-                Save Product
-            </button>
         </form>
+
     );
+
 }
+
+
 
 export default ProductForm;

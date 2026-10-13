@@ -1,28 +1,30 @@
+import "./ProductGallery.scss";
+
 function ProductGallery({
     images = [],
     productName,
     onRemove,
     imageStyle = {},
 }) {
-    if (!images.length) return null;
+    if (!Array.isArray(images) || images.length === 0) return null;
 
     const apiUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+    const baseUrl = apiUrl.replace(/\/api$/i, "");
 
     const getImageUrl = (image) => {
-        if (typeof image !== "string" || !image) {
-            return "";
-        }
+        const rawValue =
+            typeof image === "string"
+                ? image
+                : image && typeof image === "object"
+                    ? image.url || image.path || image.filename
+                    : "";
 
-        if (/^https?:\/\//i.test(image)) {
-            return image;
-        }
+        if (typeof rawValue !== "string" || !rawValue.trim()) return "";
 
-        const path = image.startsWith("/") ? image : `/${image}`;
+        const value = rawValue.trim();
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
 
-        // Om API-adressen slutar på /api ska uppladdade bilder
-        // hämtas från serverns rot i stället.
-        const baseUrl = apiUrl.replace(/\/api$/i, "");
-
+        const path = value.startsWith("/") ? value : `/${value}`;
         return `${baseUrl}${path}`;
     };
 
@@ -30,28 +32,30 @@ function ProductGallery({
         <div className="product-gallery">
             {images.map((image, index) => {
                 const imageUrl = getImageUrl(image);
+                const key =
+                    typeof image === "string"
+                        ? image
+                        : image?._id || image?.url || image?.path || index;
 
                 return (
-                    <div
-                        className="product-gallery__item"
-                        key={`${image}-${index}`}
-                    >
+                    <div className="product-gallery__item" key={`${key}-${index}`}>
                         {imageUrl && (
                             <img
                                 className="product-gallery__image"
                                 src={imageUrl}
                                 alt={`${productName || "Produkt"} ${index + 1}`}
-                                style={imageStyle}
+                                style={{
+                                    objectFit: "contain",
+                                    objectPosition: "center center",
+                                    ...imageStyle,
+                                }}
                                 loading="lazy"
                             />
                         )}
 
                         {onRemove && (
-                            <button
-                                type="button"
-                                onClick={() => onRemove(image, index)}
-                            >
-                                Remove
+                            <button type="button" onClick={() => onRemove(image, index)}>
+                                Ta bort
                             </button>
                         )}
                     </div>

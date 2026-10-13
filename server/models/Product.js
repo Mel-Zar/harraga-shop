@@ -1,163 +1,186 @@
 import mongoose from "mongoose";
 
-const productSchema =
-    new mongoose.Schema(
-        {
-            name: {
-                type:
-                    String,
-
-                required:
-                    true,
-
-                trim:
-                    true,
-
-                minlength:
-                    1,
-
-                maxlength:
-                    200,
-            },
-
-
-            description: {
-                type:
-                    String,
-
-                required:
-                    true,
-
-                trim:
-                    true,
-
-                minlength:
-                    1,
-
-                maxlength:
-                    5000,
-            },
-
-
-            price: {
-                type:
-                    Number,
-
-                required:
-                    true,
-
-                min:
-                    0,
-
-                validate: {
-                    validator:
-                        Number.isFinite,
-
-                    message:
-                        "Price must be a valid number.",
-                },
-            },
-
-
-            // Första bilden (thumbnail)
-            image: {
-                type:
-                    String,
-
-                default:
-                    "",
-
-                trim:
-                    true,
-            },
-
-
-            // Alla bilder
-            images: {
-                type:
-                    [String],
-
-                validate: {
-                    validator:
-                        function (
-                            arr
-                        ) {
-
-                            return (
-                                Array.isArray(
-                                    arr
-                                ) &&
-                                arr.length <=
-                                4
-                            );
-
-                        },
-
-                    message:
-                        "Max 4 images allowed",
-                },
-
-                default:
-                    [],
-            },
-
-
-            category: {
-                type:
-                    String,
-
-                required:
-                    true,
-
-                trim:
-                    true,
-
-                minlength:
-                    1,
-
-                maxlength:
-                    100,
-            },
-
-
-            stock: {
-                type:
-                    Number,
-
-                default:
-                    0,
-
-                min:
-                    0,
-
-                validate: {
-                    validator:
-                        Number.isInteger,
-
-                    message:
-                        "Stock must be a whole number.",
-                },
-            },
-
-
-            isActive: {
-                type:
-                    Boolean,
-
-                default:
-                    true,
-            },
-
+const productSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: [true, "Product name is required."],
+            trim: true,
+            minlength: 1,
+            maxlength: 200,
         },
-
-        {
-            timestamps:
-                true,
-        }
-    );
-
-
-export default mongoose.model(
-    "Product",
-    productSchema
+        shortDescription: { type: String, default: "", trim: true, maxlength: 300 },
+        barcode: { type: String, default: "", trim: true, maxlength: 100 },
+        compareAtPrice: { type: Number, default: null, min: 0 },
+        costPrice: { type: Number, default: null, min: 0 },
+        lowStockThreshold: {
+            type: Number,
+            default: 5,
+            min: 0,
+            validate: Number.isInteger,
+        },
+        tags: { type: [String], default: [] },
+        colors: { type: [String], default: [] },
+        material: { type: String, default: "", trim: true, maxlength: 100 },
+        fit: { type: String, default: "", trim: true, maxlength: 100 },
+        targetGroup: { type: String, default: "Unisex", trim: true, maxlength: 50 },
+        weight: { type: Number, default: null, min: 0 },
+        dimensions: {
+            length: { type: Number, default: null, min: 0 },
+            width: { type: Number, default: null, min: 0 },
+            height: { type: Number, default: null, min: 0 },
+        },
+        shippingClass: { type: String, default: "", trim: true, maxlength: 100 },
+        status: {
+            type: String,
+            enum: ["draft", "published"],
+            default: "published",
+        },
+        isFeatured: { type: Boolean, default: false },
+        allowBackorders: { type: Boolean, default: false },
+        seoTitle: { type: String, default: "", trim: true, maxlength: 200 },
+        metaDescription: { type: String, default: "", trim: true, maxlength: 500 },
+        slug: { type: String, default: "", trim: true, maxlength: 200 },
+        brand: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 100,
+        },
+        description: {
+            type: String,
+            required: [true, "Product description is required."],
+            trim: true,
+            minlength: 1,
+            maxlength: 5000,
+        },
+        price: {
+            type: Number,
+            required: [true, "Product price is required."],
+            min: [0, "Price cannot be negative."],
+            validate: {
+                validator: Number.isFinite,
+                message: "Price must be a valid number.",
+            },
+        },
+        color: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 100,
+        },
+        sku: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 100,
+        },
+        sizes: {
+            type: [String],
+            default: [],
+            validate: {
+                validator: (arr) =>
+                    Array.isArray(arr) &&
+                    arr.every(
+                        (size) => typeof size === "string" && size.trim().length > 0,
+                    ),
+                message: "Sizes must contain valid text values.",
+            },
+        },
+        // Första bilden används som thumbnail.
+        image: {
+            type: String,
+            default: "",
+            trim: true,
+        },
+        // Alla produktbilder, max 4.
+        images: {
+            type: [String],
+            default: [],
+            validate: {
+                validator: (arr) =>
+                    Array.isArray(arr) &&
+                    arr.length <= 4 &&
+                    arr.every(
+                        (item) => typeof item === "string" && item.trim().length > 0,
+                    ),
+                message: "Maximum 4 valid images are allowed.",
+            },
+        },
+        // Huvudkategori; behåller kompatibilitet med befintliga produkter.
+        category: {
+            type: String,
+            required: [true, "Product category is required."],
+            trim: true,
+            minlength: 1,
+            maxlength: 100,
+        },
+        // Hela kategorisökvägen från huvudkategori till sista nivån.
+        categoryPath: {
+            type: [String],
+            default: [],
+            validate: {
+                validator: (arr) =>
+                    Array.isArray(arr) &&
+                    arr.length <= 20 &&
+                    arr.every(
+                        (item) =>
+                            typeof item === "string" &&
+                            item.trim().length > 0 &&
+                            item.trim().length <= 100,
+                    ),
+                message:
+                    "Category path must contain no more than 20 valid category levels.",
+            },
+        },
+        // Sista nivån i categoryPath.
+        subCategory: {
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 100,
+        },
+        stock: {
+            type: Number,
+            default: 0,
+            min: [0, "Stock cannot be negative."],
+            validate: {
+                validator: Number.isInteger,
+                message: "Stock must be a whole number.",
+            },
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+    },
+    { timestamps: true },
 );
+
+productSchema.index({ category: 1 });
+productSchema.index({ categoryPath: 1 });
+productSchema.index({ subCategory: 1 });
+productSchema.index({ sku: 1 });
+
+// Synkronisera kategorifälten före Mongoose-validering.
+productSchema.pre("validate", function () {
+    if (Array.isArray(this.categoryPath)) {
+        this.categoryPath = this.categoryPath
+            .map((item) => (typeof item === "string" ? item.trim() : item))
+            .filter((item) => typeof item === "string" && item.length > 0);
+    }
+
+    if (this.categoryPath.length > 0) {
+        this.category = this.categoryPath[0];
+        this.subCategory = this.categoryPath[this.categoryPath.length - 1];
+    } else if (typeof this.category === "string" && this.category.trim()) {
+        this.category = this.category.trim();
+        this.categoryPath = [this.category];
+        this.subCategory = this.category;
+    } else {
+        this.categoryPath = [];
+        this.subCategory = "";
+    }
+});
+
+export default mongoose.model("Product", productSchema);

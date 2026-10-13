@@ -31,6 +31,55 @@ const getAuthConfig = () => {
 };
 
 // =========================
+// 🛠️ ERROR HANDLING
+// =========================
+
+const getErrorMessage = (error) => {
+    return (
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Ett oväntat fel uppstod."
+    );
+};
+
+const handleApiError = (operation, error) => {
+    const status = error.response?.status;
+    const message = getErrorMessage(error);
+
+    console.error(`❌ ${operation} ERROR:`, {
+        status,
+        message,
+        data: error.response?.data || null,
+    });
+
+    // Rensa endast token när servern uttryckligen rapporterar
+    // att JWT-token har gått ut. Behåll token vid andra fel.
+    const lowerMessage = String(message).toLowerCase();
+
+    if (
+        status === 401 &&
+        lowerMessage.includes("token") &&
+        (
+            lowerMessage.includes("expired") ||
+            lowerMessage.includes("expir")
+        )
+    ) {
+        localStorage.removeItem("token");
+
+        // Skicka användaren till inloggningen om sidan finns där.
+        if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.toLowerCase().includes("login")
+        ) {
+            window.location.assign("/login");
+        }
+    }
+
+    return error;
+};
+
+// =========================
 // 📦 GET ALL PRODUCTS
 // =========================
 
@@ -47,12 +96,7 @@ export const getProducts = async (params = {}) => {
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ GET PRODUCTS ERROR:",
-            error.response?.data || error.message
-        );
-
-        throw error;
+        throw handleApiError("GET PRODUCTS", error);
     }
 };
 
@@ -69,12 +113,7 @@ export const getProductCategories = async () => {
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ GET PRODUCT CATEGORIES ERROR:",
-            error.response?.data || error.message
-        );
-
-        throw error;
+        throw handleApiError("GET PRODUCT CATEGORIES", error);
     }
 };
 
@@ -85,18 +124,13 @@ export const getProductCategories = async () => {
 export const getProductById = async (id) => {
     try {
         const response = await axios.get(
-            `${API_URL}/${id}`,
+            `${API_URL}/${encodeURIComponent(id)}`,
             getAuthConfig()
         );
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ GET PRODUCT ERROR:",
-            error.response?.data || error.message
-        );
-
-        throw error;
+        throw handleApiError("GET PRODUCT", error);
     }
 };
 
@@ -110,27 +144,17 @@ export const createProduct = async (formData) => {
 
         const config = getAuthConfig();
 
-        const response = await axios.post(
-            API_URL,
-            formData,
-            {
-                ...config,
-                headers: {
-                    ...config.headers,
-                    "Content-Type": "multipart/form-data",
-                },
-            }
-        );
+        const response = await axios.post(API_URL, formData, {
+            ...config,
+            headers: {
+                ...config.headers,
+                // Låt Axios/webbläsaren sätta rätt multipart-boundary.
+            },
+        });
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ CREATE PRODUCT ERROR:",
-            error.response?.status,
-            error.response?.data || error.message
-        );
-
-        throw error;
+        throw handleApiError("CREATE PRODUCT", error);
     }
 };
 
@@ -143,34 +167,45 @@ export const updateProduct = async (id, formData) => {
         console.log("✏️ UPDATING PRODUCT:", id);
 
         const config = getAuthConfig();
+        const token = localStorage.getItem("token");
 
         console.log(
             "🔐 TOKEN:",
-            localStorage.getItem("token")
-                ? "FOUND ✅"
-                : "MISSING ❌"
+            token ? "FOUND ✅" : "MISSING ❌"
         );
 
+        if (!id) {
+            throw new Error("Produktens ID saknas.");
+        }
+
+        if (!(formData instanceof FormData)) {
+            throw new Error(
+                "Produktinformationen måste skickas som FormData."
+            );
+        }
+
         const response = await axios.put(
-            `${API_URL}/${id}`,
+            `${API_URL}/${encodeURIComponent(id)}`,
             formData,
             {
                 ...config,
                 headers: {
                     ...config.headers,
-                    "Content-Type": "multipart/form-data",
+                    // Sätt inte Content-Type manuellt för FormData.
+                    // Webbläsaren måste lägga till multipart-boundary.
                 },
             }
         );
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ UPDATE PRODUCT ERROR:",
-            error.response?.data || error.message
-        );
+        // Fel som saknar HTTP-svar, till exempel valideringsfel ovan.
+        if (!error.response) {
+            console.error("❌ UPDATE PRODUCT ERROR:", error.message);
+            throw error;
+        }
 
-        throw error;
+        throw handleApiError("UPDATE PRODUCT", error);
     }
 };
 
@@ -181,17 +216,12 @@ export const updateProduct = async (id, formData) => {
 export const deleteProduct = async (id) => {
     try {
         const response = await axios.delete(
-            `${API_URL}/${id}`,
+            `${API_URL}/${encodeURIComponent(id)}`,
             getAuthConfig()
         );
 
         return response.data;
     } catch (error) {
-        console.error(
-            "❌ DELETE PRODUCT ERROR:",
-            error.response?.data || error.message
-        );
-
-        throw error;
+        throw handleApiError("DELETE PRODUCT", error);
     }
 };
