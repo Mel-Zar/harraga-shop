@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -195,6 +196,19 @@ import protectedRoutes from "./routes/protectedRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
+// =========================
+// CUSTOMER SERVICE ROUTES
+// =========================
+import supportRoutes from "./routes/supportRoutes.js";
+
+app.use(
+    "/api/support",
+    supportRoutes
+);
+
+// =========================
+// EXISTING ROUTES
+// =========================
 app.use(
     "/api/auth",
     authRoutes

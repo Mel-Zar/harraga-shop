@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 
 import {
@@ -23,6 +24,12 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Home from "./pages/Home/Home";
 import Products from "./pages/Products/Products";
 import Product from "./pages/Product/Product";
+
+// =====================================================
+// CUSTOMER SERVICE
+// =====================================================
+
+import CustomerService from "./pages/CustomerService/CustomerService";
 
 // =====================================================
 // CART / CHECKOUT
@@ -184,6 +191,16 @@ function App() {
           />
 
           {/* =================================================
+                        💬 CUSTOMER SERVICE
+                        PUBLIC - ALLA KUNDER
+                    ================================================= */}
+
+          <Route
+            path="/kundservice"
+            element={<CustomerService />}
+          />
+
+          {/* =================================================
                         🛍️ PRODUCTS
                         PUBLIC
                     ================================================= */}
@@ -215,9 +232,7 @@ function App() {
 
           <Route
             path="/checkout"
-            element={
-              <Checkout />
-            }
+            element={<Checkout />}
           />
 
           {/* =================================================
@@ -227,9 +242,7 @@ function App() {
 
           <Route
             path="/payment/success"
-            element={
-              <PaymentSuccess />
-            }
+            element={<PaymentSuccess />}
           />
 
           {/* =================================================
@@ -239,9 +252,7 @@ function App() {
 
           <Route
             path="/payment/cancel"
-            element={
-              <PaymentCancel />
-            }
+            element={<PaymentCancel />}
           />
 
           {/* =================================================

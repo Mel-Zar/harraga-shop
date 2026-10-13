@@ -1,3 +1,4 @@
+
 import {
     useEffect,
     useMemo,
@@ -188,6 +189,18 @@ export default function Navbar() {
             </Link>
 
             {/* =================================================
+                💬 CUSTOMER SERVICE
+                ALLA
+            ================================================= */}
+
+            <Link
+                to="/kundservice"
+                style={linkStyle}
+            >
+                Kundservice
+            </Link>
+
+            {/* =================================================
                 👤 NORMAL USER ONLY
             ================================================= */}
 
@@ -349,4 +362,3 @@ export default function Navbar() {
         </nav>
     );
 }
-
