@@ -222,6 +222,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
 
     width: 100%;
     min-height: 2.8em;
@@ -244,6 +245,7 @@
     margin: 0 auto;
     overflow: hidden;
 
+    /* Begränsa beskrivningen till tre rader */
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     line-clamp: 3;
