@@ -78,8 +78,7 @@
     overflow-wrap: anywhere;
   }
 
-  /* Produktkort: centrerad grid med responsiva kolumner */
-
+  /* Flex-layout: produktkorten förblir centrerade */
   &__grid {
     display: flex;
     flex-wrap: wrap;
@@ -93,7 +92,7 @@
   }
 
   &__grid > * {
-    flex: 1 1 210px;
+    flex: 0 1 280px;
     width: 100%;
     min-width: 0;
     max-width: 280px;
@@ -118,8 +117,12 @@
     padding: 48px 30px;
 
     &__grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 20px;
+    }
+
+    &__grid > * {
+      flex-basis: calc((100% - 40px) / 3);
+      max-width: 280px;
     }
   }
 }
@@ -130,8 +133,12 @@
     padding: 38px 24px;
 
     &__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
+    }
+
+    &__grid > * {
+      flex-basis: calc((100% - 18px) / 2);
+      max-width: 280px;
     }
   }
 }
@@ -160,8 +167,13 @@
     }
 
     &__grid {
-      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
+    }
+
+    &__grid > * {
+      flex: 0 1 100%;
+      width: 100%;
+      max-width: 100%;
     }
   }
 }

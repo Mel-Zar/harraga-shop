@@ -45,12 +45,14 @@
   color: $text-color;
   font-size: 0.95rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .product-card p,
 .product-item p {
   padding: 0 14px;
   color: $muted-color;
+  overflow-wrap: anywhere;
 }
 
 .product-card .price,
@@ -61,6 +63,7 @@
 
 .btn-primary,
 .button-primary {
+  max-width: 100%;
   padding: 14px 26px;
   border: 1px solid #f4f4f6;
   border-radius: 2px;
@@ -70,6 +73,9 @@
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
   transition: 0.2s ease;
 }
 

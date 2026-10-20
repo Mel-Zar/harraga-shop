@@ -1,85 +1,74 @@
-function Footer() {
+
+import { Link } from "react-router-dom";
+import "./Footer.scss";
+
+export default function Footer() {
+    const year = new Date().getFullYear();
+
     return (
-        <footer
-            style={{
-                backgroundColor: "#111",
-                color: "#fff",
-                padding: "40px 20px",
-                marginTop: "50px",
-            }}
-        >
-            <div
-                style={{
-                    maxWidth: "1200px",
-                    margin: "0 auto",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: "30px",
-                }}
-            >
-                {/* Brand */}
-                <div>
-                    <h2>Harraga</h2>
+        <footer className="site-footer">
+            <div className="site-footer__inner">
+                <div className="site-footer__main">
+                    <section className="site-footer__brand">
+                        <Link to="/" className="site-footer__logo">
+                            HARRAGA<span>.</span>
+                        </Link>
 
-                    <p>
-                        Premium fashion and
-                        streetwear.
-                    </p>
+                        <p>
+                            Premium fashion and streetwear.
+                            <br />
+                            Built for your own style.
+                        </p>
+                    </section>
+
+                    <nav className="site-footer__column" aria-label="Shop">
+                        <h2>Shop</h2>
+                        <Link to="/products">All Products</Link>
+                        <Link to="/products">New Arrivals</Link>
+                        <Link to="/products">Best Sellers</Link>
+                    </nav>
+
+                    <nav className="site-footer__column" aria-label="Kundservice">
+                        <h2>Kundservice</h2>
+                        <Link to="/kundservice">Kontakta oss</Link>
+                        <Link to="/kundservice">Leverans</Link>
+                        <Link to="/kundservice">Returer</Link>
+                        <Link to="/kundservice">Vanliga frågor</Link>
+                    </nav>
+
+                    <nav className="site-footer__column" aria-label="Sociala medier">
+                        <h2>Följ oss</h2>
+                        <a
+                            href="https://www.instagram.com/"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Instagram ↗
+                        </a>
+                        <a
+                            href="https://www.tiktok.com/"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            TikTok ↗
+                        </a>
+                        <a
+                            href="https://www.facebook.com/"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Facebook ↗
+                        </a>
+                    </nav>
                 </div>
 
-                {/* Shop */}
-                <div>
-                    <h3>Shop</h3>
-
-                    <p>New Arrivals</p>
-
-                    <p>Best Sellers</p>
-
-                    <p>Products</p>
-                </div>
-
-                {/* Support */}
-                <div>
-                    <h3>Support</h3>
-
-                    <p>Contact Us</p>
-
-                    <p>Shipping</p>
-
-                    <p>Returns</p>
-                </div>
-
-                {/* Social */}
-                <div>
-                    <h3>Follow Us</h3>
-
-                    <p>Instagram</p>
-
-                    <p>TikTok</p>
-
-                    <p>Facebook</p>
+                <div className="site-footer__bottom">
+                    <p>© {year} Harraga. All rights reserved.</p>
+                    <Link to="/" className="site-footer__back-to-top">
+                        Till startsidan ↑
+                    </Link>
                 </div>
             </div>
-
-            <hr
-                style={{
-                    margin: "30px 0",
-                    borderColor: "#333",
-                }}
-            />
-
-            <p
-                style={{
-                    textAlign: "center",
-                    margin: 0,
-                }}
-            >
-                © {new Date().getFullYear()} Harraga.
-                All Rights Reserved.
-            </p>
         </footer>
     );
 }
-
-export default Footer;

@@ -1,9 +1,6 @@
 @use "./variables" as *;
 
-/* ==============================
-   SURFPLATTA OCH MINDRE SKÄRMAR
-============================== */
-
+/* Surfplatta och mindre skärmar */
 @media (max-width: 900px) {
   .products-grid,
   .product-grid,
@@ -20,10 +17,7 @@
   }
 }
 
-/* ==============================
-   MOBIL: EN PRODUKT PER RAD
-============================== */
-
+/* Mobil: en produkt per rad */
 @media (max-width: 600px) {
   .products-grid,
   .product-grid,
@@ -54,13 +48,11 @@
   .btn-primary,
   .button-primary {
     width: 100%;
+    padding: 12px 14px;
   }
 }
 
-/* ==============================
-   MYCKET SMÅ MOBILSKÄRMAR
-============================== */
-
+/* Mycket små mobilskärmar */
 @media (max-width: 360px) {
   .products-grid,
   .product-grid,
@@ -75,15 +67,14 @@
   }
 }
 
-/* ==============================
-   TILLGÄNGLIGHET
-============================== */
-
+/* Tillgänglighet */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
