@@ -96,8 +96,12 @@ export default function Navbar() {
 
                         {loggedIn && !admin && (
                             <>
-                                <Link to="/profile" onClick={closeMenu}>My Profile</Link>
-                                <Link to="/profile/orders" onClick={closeMenu}>My Orders</Link>
+                                <Link to="/profile" onClick={closeMenu}>
+                                    My Profile
+                                </Link>
+                                <Link to="/profile/orders" onClick={closeMenu}>
+                                    My Orders
+                                </Link>
                                 <Link to="/profile/address" onClick={closeMenu}>
                                     Address Book
                                 </Link>
@@ -120,7 +124,9 @@ export default function Navbar() {
                         >
                             Cart
                             {cartCount > 0 && (
-                                <span className="navbar__cart-count">{cartCount}</span>
+                                <span className="navbar__cart-count">
+                                    {cartCount}
+                                </span>
                             )}
                         </Link>
 
@@ -133,6 +139,7 @@ export default function Navbar() {
                                 >
                                     Login
                                 </Link>
+
                                 <Link
                                     to="/register"
                                     className="navbar__register"
@@ -147,7 +154,11 @@ export default function Navbar() {
                             <>
                                 <span
                                     className="navbar__username"
-                                    title={admin ? "Administratör" : user?.username || "Konto"}
+                                    title={
+                                        admin
+                                            ? "Administratör"
+                                            : user?.username || "Konto"
+                                    }
                                 >
                                     {admin
                                         ? "Admin"

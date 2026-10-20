@@ -1,7 +1,12 @@
 @use "../../styles/variables" as *;
 
 .navbar {
+  position: relative;
+  z-index: 100;
   width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   background: rgba(5, 5, 5, 0.97);
   border-bottom: 1px solid $silver-border;
   color: $silver-bright;
@@ -19,7 +24,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-
   width: 100%;
   max-width: 1600px;
   min-height: 82px;
@@ -28,12 +32,16 @@
 }
 
 .navbar__brand {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  min-width: 0;
   color: $silver-bright;
   font-family: $font-heading;
   font-size: clamp(1.25rem, 2vw, 1.7rem);
   font-weight: 900;
   letter-spacing: 0.08em;
+  line-height: 1.25;
   text-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
 }
 
@@ -45,8 +53,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex: 1 1 auto;
   gap: clamp(18px, 2.5vw, 36px);
   min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar__links,
@@ -56,6 +67,9 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: clamp(12px, 1.8vw, 24px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar__links a,
@@ -64,6 +78,7 @@
   color: $muted-color;
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.4;
   transition:
     color 0.2s ease,
     text-shadow 0.2s ease;
@@ -79,23 +94,43 @@
   flex-shrink: 0;
 }
 
+.navbar__username {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .navbar__cart {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .navbar__cart-count {
   display: inline-grid;
   place-items: center;
+  flex: 0 0 auto;
   min-width: 21px;
   height: 21px;
+  margin: 0;
   padding: 0 5px;
   border-radius: 50%;
   background: $chrome-gradient;
   color: #080808;
   font-size: 0.7rem;
   font-weight: 900;
+  line-height: 1;
+}
+
+.navbar__login {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .navbar__register,
@@ -103,31 +138,48 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+  min-width: 0;
   min-height: 38px;
+  margin: 0;
   padding: 10px 15px;
   border: 1px solid $silver-border;
-  border-radius: 2px;
+  border-radius: 3px;
   background: $chrome-gradient;
   color: #080808 !important;
   font-size: 0.72rem;
   font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .navbar__register:hover,
 .navbar__logout:hover {
+  border-color: $silver-bright;
   box-shadow: $silver-glow;
+  transform: translateY(-1px);
 }
 
 .navbar__toggle {
   display: none;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
   width: 44px;
   height: 44px;
+  margin: 0 0 0 auto;
   padding: 10px;
   border: 1px solid $silver-border;
-  border-radius: 2px;
+  border-radius: 3px;
   background: #111;
   cursor: pointer;
 }
@@ -136,7 +188,8 @@
   display: block;
   width: 100%;
   height: 2px;
-  margin: 5px 0;
+  margin: 0;
+  border-radius: 2px;
   background: $silver-bright;
   transition:
     transform 0.2s ease,
@@ -161,14 +214,21 @@
   outline-offset: 4px;
 }
 
+/* Surfplattor och mindre datorer */
 @media (max-width: 1050px) {
   .navbar__inner {
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 0;
+  }
+
+  .navbar__brand {
+    max-width: calc(100% - 58px);
+    font-size: clamp(1.15rem, 3vw, 1.5rem);
   }
 
   .navbar__toggle {
-    display: block;
+    display: flex;
+    margin-bottom: 10px;
   }
 
   .navbar__menu {
@@ -176,9 +236,11 @@
     flex: 0 0 100%;
     flex-direction: column;
     align-items: stretch;
-    gap: 22px;
+    justify-content: flex-start;
+    gap: 0;
     width: 100%;
-    padding: 20px 0 8px;
+    margin: 0;
+    padding: 6px 0 16px;
     border-top: 1px solid $silver-border;
   }
 
@@ -188,10 +250,16 @@
 
   .navbar__links,
   .navbar__account {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
     gap: 0;
     width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
   }
 
   .navbar__links a,
@@ -199,18 +267,141 @@
   .navbar__username {
     display: flex;
     align-items: center;
-    min-height: 44px;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    margin: 0;
     padding: 10px 4px;
     border-bottom: 1px solid rgba(220, 220, 230, 0.12);
+    font-size: 0.84rem;
+    line-height: 1.4;
   }
 
-  .navbar__account .navbar__register,
+  .navbar__account .navbar__cart {
+    display: inline-flex;
+    align-items: center;
+    align-self: stretch;
+    justify-content: flex-start;
+    gap: 7px;
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
+    padding: 10px 4px;
+    border-bottom: 1px solid rgba(220, 220, 230, 0.12);
+    line-height: 1.4;
+  }
+
+  .navbar__account .navbar__cart-count {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .navbar__account .navbar__login {
+    align-self: stretch;
+  }
+
+  /* Jämnt avstånd runt Register-knappen */
+  .navbar__menu:has(.navbar__register) {
+    padding-bottom: 0;
+  }
+
+  .navbar__account > a.navbar__register {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    justify-content: center;
+    flex: 0 0 42px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    margin: 14px 0 2px;
+    padding: 0 14px;
+    border: 1px solid $silver-border;
+    border-radius: 3px;
+    font-size: 0.84rem;
+    line-height: 1.2;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
   .navbar__account .navbar__logout {
-    align-self: flex-start;
-    margin-top: 12px;
+    align-self: stretch;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    margin: 7px 0 0;
+    padding: 10px 14px;
+    border: 1px solid $silver-border;
+    border-radius: 3px;
+    text-align: center;
   }
 }
 
+/* Mobiltelefoner */
+@media (max-width: 600px) {
+  .navbar__inner {
+    min-height: 68px;
+    padding: 12px 16px;
+  }
+
+  .navbar__brand {
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    letter-spacing: 0.05em;
+  }
+
+  .navbar__toggle {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 10px;
+  }
+
+  .navbar__menu {
+    gap: 0;
+    margin-top: 0;
+    padding-top: 4px;
+    padding-bottom: 16px;
+  }
+
+  .navbar__links a,
+  .navbar__account > a,
+  .navbar__username {
+    min-height: 40px;
+    padding: 9px 4px;
+    font-size: 0.82rem;
+  }
+
+  .navbar__account .navbar__cart {
+    min-height: 40px;
+    margin: 0;
+    padding: 9px 4px;
+  }
+
+  .navbar__menu:has(.navbar__register) {
+    padding-bottom: 0;
+  }
+
+  .navbar__account > a.navbar__register {
+    flex-basis: 42px;
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    margin: 14px 0 3px;
+    padding: 0 12px;
+    font-size: 0.75rem;
+  }
+
+  .navbar__account .navbar__logout {
+    min-height: 42px;
+    margin-top: 6px;
+    padding: 10px 12px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Mycket små mobilskärmar */
 @media (max-width: 360px) {
   .navbar__inner {
     padding-right: 12px;
@@ -218,10 +409,59 @@
   }
 
   .navbar__brand {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+  }
+
+  .navbar__toggle {
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    margin-bottom: 10px;
+  }
+
+  .navbar__menu {
+    gap: 0;
+    margin-top: 0;
+    padding-top: 4px;
+    padding-bottom: 12px;
+  }
+
+  .navbar__links a,
+  .navbar__account > a,
+  .navbar__username {
+    min-height: 38px;
+    padding: 8px 4px;
+    font-size: 0.8rem;
+  }
+
+  .navbar__account .navbar__cart {
+    min-height: 38px;
+    padding: 8px 4px;
+  }
+
+  .navbar__menu:has(.navbar__register) {
+    padding-bottom: 0;
+  }
+
+  .navbar__account > a.navbar__register {
+    flex-basis: 40px;
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    margin: 14px 0 2%;
+    padding: 0 10px;
+    font-size: 0.75rem;
+  }
+
+  .navbar__account .navbar__logout {
+    min-height: 40px;
+    margin-top: 5px;
+    padding: 9px 10px;
   }
 }
 
+/* Tillgänglighet */
 @media (prefers-reduced-motion: reduce) {
   .navbar *,
   .navbar *::before,
