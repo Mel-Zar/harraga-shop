@@ -67,17 +67,38 @@ app.use(
 
 // =========================
 // CORS
+// BEHÅLLER BEFINTLIG CORS_ORIGIN
+// OCH TILLÅTER LOKAL UTVECKLING
 // =========================
-const allowedOrigins = process.env.CORS_ORIGIN
+const configuredOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN
         .split(",")
         .map((o) => o.trim())
         .filter(Boolean)
-    : ["http://localhost:5173"];
+    : [];
+
+const allowedOrigins = [
+    ...new Set([
+        ...configuredOrigins,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://harraga.local:5173",
+    ]),
+];
 
 app.use(
     cors({
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            // Tillåt anrop utan Origin-header, exempelvis vissa
+            // server-till-server-anrop och lokala verktyg.
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(
+                new Error(`CORS blocked origin: ${origin}`)
+            );
+        },
         credentials: true,
     })
 );
@@ -291,6 +312,7 @@ app.listen(
         console.log(
             `🚀 Server running on port ${PORT}`
         );
+        console.log("✅ Allowed CORS origins:", allowedOrigins);
     }
 );
 

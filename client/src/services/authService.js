@@ -1,8 +1,7 @@
-const API_URL =
-    `${import.meta.env.VITE_API_URL}/auth`;
+const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 // =====================================================
-// 🔧 RESPONSE HELPER
+// RESPONSE HELPER
 // =====================================================
 
 const parseResponse = async (res) => {
@@ -15,131 +14,89 @@ const parseResponse = async (res) => {
     }
 
     if (!res.ok) {
-        throw new Error(
+        const error = new Error(
             data.message ||
+            data.error ||
             `Request failed with status ${res.status}`
         );
+
+        error.status = res.status;
+        error.response = {
+            status: res.status,
+            data,
+        };
+
+        throw error;
     }
 
     return data;
 };
 
 // =====================================================
-// 🟢 REGISTER
+// REQUEST HELPER
 // =====================================================
 
-export const registerUser = async (
-    userData
-) => {
-
-    const res = await fetch(
-        `${API_URL}/register`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
-
-            credentials: "include",
-
-            body: JSON.stringify(
-                userData
-            ),
-        }
-    );
+const postJSON = async (endpoint, body) => {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(body),
+    });
 
     return parseResponse(res);
 };
 
 // =====================================================
-// 🔵 LOGIN
+// REGISTER
 // =====================================================
 
-export const loginUser = async (
-    userData
-) => {
+export const registerUser = async (userData) => {
+    if (!userData || typeof userData !== "object" || Array.isArray(userData)) {
+        throw new Error("Registreringsuppgifterna saknas eller är ogiltiga.");
+    }
 
-    const res = await fetch(
-        `${API_URL}/login`,
-        {
-            method: "POST",
+    // Skicka samtliga registreringsfält och CAPTCHA-token
+    // vidare utan att ändra fältnamn eller ta bort data.
+    if (!userData.captchaToken) {
+        throw new Error("CAPTCHA-verifieringen saknas. Försök igen.");
+    }
 
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
+    return postJSON("/register", userData);
+};
 
-            credentials: "include",
+// =====================================================
+// LOGIN
+// =====================================================
 
-            body: JSON.stringify(
-                userData
-            ),
-        }
-    );
-
-    const data =
-        await parseResponse(res);
-
-    // =================================================
-    // SAVE TOKEN + USER
-    // =================================================
+export const loginUser = async (userData) => {
+    const data = await postJSON("/login", userData);
 
     if (data?.accessToken) {
-        localStorage.setItem(
-            "token",
-            data.accessToken
-        );
+        localStorage.setItem("token", data.accessToken);
     }
 
     if (data?.user) {
-        localStorage.setItem(
-            "user",
-            JSON.stringify(
-                data.user
-            )
-        );
+        localStorage.setItem("user", JSON.stringify(data.user));
     }
 
-    window.dispatchEvent(
-        new Event("auth-change")
-    );
+    window.dispatchEvent(new Event("auth-change"));
 
     return data;
 };
 
 // =====================================================
-// 🟠 FORGOT PASSWORD
+// FORGOT PASSWORD
 // =====================================================
 
-export const forgotPassword = async (
-    email
-) => {
-
-    const res = await fetch(
-        `${API_URL}/forgot-password`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
-
-            credentials: "include",
-
-            body: JSON.stringify({
-                email,
-            }),
-        }
-    );
-
-    return parseResponse(res);
+export const forgotPassword = async (email) => {
+    return postJSON("/forgot-password", { email });
 };
 
 // =====================================================
-// 🔴 RESET PASSWORD
+// RESET PASSWORD
 // =====================================================
 
 export const resetPassword = async (
@@ -147,54 +104,16 @@ export const resetPassword = async (
     password,
     confirmPassword
 ) => {
-
-    const res = await fetch(
-        `${API_URL}/reset-password/${token}`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
-
-            credentials: "include",
-
-            body: JSON.stringify({
-                password,
-                confirmPassword,
-            }),
-        }
-    );
-
-    return parseResponse(res);
+    return postJSON(`/reset-password/${encodeURIComponent(token)}`, {
+        password,
+        confirmPassword,
+    });
 };
 
 // =====================================================
-// 📩 RESEND VERIFY EMAIL
+// RESEND VERIFY EMAIL
 // =====================================================
 
-export const resendVerifyEmail = async (
-    email
-) => {
-
-    const res = await fetch(
-        `${API_URL}/resend-verify-email`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
-
-            credentials: "include",
-
-            body: JSON.stringify({
-                email,
-            }),
-        }
-    );
-
-    return parseResponse(res);
+export const resendVerifyEmail = async (email) => {
+    return postJSON("/resend-verify-email", { email });
 };

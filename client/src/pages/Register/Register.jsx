@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { registerUser } from "../../services/authService";
 import AddressInput from "../../components/address/AddressInput.jsx";
+import "./Register.scss";
 
 export default function Register() {
+    const navigate = useNavigate();
+
     const [form, setForm] = useState({
         username: "",
         firstName: "",
@@ -23,12 +25,9 @@ export default function Register() {
     });
 
     const [countries, setCountries] = useState([]);
-
-    const [captchaToken, setCaptchaToken] = useState("");
-    const [showCaptcha, setShowCaptcha] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
 
     const [passwordStrength, setPasswordStrength] = useState({
         score: 0,
@@ -43,41 +42,31 @@ export default function Register() {
     useEffect(() => {
         const loadCountries = async () => {
             try {
-                const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/countries`
-                );
+                const apiUrl = import.meta.env.VITE_API_URL;
+
+                if (!apiUrl) {
+                    throw new Error("VITE_API_URL is not configured.");
+                }
+
+                const res = await fetch(`${apiUrl}/countries`);
+
+                if (!res.ok) {
+                    throw new Error("Failed to load countries.");
+                }
 
                 const data = await res.json();
 
-                console.log(
-                    "📦 COUNTRIES API RESPONSE:",
-                    data
-                );
-
                 if (Array.isArray(data)) {
                     setCountries(data);
-                } else if (
-                    data &&
-                    typeof data === "object"
-                ) {
-                    setCountries(
-                        Object.values(data)
-                    );
+                } else if (data && typeof data === "object") {
+                    setCountries(Object.values(data));
                 } else {
                     setCountries([]);
                 }
-
             } catch (err) {
-                console.error(
-                    "Failed to load countries:",
-                    err
-                );
-
+                console.error("Failed to load countries:", err);
                 setCountries([]);
-
-                toast.error(
-                    "Failed to load countries."
-                );
+                toast.error("Failed to load countries.");
             }
         };
 
@@ -91,37 +80,27 @@ export default function Register() {
         if (password.length >= 12) score++;
         if (/\d/.test(password)) score++;
 
-        if (
-            /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
-                password
-            )
-        ) {
+        if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) {
             score++;
         }
 
         if (/[A-Z]/.test(password)) score++;
 
         if (score <= 2) {
-            return {
-                score,
-                label: "Weak",
-                color: "red"
-            };
+            return { score, label: "Weak", color: "red" };
         }
 
-        if (score === 3 || score === 4) {
-            return {
-                score,
-                label: "Medium",
-                color: "orange"
-            };
+        if (score <= 4) {
+            return { score, label: "Medium", color: "orange" };
         }
 
-        return {
-            score,
-            label: "Strong",
-            color: "green"
-        };
+        return { score, label: "Strong", color: "green" };
+    };
+
+    const showValidationError = (message) => {
+        setError(message);
+        setSuccess("");
+        toast.error(message);
     };
 
     const handleChange = (e) => {
@@ -135,255 +114,152 @@ export default function Register() {
                 city: "",
                 postalCode: "",
                 addressVerified: false
-            }),
-
-            ...(name === "country" && {
-                addressVerified: false
             })
         }));
 
         if (name === "password") {
-            setPasswordStrength(
-                checkPasswordStrength(value)
-            );
+            setPasswordStrength(checkPasswordStrength(value));
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log(
-            "🚀 FORM SUBMIT START"
-        );
-
-        console.log(
-            "🔐 CAPTCHA TOKEN:",
-            captchaToken
-        );
-
-        console.log(
-            "📄 FORM DATA:",
-            form
-        );
-
         if (loading) return;
 
         setError("");
         setSuccess("");
 
-        // =================================================
-        // 🤖 BOT PROTECTION
-        // =================================================
-
-        if (form.website) {
-            const message =
-                "Bot detected";
-
-            setError(message);
-            toast.error(message);
-
+        // Bot protection: honeypot
+        if (form.website.trim()) {
+            showValidationError("Bot detected.");
             return;
         }
 
-        // =================================================
-        // ⏳ SUBMIT COOLDOWN
-        // =================================================
-
+        // Submit cooldown
         const now = Date.now();
 
-        if (
-            now - lastSubmitRef.current <
-            cooldownMs
-        ) {
-            const message =
-                "Please wait before trying again.";
-
+        if (now - lastSubmitRef.current < cooldownMs) {
+            const message = "Please wait before trying again.";
             setError(message);
             toast.warning(message);
-
             return;
         }
 
-        // =================================================
-        // 🚫 RATE LIMIT
-        // =================================================
-
-        if (
-            retryAfterRef.current >
-            now
-        ) {
-            const message =
-                "Too many attempts. Try again soon.";
-
+        // Rate-limit retry time, if supplied by the API
+        if (retryAfterRef.current > now) {
+            const message = "Too many attempts. Try again soon.";
             setError(message);
             toast.warning(message);
-
             return;
         }
 
-        lastSubmitRef.current = now;
+        // Username
+        const username = form.username.trim();
 
-        // =================================================
-        // 🛡️ CAPTCHA
-        // =================================================
-
-        if (!captchaToken) {
-            setShowCaptcha(true);
-
-            const message =
-                "Please complete the captcha.";
-
-            setError(message);
-            toast.warning(message);
-
+        if (!username) {
+            showValidationError("Username is required.");
             return;
         }
 
-        // =================================================
-        // 📝 FORM VALIDATION
-        // =================================================
-
-        if (!form.username.trim()) {
-            const message =
-                "Username is required";
-
-            setError(message);
-            toast.error(message);
-
+        if (username.length < 3 || username.length > 50) {
+            showValidationError(
+                "Username must be between 3 and 50 characters."
+            );
             return;
         }
 
+        // Names
         if (!form.firstName.trim()) {
-            const message =
-                "First name is required";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("First name is required.");
             return;
         }
 
         if (!form.lastName.trim()) {
-            const message =
-                "Last name is required";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Last name is required.");
             return;
         }
 
-        if (!form.email.trim()) {
-            const message =
-                "Email is required";
+        // Email
+        const email = form.email.trim().toLowerCase();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-            setError(message);
-            toast.error(message);
-
+        if (!email) {
+            showValidationError("Email is required.");
             return;
         }
 
-        // =================================================
-        // 📱 PHONE VALIDATION
-        // =================================================
-
-        if (!form.phone.trim()) {
-            const message =
-                "Phone number is required";
-
-            setError(message);
-            toast.error(message);
-
+        if (email.length > 320 || !emailPattern.test(email)) {
+            showValidationError("Please enter a valid email address.");
             return;
         }
 
+        // Phone
+        const phone = form.phone.trim();
+        const phoneDigits = phone.replace(/\D/g, "");
+
+        if (!phone) {
+            showValidationError("Phone number is required.");
+            return;
+        }
+
+        if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+            showValidationError("Please enter a valid phone number.");
+            return;
+        }
+
+        // Password
         if (!form.password) {
-            const message =
-                "Password is required";
-
-            setError(message);
-            toast.error(message);
-
-            return;
-        }
-
-        if (!form.confirmPassword) {
-            const message =
-                "Confirm password is required";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Password is required.");
             return;
         }
 
         if (form.password.length < 8) {
-            const message =
-                "Password must be at least 8 characters";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Password must be at least 8 characters.");
             return;
         }
 
-        const hasNumber =
-            /\d/.test(form.password);
+        if (form.password.length > 128) {
+            showValidationError("Password must not exceed 128 characters.");
+            return;
+        }
 
-        const hasSpecial =
-            /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
-                form.password
+        const hasNumber = /\d/.test(form.password);
+        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
+            form.password
+        );
+
+        if (!hasNumber || !hasSpecial) {
+            showValidationError(
+                "Password must contain at least 1 number and 1 special character."
             );
-
-        if (
-            !hasNumber ||
-            !hasSpecial
-        ) {
-            const message =
-                "Password must contain at least 1 number and 1 special character";
-
-            setError(message);
-            toast.error(message);
-
             return;
         }
 
-        if (
-            form.password !==
-            form.confirmPassword
-        ) {
-            const message =
-                "Passwords do not match";
-
-            setError(message);
-            toast.error(message);
-
+        if (form.password !== form.confirmPassword) {
+            showValidationError("Passwords do not match.");
             return;
         }
 
+        // Country
         if (!form.country) {
-            const message =
-                "Please select a country";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Please select a country.");
             return;
         }
 
-        // =================================================
-        // 📍 ADDRESS VALIDATION
-        // =================================================
-
+        // Address
         if (!form.address.trim()) {
-            const message =
-                "Please enter your street address";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Please enter your street address.");
             return;
         }
+
+        console.log("REGISTER ADDRESS CHECK:", {
+            address: form.address,
+            city: form.city,
+            postalCode: form.postalCode,
+            country: form.country,
+            addressVerified: form.addressVerified
+        });
 
         if (!form.addressVerified) {
             const message =
@@ -391,117 +267,55 @@ export default function Register() {
 
             setError(message);
             toast.warning(message);
-
             return;
         }
 
         if (!form.city.trim()) {
-            const message =
-                "Please enter/select a city";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Please enter/select a city.");
             return;
         }
 
         if (!form.postalCode.trim()) {
-            const message =
-                "Please enter/select a postal code";
-
-            setError(message);
-            toast.error(message);
-
+            showValidationError("Please enter/select a postal code.");
             return;
         }
 
-        // =================================================
-        // 🚀 REGISTER
-        // =================================================
+        // Prepare validated registration data for the separate CAPTCHA page.
+        const registrationData = {
+            username: username.toLowerCase(),
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            email,
+            phone: form.phone.trim(),
+            password: form.password,
+            confirmPassword: form.confirmPassword,
+            address: form.address.trim(),
+            postalCode: form.postalCode.trim(),
+            city: form.city.trim(),
+            country: form.country,
+        };
 
-        setLoading(true);
+        // Prevent rapid repeated submissions.
+        lastSubmitRef.current = now;
 
-        try {
-            const res =
-                await registerUser({
-                    ...form,
-                    captchaToken
-                });
-
-            console.log(
-                "✅ REGISTER SUCCESS:",
-                res
-            );
-
-            const message =
-                "Account created successfully!";
-
-            setSuccess(message);
-            toast.success(message);
-
-            // =================================================
-            // 🧹 RESET FORM
-            // =================================================
-
-            setForm({
-                username: "",
-                firstName: "",
-                lastName: "",
-                email: "",
-                phone: "",
-                password: "",
-                confirmPassword: "",
-                address: "",
-                postalCode: "",
-                city: "",
-                country: "",
-                website: "",
-                addressVerified: false
-            });
-
-            setCaptchaToken("");
-            setShowCaptcha(false);
-
-            setPasswordStrength({
-                score: 0,
-                label: "",
-                color: ""
-            });
-
-        } catch (err) {
-
-            console.log(
-                "❌ REGISTER ERROR:",
-                err
-            );
-
-            const message =
-                err?.message ||
-                "Something went wrong";
-
-            setError(message);
-            toast.error(message);
-
-        } finally {
-            setLoading(false);
-        }
+        navigate("/register/captcha", {
+            state: { registrationData }
+        });
     };
 
     return (
-        <form
-            onSubmit={handleSubmit}
-        >
-            <h2>
-                Register
-            </h2>
+        <form className="register-form" onSubmit={handleSubmit} noValidate>
+            <h2>Register</h2>
 
+            {/* Honeypot field for basic bot detection */}
             <input
                 name="website"
                 value={form.website}
                 onChange={handleChange}
-                style={{
-                    display: "none"
-                }}
+                style={{ display: "none" }}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
             />
 
             <input
@@ -509,6 +323,10 @@ export default function Register() {
                 value={form.username}
                 onChange={handleChange}
                 placeholder="Username"
+                autoComplete="username"
+                minLength={3}
+                maxLength={50}
+                required
             />
 
             <input
@@ -516,6 +334,9 @@ export default function Register() {
                 value={form.firstName}
                 onChange={handleChange}
                 placeholder="First Name"
+                autoComplete="given-name"
+                maxLength={100}
+                required
             />
 
             <input
@@ -523,6 +344,9 @@ export default function Register() {
                 value={form.lastName}
                 onChange={handleChange}
                 placeholder="Last Name"
+                autoComplete="family-name"
+                maxLength={100}
+                required
             />
 
             <input
@@ -531,6 +355,9 @@ export default function Register() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
+                autoComplete="email"
+                maxLength={320}
+                required
             />
 
             <input
@@ -540,6 +367,8 @@ export default function Register() {
                 onChange={handleChange}
                 placeholder="Phone Number"
                 autoComplete="tel"
+                maxLength={30}
+                required
             />
 
             <input
@@ -548,29 +377,25 @@ export default function Register() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Password"
+                autoComplete="new-password"
+                maxLength={128}
+                required
             />
 
             {/* PASSWORD STRENGTH (SASS HANDLES STYLE) */}
-
             {form.password && (
                 <div className="password-strength">
-
                     <div
                         className="password-strength__bar"
-                        data-strength={
-                            passwordStrength.label
-                        }
+                        data-strength={passwordStrength.label}
                         style={{
                             width: `${passwordStrength.score * 20}%`
                         }}
                     />
 
                     <small className="password-strength__label">
-                        {
-                            passwordStrength.label
-                        }
+                        {passwordStrength.label}
                     </small>
-
                 </div>
             )}
 
@@ -580,23 +405,22 @@ export default function Register() {
                 value={form.confirmPassword}
                 onChange={handleChange}
                 placeholder="Confirm Password"
+                autoComplete="new-password"
+                maxLength={128}
+                required
             />
 
             <select
                 name="country"
                 value={form.country}
                 onChange={handleChange}
+                required
             >
-                <option value="">
-                    Select country
-                </option>
+                <option value="">Select country</option>
 
-                {countries.map((c, i) => (
-                    <option
-                        key={i}
-                        value={c}
-                    >
-                        {c}
+                {countries.map((country, index) => (
+                    <option key={`${country}-${index}`} value={country}>
+                        {country}
                     </option>
                 ))}
             </select>
@@ -612,6 +436,9 @@ export default function Register() {
                 value={form.postalCode}
                 onChange={handleChange}
                 placeholder="Postal Code"
+                autoComplete="postal-code"
+                maxLength={20}
+                required
             />
 
             <input
@@ -619,61 +446,26 @@ export default function Register() {
                 value={form.city}
                 onChange={handleChange}
                 placeholder="City"
+                autoComplete="address-level2"
+                maxLength={100}
+                required
             />
 
-            {showCaptcha && (
-                <div
-                    style={{
-                        marginTop: "20px"
-                    }}
-                >
-                    <HCaptcha
-                        sitekey="fc8ee466-865a-456e-87ae-edc4e3983756"
-                        onVerify={(token) => {
-                            setCaptchaToken(
-                                token
-                            );
-
-                            setError("");
-                        }}
-                        onExpire={() => {
-                            setCaptchaToken("");
-                        }}
-                    />
-                </div>
-            )}
-
-            <button
-                type="submit"
-                disabled={loading}
-            >
-                {
-                    loading
-                        ? "Creating account..."
-                        : "Register"
-                }
+            <button type="submit" disabled={loading}>
+                Register
             </button>
 
             {error && (
-                <p
-                    style={{
-                        color: "red"
-                    }}
-                >
+                <p role="alert" style={{ color: "red" }}>
                     {error}
                 </p>
             )}
 
             {success && (
-                <p
-                    style={{
-                        color: "green"
-                    }}
-                >
+                <p role="status" style={{ color: "green" }}>
                     {success}
                 </p>
             )}
-
         </form>
     );
 }

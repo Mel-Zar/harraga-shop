@@ -13,6 +13,7 @@ import {
 
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
+import RegisterCaptcha from "./pages/Register/RegisterCaptcha";
 import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
@@ -98,8 +99,7 @@ function App() {
   // =================================================
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     if (
       !token ||
@@ -161,6 +161,16 @@ function App() {
           <Route
             path="/register"
             element={<Register />}
+          />
+
+          {/* =================================================
+                        🛡️ REGISTER CAPTCHA
+                        SEPARATE PAGE
+                    ================================================= */}
+
+          <Route
+            path="/register/captcha"
+            element={<RegisterCaptcha />}
           />
 
           {/* =================================================

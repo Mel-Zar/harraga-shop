@@ -1,6 +1,3 @@
-// =========================
-// ADDRESS API
-// =========================
 
 const API_BASE_URL =
     String(
@@ -55,8 +52,7 @@ const getErrorMessage = (
         }
 
         if (
-            typeof data.googleError.message ===
-            "string"
+            typeof data.googleError.message === "string"
         ) {
             return data.googleError.message;
         }
@@ -206,15 +202,12 @@ export const searchAddress = async (
             await fetch(
                 url,
                 {
-                    method:
-                        "GET",
+                    method: "GET",
 
-                    credentials:
-                        "include",
+                    credentials: "include",
 
                     headers: {
-                        Accept:
-                            "application/json",
+                        Accept: "application/json",
                     },
 
                     signal,
@@ -230,8 +223,7 @@ export const searchAddress = async (
          */
 
         if (
-            error?.name ===
-            "AbortError"
+            error?.name === "AbortError"
         ) {
             throw error;
         }
@@ -262,10 +254,8 @@ export const searchAddress = async (
             "ADDRESS SEARCH BACKEND ERROR:",
             {
                 url,
-                status:
-                    response.status,
-                statusText:
-                    response.statusText,
+                status: response.status,
+                statusText: response.statusText,
                 data,
             }
         );

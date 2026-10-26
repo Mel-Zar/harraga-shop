@@ -1,0 +1,340 @@
+/* ==========================================
+   HARRAGA SHOP — REGISTER CAPTCHA
+   Chrome Silver — helt responsiv styling
+   Mobil, surfplatta och dator
+   ========================================== */
+
+.register-captcha {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 70vh;
+  margin: 0;
+  padding: clamp(16px, 4vw, 48px) 16px;
+
+  color: #eeeeef;
+  background: #050505;
+  font-family: "Inter", sans-serif;
+}
+
+.register-captcha *,
+.register-captcha *::before,
+.register-captcha *::after {
+  box-sizing: border-box;
+}
+
+.register-captcha__card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  width: 100%;
+  max-width: 500px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 32px);
+
+  color: #eeeeef;
+  text-align: center;
+
+  background: linear-gradient(145deg, #171717, #090909);
+  border: 1px solid rgba(220, 220, 230, 0.42);
+  border-radius: 4px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
+}
+
+.register-captcha__title {
+  max-width: 100%;
+  margin: 0 0 18px;
+
+  color: #ffffff;
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.register-captcha__description {
+  max-width: 100%;
+  margin: 0 0 20px;
+
+  color: #bdbdc4;
+  font-size: clamp(0.9rem, 2.5vw, 0.98rem);
+  line-height: 1.7;
+
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   HCAPTCHA
+   Behåll widgetens naturliga storlek.
+   Styla endast containern runt iframen.
+   ========================================== */
+
+.register-captcha__widget {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 138px;
+  margin: 20px auto 24px;
+  padding: 0;
+
+  position: relative;
+  overflow: visible;
+}
+
+.register-captcha__widget > div {
+  display: block;
+  flex: 0 0 auto;
+
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.register-captcha__widget iframe {
+  display: block;
+
+  /* Låt hCaptcha bestämma sin egen bredd och höjd. */
+  max-width: 100%;
+  border: 0;
+}
+
+/* ==========================================
+   FELMEDDELANDEN
+   ========================================== */
+
+.register-captcha__error {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 16px;
+  padding: 12px;
+
+  color: #ffb4b4;
+  background: rgba(130, 0, 0, 0.16);
+  border: 1px solid rgba(255, 100, 100, 0.5);
+  border-radius: 3px;
+
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   KNAPPAR
+   ========================================== */
+
+.register-captcha__button {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin: 12px 0 0;
+  padding: 12px 16px;
+
+  border: 1px solid rgba(220, 220, 230, 0.42);
+  border-radius: 3px;
+
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  cursor: pointer;
+  touch-action: manipulation;
+
+  transition:
+    box-shadow 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease;
+}
+
+.register-captcha__button--primary {
+  color: #080808;
+  background: linear-gradient(
+    135deg,
+    #55555b 0%,
+    #f5f5f7 20%,
+    #88888f 40%,
+    #ffffff 55%,
+    #77777e 75%,
+    #eeeeef 100%
+  );
+
+  border-color: #f4f4f6;
+}
+
+.register-captcha__button--primary:hover:not(:disabled) {
+  box-shadow: 0 0 18px rgba(220, 220, 230, 0.2);
+}
+
+.register-captcha__button--secondary {
+  color: #eeeeef;
+  background: #101010;
+}
+
+.register-captcha__button--secondary:hover:not(:disabled) {
+  background: #202020;
+  border-color: #ffffff;
+}
+
+.register-captcha__button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.register-captcha__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ==========================================
+   SURFPLATTOR
+   ========================================== */
+
+@media (max-width: 768px) {
+  .register-captcha {
+    min-height: 60vh;
+    padding: 28px 16px;
+  }
+
+  .register-captcha__card {
+    max-width: 500px;
+    padding: 26px 20px;
+  }
+
+  .register-captcha__widget {
+    margin: 20px auto 24px;
+  }
+}
+
+/* ==========================================
+   MOBILTELEFONER
+   ========================================== */
+
+@media (max-width: 600px) {
+  .register-captcha {
+    width: 100%;
+    min-width: 0;
+    padding: 18px 10px;
+  }
+
+  .register-captcha__card {
+    width: 100%;
+    max-width: 500px;
+    min-width: 0;
+    padding: 22px 14px;
+    border-radius: 3px;
+  }
+
+  .register-captcha__title {
+    margin-bottom: 14px;
+    font-size: clamp(1.25rem, 5.8vw, 1.65rem);
+    line-height: 1.4;
+    letter-spacing: -0.025em;
+  }
+
+  .register-captcha__description {
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .register-captcha__widget {
+    width: 100%;
+    max-width: 100%;
+    min-height: 138px;
+    margin: 18px auto 22px;
+    padding: 0;
+  }
+
+  .register-captcha__widget > div {
+    max-width: 100%;
+  }
+
+  .register-captcha__button {
+    min-height: 48px;
+    margin-top: 10px;
+    padding: 12px;
+    font-size: 0.88rem;
+  }
+}
+
+/* ==========================================
+   SMÅ MOBILER
+   ========================================== */
+
+@media (max-width: 400px) {
+  .register-captcha {
+    padding: 14px 8px;
+  }
+
+  .register-captcha__card {
+    padding: 20px 10px;
+  }
+
+  .register-captcha__title {
+    font-size: clamp(1.2rem, 5.5vw, 1.4rem);
+  }
+
+  .register-captcha__widget {
+    margin: 16px auto 20px;
+  }
+}
+
+/* ==========================================
+   MYCKET SMÅ SKÄRMAR
+   ========================================== */
+
+@media (max-width: 320px) {
+  .register-captcha {
+    padding: 12px 5px;
+  }
+
+  .register-captcha__card {
+    padding: 18px 8px;
+  }
+
+  .register-captcha__title {
+    font-size: 1.15rem;
+  }
+
+  .register-captcha__description {
+    font-size: 0.88rem;
+  }
+
+  .register-captcha__button {
+    padding: 11px 8px;
+    font-size: 0.84rem;
+  }
+}
+
+/* ==========================================
+   REDUCERAD RÖRELSE
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .register-captcha__button {
+    transition: none;
+  }
+}

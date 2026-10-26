@@ -1340,6 +1340,7 @@ export default function AddressInput({
     // SELECT ADDRESS
     // =========================
 
+
     const selectAddress = (
         place
     ) => {
@@ -1687,35 +1688,62 @@ export default function AddressInput({
         // UPDATE FORM
         // =========================
 
-        setForm(
-            (previous) => ({
-                ...previous,
-
-                address:
-                    cleanStreet,
-
-                city:
-                    city ||
-                    previous.city,
-
-                postalCode:
-                    postalCode ||
-                    previous.postalCode,
-
-                country:
-                    country ||
-                    previous.country,
-
-                countryCode:
-                    countryCode,
-
-                addressVerified:
-                    true,
-            })
-        );
-
+        // Remember the exact selected street first.
         lastSelectedRef.current =
             cleanStreet;
+
+        console.log(
+            "ADDRESS VERIFICATION SET TO TRUE",
+            {
+                address: cleanStreet,
+                addressVerified: true,
+            }
+        );
+
+        setForm(
+            (previous) => {
+                const updatedForm = {
+                    ...previous,
+
+                    address:
+                        cleanStreet,
+
+                    city:
+                        city ||
+                        previous.city,
+
+                    postalCode:
+                        postalCode ||
+                        previous.postalCode,
+
+                    country:
+                        country ||
+                        previous.country,
+
+                    countryCode:
+                        countryCode,
+
+                    addressVerified:
+                        true,
+                };
+
+                console.log(
+                    "ADDRESS FORM UPDATED:",
+                    {
+                        address: updatedForm.address,
+                        addressVerified:
+                            updatedForm.addressVerified,
+                        city: updatedForm.city,
+                        postalCode:
+                            updatedForm.postalCode,
+                        country:
+                            updatedForm.country,
+                    }
+                );
+
+                return updatedForm;
+            }
+        );
 
         setSelected(true);
         setLocked(true);
@@ -1735,71 +1763,59 @@ export default function AddressInput({
             "";
     };
 
+
     // =========================
     // KEYBOARD
     // =========================
 
-    const handleKeyDown = (
-        event
-    ) => {
-        if (
-            !results.length
-        ) {
+    const handleKeyDown = (event) => {
+        if (!results.length) {
             return;
         }
 
-        if (
-            event.key ===
-            "ArrowDown"
-        ) {
+        if (event.key === "ArrowDown") {
             event.preventDefault();
 
-            setActiveIndex(
-                (previous) =>
-                    Math.min(
-                        previous + 1,
-                        results.length -
-                        1
-                    )
+            setActiveIndex((previous) =>
+                Math.min(previous + 1, results.length - 1)
             );
+
+            return;
         }
 
-        if (
-            event.key ===
-            "ArrowUp"
-        ) {
+        if (event.key === "ArrowUp") {
             event.preventDefault();
 
-            setActiveIndex(
-                (previous) =>
-                    Math.max(
-                        previous - 1,
-                        0
-                    )
+            setActiveIndex((previous) =>
+                previous <= 0
+                    ? 0
+                    : previous - 1
             );
+
+            return;
         }
 
-        if (
-            event.key ===
-            "Enter"
-        ) {
+        if (event.key === "Enter") {
             event.preventDefault();
 
             if (
-                activeIndex >= 0
+                activeIndex >= 0 &&
+                activeIndex < results.length
             ) {
-                selectAddress(
-                    results[
-                    activeIndex
-                    ]
+                const selectedPlace = results[activeIndex];
+
+                console.log(
+                    "ADDRESS SELECTED BY KEYBOARD:",
+                    selectedPlace
                 );
+
+                selectAddress(selectedPlace);
             }
+
+            return;
         }
 
-        if (
-            event.key ===
-            "Escape"
-        ) {
+        if (event.key === "Escape") {
             setResults([]);
             setActiveIndex(-1);
         }
