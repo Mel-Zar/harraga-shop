@@ -81,7 +81,7 @@ export default function VerifyEmail() {
                 }
 
                 const url =
-                    `${apiUrl}/api/auth/verify-email/${encodeURIComponent(
+                    `${apiUrl}/auth/verify-email/${encodeURIComponent(
                         userId
                     )}/${encodeURIComponent(
                         token
