@@ -86,6 +86,12 @@ const emailRegex =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // =====================================================
+// USERNAME VALIDATION
+// =====================================================
+
+const usernameRegex = /^[a-z0-9_]{3,20}$/;
+
+// =====================================================
 // REGISTER
 // =====================================================
 
@@ -189,6 +195,31 @@ export const register = async (
             return res.status(400).json({
                 message:
                     "All fields are required",
+            });
+        }
+
+        // =====================================================
+        // USERNAME VALIDATION
+        // =====================================================
+
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({
+                message:
+                    "Username must be 3-20 characters and contain only letters, numbers, and underscores.",
+            });
+        }
+
+        // =================================================
+        // CONFIRM PASSWORD
+        // =================================================
+
+        if (
+            password !==
+            confirmPassword
+        ) {
+            return res.status(400).json({
+                message:
+                    "Passwords do not match",
             });
         }
 
@@ -844,6 +875,7 @@ export const resetPassword = async (
                     "Password and confirmPassword are required",
             });
         }
+
 
         // =================================================
         // CONFIRM PASSWORD

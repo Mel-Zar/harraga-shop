@@ -1,20 +1,22 @@
 /* ==========================================
    HARRAGA SHOP — REGISTER CAPTCHA
-   Chrome Silver — helt responsiv styling
-   Mobil, surfplatta och dator
+   Chrome Silver — fully responsive
+   Vertically centered with equal top/bottom
    ========================================== */
 
 .register-captcha {
   box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
 
   width: 100%;
   min-width: 0;
-  min-height: 70vh;
+  min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
-  padding: clamp(16px, 4vw, 48px) 16px;
+  padding: 24px 16px;
 
   color: #eeeeef;
   background: #050505;
@@ -75,8 +77,7 @@
 
 /* ==========================================
    HCAPTCHA
-   Behåll widgetens naturliga storlek.
-   Styla endast containern runt iframen.
+   Preserve widget's natural dimensions
    ========================================== */
 
 .register-captcha__widget {
@@ -108,14 +109,12 @@
 
 .register-captcha__widget iframe {
   display: block;
-
-  /* Låt hCaptcha bestämma sin egen bredd och höjd. */
   max-width: 100%;
   border: 0;
 }
 
 /* ==========================================
-   FELMEDDELANDEN
+   ERROR MESSAGES
    ========================================== */
 
 .register-captcha__error {
@@ -135,7 +134,7 @@
 }
 
 /* ==========================================
-   KNAPPAR
+   BUTTONS
    ========================================== */
 
 .register-captcha__button {
@@ -209,40 +208,37 @@
 }
 
 /* ==========================================
-   SURFPLATTOR
+   TABLETS
    ========================================== */
 
 @media (max-width: 768px) {
   .register-captcha {
-    min-height: 60vh;
-    padding: 28px 16px;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 24px 16px;
   }
 
   .register-captcha__card {
     max-width: 500px;
     padding: 26px 20px;
   }
-
-  .register-captcha__widget {
-    margin: 20px auto 24px;
-  }
 }
 
 /* ==========================================
-   MOBILTELEFONER
+   MOBILE
    ========================================== */
 
 @media (max-width: 600px) {
   .register-captcha {
-    width: 100%;
-    min-width: 0;
+    min-height: 100vh;
+    min-height: 100svh;
     padding: 18px 10px;
   }
 
   .register-captcha__card {
     width: 100%;
     max-width: 500px;
-    min-width: 0;
+    margin: 0 auto;
     padding: 22px 14px;
     border-radius: 3px;
   }
@@ -261,15 +257,8 @@
   }
 
   .register-captcha__widget {
-    width: 100%;
-    max-width: 100%;
     min-height: 138px;
     margin: 18px auto 22px;
-    padding: 0;
-  }
-
-  .register-captcha__widget > div {
-    max-width: 100%;
   }
 
   .register-captcha__button {
@@ -281,11 +270,13 @@
 }
 
 /* ==========================================
-   SMÅ MOBILER
+   SMALL MOBILE
    ========================================== */
 
 @media (max-width: 400px) {
   .register-captcha {
+    min-height: 100vh;
+    min-height: 100svh;
     padding: 14px 8px;
   }
 
@@ -303,11 +294,13 @@
 }
 
 /* ==========================================
-   MYCKET SMÅ SKÄRMAR
+   VERY SMALL SCREENS
    ========================================== */
 
 @media (max-width: 320px) {
   .register-captcha {
+    min-height: 100vh;
+    min-height: 100svh;
     padding: 12px 5px;
   }
 
@@ -330,7 +323,7 @@
 }
 
 /* ==========================================
-   REDUCERAD RÖRELSE
+   REDUCED MOTION
    ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
