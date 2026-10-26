@@ -154,17 +154,25 @@ export default function Register() {
             return;
         }
 
-        // Username
-        const username = form.username.trim();
+        // Username: email addresses are not allowed.
+        const username = form.username.trim().toLowerCase();
+        const usernamePattern = /^[a-z0-9_]{3,20}$/;
 
         if (!username) {
             showValidationError("Username is required.");
             return;
         }
 
-        if (username.length < 3 || username.length > 50) {
+        if (username.length < 3 || username.length > 20) {
             showValidationError(
-                "Username must be between 3 and 50 characters."
+                "Username must be between 3 and 20 characters."
+            );
+            return;
+        }
+
+        if (!usernamePattern.test(username)) {
+            showValidationError(
+                "Username can only contain letters, numbers, and underscores. Email addresses are not allowed."
             );
             return;
         }
@@ -325,7 +333,9 @@ export default function Register() {
                 placeholder="Username"
                 autoComplete="username"
                 minLength={3}
-                maxLength={50}
+                maxLength={20}
+                pattern="[a-zA-Z0-9_]{3,20}"
+                title="Use 3–20 letters, numbers, or underscores. Email addresses are not allowed."
                 required
             />
 
