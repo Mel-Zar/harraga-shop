@@ -1,20 +1,19 @@
 /* ==========================================
    HARRAGA SHOP — REGISTER CAPTCHA
-   Chrome Silver — fully responsive
-   Vertically centered with equal top/bottom
+   Chrome Silver — responsive layout
    ========================================== */
 
 .register-captcha {
   box-sizing: border-box;
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 
   width: 100%;
   min-width: 0;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: 0;
   margin: 0;
   padding: 24px 16px;
 
@@ -29,15 +28,20 @@
   box-sizing: border-box;
 }
 
+/* ==========================================
+   CARD
+   ========================================== */
+
 .register-captcha__card {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
 
   width: 100%;
   max-width: 500px;
   min-width: 0;
-  margin: 0 auto;
+  margin: auto;
   padding: clamp(20px, 4vw, 32px);
 
   color: #eeeeef;
@@ -48,6 +52,10 @@
   border-radius: 4px;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
 }
+
+/* ==========================================
+   TITLE
+   ========================================== */
 
 .register-captcha__title {
   max-width: 100%;
@@ -64,6 +72,10 @@
   hyphens: auto;
 }
 
+/* ==========================================
+   DESCRIPTION
+   ========================================== */
+
 .register-captcha__description {
   max-width: 100%;
   margin: 0 0 20px;
@@ -77,10 +89,11 @@
 
 /* ==========================================
    HCAPTCHA
-   Preserve widget's natural dimensions
    ========================================== */
 
 .register-captcha__widget {
+  position: relative;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -92,13 +105,12 @@
   margin: 20px auto 24px;
   padding: 0;
 
-  position: relative;
   overflow: visible;
 }
 
 .register-captcha__widget > div {
   display: block;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
 
   width: auto;
   min-width: 0;
@@ -213,8 +225,6 @@
 
 @media (max-width: 768px) {
   .register-captcha {
-    min-height: 100vh;
-    min-height: 100svh;
     padding: 24px 16px;
   }
 
@@ -230,15 +240,12 @@
 
 @media (max-width: 600px) {
   .register-captcha {
-    min-height: 100vh;
-    min-height: 100svh;
     padding: 18px 10px;
   }
 
   .register-captcha__card {
     width: 100%;
     max-width: 500px;
-    margin: 0 auto;
     padding: 22px 14px;
     border-radius: 3px;
   }
@@ -275,8 +282,6 @@
 
 @media (max-width: 400px) {
   .register-captcha {
-    min-height: 100vh;
-    min-height: 100svh;
     padding: 14px 8px;
   }
 
@@ -299,8 +304,6 @@
 
 @media (max-width: 320px) {
   .register-captcha {
-    min-height: 100vh;
-    min-height: 100svh;
     padding: 12px 5px;
   }
 
@@ -319,6 +322,86 @@
   .register-captcha__button {
     padding: 11px 8px;
     font-size: 0.84rem;
+  }
+}
+
+/* ==========================================
+   APP LAYOUT — CAPTCHA PAGE
+   ========================================== */
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+.app.app--captcha {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.app.app--captcha > .captcha-page-layout {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.app.app--captcha .captcha-page-layout > .register-captcha {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 56px 24px;
+}
+
+.app.app--captcha .register-captcha__card {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 500px;
+  margin: 0;
+}
+
+/* ==========================================
+   RESPONSIVE CAPTCHA SPACING
+   Extra breathing room above and below
+   ========================================== */
+
+@media (max-width: 768px) {
+  .app.app--captcha .captcha-page-layout > .register-captcha {
+    padding: 44px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app.app--captcha .captcha-page-layout > .register-captcha {
+    padding: 36px 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .app.app--captcha .captcha-page-layout > .register-captcha {
+    padding: 30px 10px;
+  }
+}
+
+@media (max-width: 320px) {
+  .app.app--captcha .captcha-page-layout > .register-captcha {
+    padding: 24px 6px;
   }
 }
 

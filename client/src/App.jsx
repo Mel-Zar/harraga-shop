@@ -1,10 +1,10 @@
-
 import { useEffect } from "react";
 
 import {
   BrowserRouter as Router,
   Routes,
   Route,
+  useLocation,
 } from "react-router-dom";
 
 // =====================================================
@@ -89,187 +89,77 @@ import UserRoute from "./routes/UserRoute";
 import { getProtectedData } from "./services/protectedService";
 
 // =====================================================
-// APP
+// APP LAYOUT
 // =====================================================
 
-function App() {
-
-  // =================================================
-  // 🔐 OPTIONAL PROTECTED CONNECTION TEST
-  // =================================================
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (
-      !token ||
-      token === "null" ||
-      token === "undefined"
-    ) {
-      return;
-    }
-
-    getProtectedData()
-      .then((data) => {
-        console.log(
-          "✅ PROTECTED DATA:",
-          data
-        );
-      })
-      .catch((err) => {
-        console.log(
-          "❌ PROTECTED ERROR:",
-          err.message
-        );
-      });
-  }, []);
+function AppLayout() {
+  const location = useLocation();
+  const isCaptchaPage = location.pathname === "/register/captcha";
 
   return (
-    <Router>
-      <div className="app">
+    <div className={`app${isCaptchaPage ? " app--captcha" : ""}`}>
+      <Navbar />
 
-        {/* =================================================
-                    🔥 NAVBAR
-                ================================================= */}
-
-        <Navbar />
-
-        {/* =================================================
-                    📍 ROUTES
-                ================================================= */}
-
+      <div
+        className={
+          isCaptchaPage
+            ? "captcha-page-layout"
+            : "app-content"
+        }
+      >
         <Routes>
+          {/* HOME */}
+          <Route path="/" element={<Home />} />
 
-          {/* =================================================
-                        🏠 HOME
-                    ================================================= */}
-
-          <Route
-            path="/"
-            element={<Home />}
-          />
-
-          {/* =================================================
-                        🔐 AUTH
-                    ================================================= */}
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-          {/* =================================================
-                        🛡️ REGISTER CAPTCHA
-                        SEPARATE PAGE
-                    ================================================= */}
-
+          {/* AUTH */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route
             path="/register/captcha"
             element={<RegisterCaptcha />}
           />
 
-          {/* =================================================
-                        ✉️ EMAIL VERIFY
-                    ================================================= */}
-
+          {/* EMAIL VERIFICATION */}
           <Route
             path="/verify-email/:userId/:token"
             element={<VerifyEmail />}
           />
 
-          {/* =================================================
-                        🔑 FORGOT PASSWORD
-                    ================================================= */}
-
+          {/* PASSWORD */}
           <Route
             path="/forgot-password"
             element={<ForgotPassword />}
           />
-
-          {/* =================================================
-                        🔑 RESET PASSWORD
-                    ================================================= */}
-
           <Route
             path="/reset-password/:token"
             element={<ResetPassword />}
           />
 
-          {/* =================================================
-                        💬 CUSTOMER SERVICE
-                        PUBLIC - ALLA KUNDER
-                    ================================================= */}
-
+          {/* CUSTOMER SERVICE */}
           <Route
             path="/kundservice"
             element={<CustomerService />}
           />
 
-          {/* =================================================
-                        🛍️ PRODUCTS
-                        PUBLIC
-                    ================================================= */}
+          {/* PRODUCTS */}
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<Product />} />
 
-          <Route
-            path="/products"
-            element={<Products />}
-          />
+          {/* CART / CHECKOUT */}
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
 
-          <Route
-            path="/products/:id"
-            element={<Product />}
-          />
-
-          {/* =================================================
-                        🛒 CART
-                        PUBLIC
-                    ================================================= */}
-
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
-
-          {/* =================================================
-                        💳 CHECKOUT
-                        PUBLIC
-                    ================================================= */}
-
-          <Route
-            path="/checkout"
-            element={<Checkout />}
-          />
-
-          {/* =================================================
-                        💰 PAYMENT SUCCESS
-                        PUBLIC
-                    ================================================= */}
-
+          {/* PAYMENT */}
           <Route
             path="/payment/success"
             element={<PaymentSuccess />}
           />
-
-          {/* =================================================
-                        ❌ PAYMENT CANCEL
-                        PUBLIC
-                    ================================================= */}
-
           <Route
             path="/payment/cancel"
             element={<PaymentCancel />}
           />
 
-          {/* =================================================
-                        👤 USER ACCOUNT
-                        NORMAL USER ONLY
-                    ================================================= */}
-
+          {/* USER ACCOUNT */}
           <Route
             path="/profile"
             element={
@@ -278,7 +168,6 @@ function App() {
               </UserRoute>
             }
           />
-
           <Route
             path="/profile/orders"
             element={
@@ -287,7 +176,6 @@ function App() {
               </UserRoute>
             }
           />
-
           <Route
             path="/profile/orders/:id"
             element={
@@ -296,7 +184,6 @@ function App() {
               </UserRoute>
             }
           />
-
           <Route
             path="/profile/edit"
             element={
@@ -305,7 +192,6 @@ function App() {
               </UserRoute>
             }
           />
-
           <Route
             path="/profile/password"
             element={
@@ -314,7 +200,6 @@ function App() {
               </UserRoute>
             }
           />
-
           <Route
             path="/profile/address"
             element={
@@ -324,10 +209,7 @@ function App() {
             }
           />
 
-          {/* =================================================
-                        👑 ADMIN
-                    ================================================= */}
-
+          {/* ADMIN */}
           <Route
             path="/admin/dashboard"
             element={
@@ -336,12 +218,6 @@ function App() {
               </AdminRoute>
             }
           />
-
-          {/* =================================================
-                        ➕ CREATE PRODUCT
-                        ORIGINAL ROUTE
-                    ================================================= */}
-
           <Route
             path="/admin/create"
             element={
@@ -350,13 +226,6 @@ function App() {
               </AdminRoute>
             }
           />
-
-          {/* =================================================
-                        ➕ CREATE PRODUCT
-                        ALIAS
-                        BEHÅLLER LINKEN FRÅN PRODUCTS
-                    ================================================= */}
-
           <Route
             path="/admin/products/create"
             element={
@@ -365,11 +234,6 @@ function App() {
               </AdminRoute>
             }
           />
-
-          {/* =================================================
-                        📦 ADMIN ORDERS
-                    ================================================= */}
-
           <Route
             path="/admin/orders"
             element={
@@ -378,7 +242,6 @@ function App() {
               </AdminRoute>
             }
           />
-
           <Route
             path="/admin/orders/:id"
             element={
@@ -388,10 +251,6 @@ function App() {
             }
           />
 
-          {/* =================================================
-                        👥 ADMIN USERS
-                    ================================================= */}
-
           <Route
             path="/admin/users"
             element={
@@ -400,11 +259,6 @@ function App() {
               </AdminRoute>
             }
           />
-
-          {/* =================================================
-                        🛍️ ADMIN PRODUCTS
-                    ================================================= */}
-
           <Route
             path="/admin/products"
             element={
@@ -414,10 +268,7 @@ function App() {
             }
           />
 
-          {/* =================================================
-                        404
-                    ================================================= */}
-
+          {/* 404 */}
           <Route
             path="*"
             element={
@@ -429,26 +280,43 @@ function App() {
                   textAlign: "center",
                 }}
               >
-                <h1>
-                  404
-                </h1>
-
-                <p>
-                  Page not found.
-                </p>
+                <h1>404</h1>
+                <p>Page not found.</p>
               </div>
             }
           />
-
         </Routes>
-
-        {/* =================================================
-                    🦶 FOOTER
-                ================================================= */}
-
-        <Footer />
-
       </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+// =====================================================
+// APP
+// =====================================================
+
+function App() {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token || token === "null" || token === "undefined") {
+      return;
+    }
+
+    getProtectedData()
+      .then((data) => {
+        console.log("✅ PROTECTED DATA:", data);
+      })
+      .catch((err) => {
+        console.log("❌ PROTECTED ERROR:", err.message);
+      });
+  }, []);
+
+  return (
+    <Router>
+      <AppLayout />
     </Router>
   );
 }
