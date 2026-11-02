@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById } from "../../services/productService";
 import ProductGallery from "../../components/ProductGallery/ProductGallery";
 import { useCart } from "../../context/useCart";
+import "./Product.scss";
 
 function Product() {
     const { id } = useParams();
@@ -10,197 +12,304 @@ function Product() {
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Quantity för produktsidan
     const [quantity, setQuantity] = useState(1);
 
-    const {
-        addToCart
-    } = useCart();
+    const { addToCart } = useCart();
 
     useEffect(() => {
         const fetchProduct = async () => {
+            setLoading(true);
+
             try {
                 const product = await getProductById(id);
-
                 setProduct(product);
-
+                setQuantity(1);
             } catch (error) {
-                console.error(error);
-
+                console.error("Failed to load product:", error);
+                setProduct(null);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProduct();
-
     }, [id]);
 
     if (loading) {
-        return <h2>Loading...</h2>;
+        return (
+            <div className="product-loading">
+                <div className="product-loading__spinner"></div>
+                <p>LOADING PRODUCT</p>
+            </div>
+        );
     }
 
     if (!product) {
-        return <h2>Product not found</h2>;
+        return (
+            <div className="product-not-found">
+                <h2>PRODUCT NOT FOUND</h2>
+                <button onClick={() => navigate(-1)}>
+                    GO BACK
+                </button>
+            </div>
+        );
     }
 
-    console.log("Product images:", product.images);
-
     const increaseQuantity = () => {
-
         if (quantity < product.stock) {
             setQuantity((prev) => prev + 1);
         }
-
     };
 
     const decreaseQuantity = () => {
-
         if (quantity > 1) {
             setQuantity((prev) => prev - 1);
         }
-
     };
 
     const addProductToCart = () => {
-
         if (product.stock === 0) {
             return;
         }
 
-        addToCart(
-            product,
-            quantity
-        );
-
-        // Återställ väljaren efter att produkten lagts till
+        addToCart(product, quantity);
         setQuantity(1);
-
     };
 
     const buyNow = () => {
-
         if (product.stock === 0) {
             return;
         }
 
-        addToCart(
-            product,
-            quantity
-        );
-
+        addToCart(product, quantity);
         navigate("/cart");
-
     };
 
     return (
-        <div
-            style={{
-                maxWidth: "1000px",
-                margin: "0 auto",
-                padding: "20px",
-            }}
-        >
+        <main className="product-page">
 
-            <ProductGallery
-                images={product.images}
-                productName={product.name}
-                imageStyle={{
-                    width: "100%",
-                    maxWidth: "600px",
-                    aspectRatio: "1 / 1",
-                    objectFit: "contain",
-                    borderRadius: "12px",
-                }}
-            />
+            {/* BREADCRUMB */}
 
-            <h1>{product.name}</h1>
+            <div className="product-breadcrumb">
+                <button onClick={() => navigate("/")}>
+                    HOME
+                </button>
 
-            <p>{product.description}</p>
+                <span>/</span>
 
-            <p>
-                <strong>Price:</strong> ${product.price}
-            </p>
+                <span>SHOP</span>
 
-            <p>
-                <strong>Category:</strong> {product.category}
-            </p>
+                <span>/</span>
 
-            <p>
-                <strong>Stock:</strong> {product.stock}
-            </p>
+                <span className="product-breadcrumb__current">
+                    {product.name}
+                </span>
+            </div>
 
-            <div style={{ marginTop: "20px" }}>
+            {/* PRODUCT CONTENT */}
 
-                <label>
-                    Quantity:
-                </label>
+            <section className="product-layout">
 
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        marginLeft: "10px",
-                    }}
-                >
+                {/* LEFT: PRODUCT GALLERY */}
 
-                    <button
-                        onClick={decreaseQuantity}
-                        disabled={
-                            quantity <= 1 ||
-                            product.stock === 0
-                        }
-                    >
-                        -
-                    </button>
+                <div className="product-visual">
 
-                    <span
-                        style={{
-                            minWidth: "30px",
-                            textAlign: "center",
-                            fontWeight: "bold",
-                        }}
-                    >
-                        {quantity}
-                    </span>
+                    <div className="product-visual__badge">
+                        HARRAGA EXCLUSIVE
+                    </div>
 
-                    <button
-                        onClick={increaseQuantity}
-                        disabled={
-                            quantity >= product.stock ||
-                            product.stock === 0
-                        }
-                    >
-                        +
-                    </button>
+                    <div className="product-gallery-wrapper">
+                        <ProductGallery
+                            images={product.images}
+                            productName={product.name}
+                            imageStyle={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                aspectRatio: "1 / 1",
+                                objectFit: "contain",
+                                borderRadius: "4px",
+                            }}
+                        />
+                    </div>
+
+                    <div className="product-visual__caption">
+                        <span>HARRAGA SHOP</span>
+                        <span>PREMIUM COLLECTION</span>
+                    </div>
 
                 </div>
 
-            </div>
+                {/* RIGHT: PRODUCT INFORMATION */}
 
-            <br />
+                <div className="product-info">
 
-            <button
-                onClick={addProductToCart}
-                disabled={product.stock === 0}
-            >
-                {product.stock === 0
-                    ? "Out of Stock"
-                    : "Add To Cart"}
-            </button>
+                    <div className="product-info__eyebrow">
+                        <span className="product-info__line"></span>
+                        PREMIUM SELECTION
+                    </div>
 
-            {" "}
+                    <h1>{product.name}</h1>
 
-            <button
-                onClick={buyNow}
-                disabled={product.stock === 0}
-            >
-                Buy Now
-            </button>
+                    <div className="product-info__divider"></div>
 
-        </div>
+                    <div className="product-price">
+                        <span className="product-price__label">
+                            PRICE
+                        </span>
+
+                        <span className="product-price__value">
+                            ${product.price}
+                        </span>
+                    </div>
+
+                    <div className="product-description">
+                        <h3>PRODUCT DETAILS</h3>
+
+                        <p>
+                            {product.description}
+                        </p>
+                    </div>
+
+                    {/* PRODUCT INFORMATION */}
+
+                    <div className="product-specifications">
+
+                        <div className="product-specification">
+                            <span>CATEGORY</span>
+                            <strong>{product.category}</strong>
+                        </div>
+
+                        <div className="product-specification">
+                            <span>AVAILABILITY</span>
+
+                            <strong
+                                className={
+                                    product.stock > 0
+                                        ? "stock-available"
+                                        : "stock-unavailable"
+                                }
+                            >
+                                {product.stock > 0
+                                    ? "IN STOCK"
+                                    : "OUT OF STOCK"}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    {/* QUANTITY */}
+
+                    <div className="product-purchase">
+
+                        <label className="product-purchase__label">
+                            SELECT QUANTITY
+                        </label>
+
+                        <div className="quantity-control">
+
+                            <button
+                                type="button"
+                                onClick={decreaseQuantity}
+                                disabled={
+                                    quantity <= 1 ||
+                                    product.stock === 0
+                                }
+                                aria-label="Decrease quantity"
+                            >
+                                −
+                            </button>
+
+                            <span>{quantity}</span>
+
+                            <button
+                                type="button"
+                                onClick={increaseQuantity}
+                                disabled={
+                                    quantity >= product.stock ||
+                                    product.stock === 0
+                                }
+                                aria-label="Increase quantity"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    {/* ACTION BUTTONS */}
+
+                    <div className="product-actions">
+
+                        <button
+                            type="button"
+                            className="product-add-button"
+                            onClick={addProductToCart}
+                            disabled={product.stock === 0}
+                        >
+                            <span>
+                                {product.stock === 0
+                                    ? "OUT OF STOCK"
+                                    : "ADD TO CART"}
+                            </span>
+
+                            <span className="product-button-arrow">
+                                →
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="product-buy-button"
+                            onClick={buyNow}
+                            disabled={product.stock === 0}
+                        >
+                            BUY NOW
+                        </button>
+
+                    </div>
+
+                    {/* TRUST INFORMATION */}
+
+                    <div className="product-trust">
+
+                        <div>
+                            <span className="product-trust__icon">
+                                ✦
+                            </span>
+
+                            <span>PREMIUM QUALITY</span>
+                        </div>
+
+                        <div>
+                            <span className="product-trust__icon">
+                                ✓
+                            </span>
+
+                            <span>SECURE SHOPPING</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            {/* BOTTOM BRAND SECTION */}
+
+            <section className="product-brand-footer">
+
+                <span>HARRAGA SHOP</span>
+
+                <div></div>
+
+                <p>
+                    STYLE. QUALITY. IDENTITY.
+                </p>
+
+            </section>
+
+        </main>
     );
 }
 
