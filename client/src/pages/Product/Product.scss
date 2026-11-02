@@ -7,11 +7,18 @@
 
 .product-page {
   position: relative;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  justify-content: center;
+
   width: 100%;
   max-width: 1500px;
-  min-height: 80vh;
+  min-width: 0;
+  min-height: 0;
+
   margin: 0 auto;
-  padding: 35px 5% 70px;
+  padding: 35px 5%;
 
   color: $text-color;
 
@@ -23,7 +30,7 @@
     ),
     #050505;
 
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* =========================================
@@ -70,10 +77,11 @@
 .product-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  align-items: start;
+  align-items: center;
   gap: clamp(35px, 6vw, 90px);
 
   width: 100%;
+  flex-shrink: 0;
 }
 
 /* =========================================
@@ -519,7 +527,8 @@
   align-items: center;
   gap: 22px;
 
-  margin-top: 85px;
+  flex-shrink: 0;
+  margin-top: 55px;
   padding-top: 28px;
 
   border-top: 1px solid rgba(255, 255, 255, 0.14);
@@ -647,6 +656,10 @@
 ========================================= */
 
 @media (max-width: 768px) {
+  .product-page {
+    justify-content: flex-start;
+  }
+
   .product-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 35px;
@@ -665,7 +678,7 @@
   }
 
   .product-brand-footer {
-    margin-top: 55px;
+    margin-top: 45px;
   }
 }
 
@@ -675,7 +688,7 @@
 
 @media (max-width: 600px) {
   .product-page {
-    padding: 22px 15px 45px;
+    padding: 22px 15px;
   }
 
   .product-breadcrumb {
@@ -732,7 +745,7 @@
   .product-brand-footer {
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 45px;
+    margin-top: 35px;
 
     span {
       font-size: 0.68rem;
@@ -769,12 +782,211 @@
 }
 
 /* =========================================
+   PRODUCT IMAGE ZOOM
+========================================= */
+
+.product-image-zoom {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+
+  background: rgba(10, 10, 10, 0.85);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+
+  font-size: 28px;
+  cursor: zoom-in;
+  transition: 0.25s ease;
+
+  &:hover {
+    background: #ffffff;
+    color: #050505;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* =========================================
+   IMAGE LIGHTBOX
+========================================= */
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  padding: 55px 25px;
+
+  background: rgba(0, 0, 0, 0.97);
+  backdrop-filter: blur(15px);
+
+  animation: lightboxFadeIn 0.25s ease;
+
+  img {
+    display: block;
+
+    max-width: 90vw;
+    max-height: 82vh;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.08);
+
+    animation: lightboxImageIn 0.3s ease;
+  }
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 48px;
+
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+
+  font-size: 36px;
+  cursor: pointer;
+  transition: 0.25s ease;
+
+  &:hover {
+    background: #ffffff;
+    color: #050505;
+    transform: rotate(90deg);
+  }
+}
+
+.lightbox-caption {
+  margin-top: 18px;
+
+  color: #bdbdc4;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lightboxImageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================
+   LIGHTBOX MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  .image-lightbox {
+    padding: 60px 12px;
+
+    img {
+      max-width: 96vw;
+      max-height: 78vh;
+    }
+  }
+
+  .lightbox-close {
+    top: 12px;
+    right: 12px;
+  }
+}
+
+/* =========================================
+   APP LAYOUT — PRODUCT PAGE
+   Same principle as CAPTCHA layout
+========================================= */
+
+.app:has(.product-page) {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.app:has(.product-page) > .app-content {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.app:has(.product-page) > .app-content > .product-page {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  justify-content: center;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+/* =========================================
+   PRODUCT PAGE — TABLET AND MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+  .app:has(.product-page) > .app-content > .product-page {
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================
    ACCESSIBILITY
 ========================================= */
 
 @media (prefers-reduced-motion: reduce) {
   .product-page *,
-  .product-loading__spinner {
+  .product-loading__spinner,
+  .image-lightbox,
+  .image-lightbox img {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 
 import {
@@ -98,9 +99,10 @@ function AppLayout() {
 
   return (
     <div className={`app${isCaptchaPage ? " app--captcha" : ""}`}>
+
       <Navbar />
 
-      <div
+      <main
         className={
           isCaptchaPage
             ? "captcha-page-layout"
@@ -108,6 +110,7 @@ function AppLayout() {
         }
       >
         <Routes>
+
           {/* HOME */}
           <Route path="/" element={<Home />} />
 
@@ -168,6 +171,7 @@ function AppLayout() {
               </UserRoute>
             }
           />
+
           <Route
             path="/profile/orders"
             element={
@@ -176,6 +180,7 @@ function AppLayout() {
               </UserRoute>
             }
           />
+
           <Route
             path="/profile/orders/:id"
             element={
@@ -184,6 +189,7 @@ function AppLayout() {
               </UserRoute>
             }
           />
+
           <Route
             path="/profile/edit"
             element={
@@ -192,6 +198,7 @@ function AppLayout() {
               </UserRoute>
             }
           />
+
           <Route
             path="/profile/password"
             element={
@@ -200,6 +207,7 @@ function AppLayout() {
               </UserRoute>
             }
           />
+
           <Route
             path="/profile/address"
             element={
@@ -218,6 +226,7 @@ function AppLayout() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/create"
             element={
@@ -226,6 +235,7 @@ function AppLayout() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/products/create"
             element={
@@ -234,6 +244,7 @@ function AppLayout() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/orders"
             element={
@@ -242,6 +253,7 @@ function AppLayout() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/orders/:id"
             element={
@@ -259,6 +271,7 @@ function AppLayout() {
               </AdminRoute>
             }
           />
+
           <Route
             path="/admin/products"
             element={
@@ -285,10 +298,12 @@ function AppLayout() {
               </div>
             }
           />
+
         </Routes>
-      </div>
+      </main>
 
       <Footer />
+
     </div>
   );
 }

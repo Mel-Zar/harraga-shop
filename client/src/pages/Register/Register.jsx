@@ -1,8 +1,10 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import AddressInput from "../../components/address/AddressInput.jsx";
+import CountrySelect from "../../components/CountrySelect/CountrySelect.jsx";
 import "./Register.scss";
 
 export default function Register() {
@@ -103,6 +105,14 @@ export default function Register() {
         toast.error(message);
     };
 
+    const capitalizeFirstLetter = (value) => {
+        const text = value.trim();
+
+        if (!text) return "";
+
+        return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -119,6 +129,24 @@ export default function Register() {
 
         if (name === "password") {
             setPasswordStrength(checkPasswordStrength(value));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+
+        if (name === "firstName" || name === "lastName" || name === "city") {
+            setForm((prev) => ({
+                ...prev,
+                [name]: capitalizeFirstLetter(value)
+            }));
+        }
+
+        if (name === "email") {
+            setForm((prev) => ({
+                ...prev,
+                email: value.trim().toLowerCase()
+            }));
         }
     };
 
@@ -291,16 +319,16 @@ export default function Register() {
         // Prepare validated registration data for the separate CAPTCHA page.
         const registrationData = {
             username: username.toLowerCase(),
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
+            firstName: capitalizeFirstLetter(form.firstName),
+            lastName: capitalizeFirstLetter(form.lastName),
             email,
             phone: form.phone.trim(),
             password: form.password,
             confirmPassword: form.confirmPassword,
             address: form.address.trim(),
             postalCode: form.postalCode.trim(),
-            city: form.city.trim(),
-            country: form.country,
+            city: capitalizeFirstLetter(form.city),
+            country: form.country
         };
 
         // Prevent rapid repeated submissions.
@@ -343,6 +371,7 @@ export default function Register() {
                 name="firstName"
                 value={form.firstName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="First Name"
                 autoComplete="given-name"
                 maxLength={100}
@@ -353,6 +382,7 @@ export default function Register() {
                 name="lastName"
                 value={form.lastName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Last Name"
                 autoComplete="family-name"
                 maxLength={100}
@@ -364,6 +394,7 @@ export default function Register() {
                 type="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Email"
                 autoComplete="email"
                 maxLength={320}
@@ -420,20 +451,16 @@ export default function Register() {
                 required
             />
 
-            <select
-                name="country"
+            <CountrySelect
+                countries={countries}
                 value={form.country}
-                onChange={handleChange}
-                required
-            >
-                <option value="">Select country</option>
-
-                {countries.map((country, index) => (
-                    <option key={`${country}-${index}`} value={country}>
-                        {country}
-                    </option>
-                ))}
-            </select>
+                onChange={(country) =>
+                    setForm((prev) => ({
+                        ...prev,
+                        country
+                    }))
+                }
+            />
 
             <AddressInput
                 form={form}
@@ -455,6 +482,7 @@ export default function Register() {
                 name="city"
                 value={form.city}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="City"
                 autoComplete="address-level2"
                 maxLength={100}

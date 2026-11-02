@@ -1,9 +1,11 @@
+
 import "./ProductGallery.scss";
 
 function ProductGallery({
     images = [],
     productName,
     onRemove,
+    onImageClick,
     imageStyle = {},
 }) {
     if (!Array.isArray(images) || images.length === 0) return null;
@@ -22,6 +24,7 @@ function ProductGallery({
         if (typeof rawValue !== "string" || !rawValue.trim()) return "";
 
         const value = rawValue.trim();
+
         if (/^(https?:|data:|blob:)/i.test(value)) return value;
 
         const path = value.startsWith("/") ? value : `/${value}`;
@@ -32,13 +35,17 @@ function ProductGallery({
         <div className="product-gallery">
             {images.map((image, index) => {
                 const imageUrl = getImageUrl(image);
+
                 const key =
                     typeof image === "string"
                         ? image
                         : image?._id || image?.url || image?.path || index;
 
                 return (
-                    <div className="product-gallery__item" key={`${key}-${index}`}>
+                    <div
+                        className="product-gallery__item"
+                        key={`${key}-${index}`}
+                    >
                         {imageUrl && (
                             <img
                                 className="product-gallery__image"
@@ -47,14 +54,19 @@ function ProductGallery({
                                 style={{
                                     objectFit: "contain",
                                     objectPosition: "center center",
+                                    cursor: onImageClick ? "zoom-in" : "default",
                                     ...imageStyle,
                                 }}
                                 loading="lazy"
+                                onClick={() => onImageClick?.(imageUrl)}
                             />
                         )}
 
                         {onRemove && (
-                            <button type="button" onClick={() => onRemove(image, index)}>
+                            <button
+                                type="button"
+                                onClick={() => onRemove(image, index)}
+                            >
                                 Ta bort
                             </button>
                         )}

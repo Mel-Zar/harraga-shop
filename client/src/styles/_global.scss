@@ -112,3 +112,38 @@ h3 {
   color: #050505;
   background: #d8d8dc;
 }
+
+/* =========================================
+   GLOBAL STICKY FOOTER LAYOUT
+========================================= */
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.app-content,
+.captcha-page-layout {
+  display: block;
+  flex: 1 0 auto;
+  width: 100%;
+  min-width: 0;
+}

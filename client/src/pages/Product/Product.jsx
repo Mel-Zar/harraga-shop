@@ -13,6 +13,7 @@ function Product() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
+    const [expandedImage, setExpandedImage] = useState(null);
 
     const { addToCart } = useCart();
 
@@ -24,6 +25,7 @@ function Product() {
                 const product = await getProductById(id);
                 setProduct(product);
                 setQuantity(1);
+                setExpandedImage(null);
             } catch (error) {
                 console.error("Failed to load product:", error);
                 setProduct(null);
@@ -34,6 +36,21 @@ function Product() {
 
         fetchProduct();
     }, [id]);
+
+    // Close enlarged image with Escape
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setExpandedImage(null);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
 
     if (loading) {
         return (
@@ -122,6 +139,9 @@ function Product() {
                         <ProductGallery
                             images={product.images}
                             productName={product.name}
+                            onImageClick={(imageUrl) => {
+                                setExpandedImage(imageUrl);
+                            }}
                             imageStyle={{
                                 width: "100%",
                                 maxWidth: "100%",
@@ -308,6 +328,35 @@ function Product() {
                 </p>
 
             </section>
+
+            {/* ENLARGED PRODUCT IMAGE */}
+
+            {expandedImage && (
+                <div
+                    className="image-lightbox"
+                    onClick={() => setExpandedImage(null)}
+                    role="presentation"
+                >
+                    <button
+                        type="button"
+                        className="lightbox-close"
+                        onClick={() => setExpandedImage(null)}
+                        aria-label="Close enlarged image"
+                    >
+                        ×
+                    </button>
+
+                    <img
+                        src={expandedImage}
+                        alt={product.name}
+                        onClick={(event) => event.stopPropagation()}
+                    />
+
+                    <span className="lightbox-caption">
+                        {product.name}
+                    </span>
+                </div>
+            )}
 
         </main>
     );

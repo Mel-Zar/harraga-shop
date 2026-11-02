@@ -1,8 +1,13 @@
 @use "../../styles/variables" as *;
 
+/* =========================================
+   HARRAGA SHOP — FOOTER
+========================================= */
+
 .site-footer {
+  flex-shrink: 0;
   width: 100%;
-  margin-top: 0;
+  margin-top: auto;
   background: linear-gradient(145deg, #151515, #070707);
   border-top: 1px solid $silver-border;
   color: $silver-bright;
@@ -15,12 +20,20 @@
   box-sizing: border-box;
 }
 
+/* =========================================
+   FOOTER INNER
+========================================= */
+
 .site-footer__inner {
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
   padding: clamp(36px, 5vw, 64px) clamp(16px, 4vw, 48px) 20px;
 }
+
+/* =========================================
+   MAIN FOOTER GRID
+========================================= */
 
 .site-footer__main {
   display: grid;
@@ -35,6 +48,10 @@
   align-items: flex-start;
   min-width: 0;
 }
+
+/* =========================================
+   BRAND
+========================================= */
 
 .site-footer__logo {
   display: inline-block;
@@ -58,6 +75,10 @@
   font-size: 0.9rem;
   line-height: 1.9;
 }
+
+/* =========================================
+   FOOTER COLUMNS
+========================================= */
 
 .site-footer__column h2 {
   margin: 0 0 20px;
@@ -92,6 +113,10 @@
   outline-offset: 4px;
 }
 
+/* =========================================
+   FOOTER BOTTOM
+========================================= */
+
 .site-footer__bottom {
   display: flex;
   align-items: center;
@@ -119,6 +144,10 @@
     transform 0.2s ease;
 }
 
+/* =========================================
+   TABLET
+========================================= */
+
 @media (max-width: 900px) {
   .site-footer__main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -130,11 +159,11 @@
   }
 }
 
-@media (max-width: 600px) {
-  .site-footer {
-    margin-top: 0;
-  }
+/* =========================================
+   MOBILE
+========================================= */
 
+@media (max-width: 600px) {
   .site-footer__inner {
     padding: 36px 20px 18px;
   }
@@ -166,6 +195,10 @@
   }
 }
 
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
 @media (max-width: 360px) {
   .site-footer__inner {
     padding-right: 14px;
@@ -185,6 +218,10 @@
     font-size: 0.78rem;
   }
 }
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
 
 @media (prefers-reduced-motion: reduce) {
   .site-footer *,
