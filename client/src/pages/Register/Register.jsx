@@ -28,6 +28,7 @@ export default function Register() {
 
     const [countries, setCountries] = useState([]);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -36,6 +37,20 @@ export default function Register() {
         label: "",
         color: ""
     });
+
+    const addressValuesRef = useRef({ address: form.address, city: form.city, postalCode: form.postalCode });
+
+    useEffect(() => {
+        const previous = addressValuesRef.current;
+        if (previous.address !== form.address) clearFieldError("address");
+        if (previous.city !== form.city) clearFieldError("city");
+        if (previous.postalCode !== form.postalCode) clearFieldError("postalCode");
+        addressValuesRef.current = {
+            address: form.address,
+            city: form.city,
+            postalCode: form.postalCode
+        };
+    }, [form.address, form.city, form.postalCode]);
 
     const lastSubmitRef = useRef(0);
     const cooldownMs = 5000;
@@ -76,34 +91,57 @@ export default function Register() {
     }, []);
 
     const checkPasswordStrength = (password) => {
-        let score = 0;
+        const length = password.length;
 
-        if (password.length >= 8) score++;
-        if (password.length >= 12) score++;
-        if (/\d/.test(password)) score++;
-
-        if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) {
-            score++;
+        if (length === 0) {
+            return { score: 0, label: "", color: "" };
         }
 
-        if (/[A-Z]/.test(password)) score++;
-
-        if (score <= 2) {
-            return { score, label: "Weak", color: "red" };
+        if (length < 8) {
+            return { score: 1, label: "Weak", color: "red" };
         }
 
-        if (score <= 4) {
-            return { score, label: "Medium", color: "orange" };
+        if (length < 20) {
+            return { score: 3, label: "Medium", color: "orange" };
         }
 
-        return { score, label: "Strong", color: "green" };
+        if (length < 25) {
+            return { score: 4, label: "Strong", color: "green" };
+        }
+
+        return { score: 5, label: "Strong", color: "green" };
     };
 
-    const showValidationError = (message) => {
-        setError(message);
+    // Field validation stays beside its input. Only general errors use the
+    // form-level message at the bottom; validation does not trigger a toast.
+    const showValidationError = (message, field = null) => {
         setSuccess("");
-        toast.error(message);
+
+        if (field) {
+            setError("");
+            setFieldErrors((prev) => ({ ...prev, [field]: message }));
+            return;
+        }
+
+        setError(message);
     };
+
+    const clearFieldError = (field) => {
+        setFieldErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+        setError("");
+    };
+
+    const renderFieldError = (field) =>
+        fieldErrors[field] ? (
+            <small className="register-field-error" id={`${field}-error`} role="alert">
+                {fieldErrors[field]}
+            </small>
+        ) : null;
 
     const capitalizeFirstLetter = (value) => {
         const text = String(value || "").trim();
@@ -115,6 +153,8 @@ export default function Register() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        clearFieldError(name);
 
         setForm((prev) => ({
             ...prev,
@@ -157,6 +197,7 @@ export default function Register() {
 
         setError("");
         setSuccess("");
+        setFieldErrors({});
 
         if (form.website.trim()) {
             showValidationError("Bot detected.");
@@ -168,14 +209,12 @@ export default function Register() {
         if (now - lastSubmitRef.current < cooldownMs) {
             const message = "Please wait before trying again.";
             setError(message);
-            toast.warning(message);
             return;
         }
 
         if (retryAfterRef.current > now) {
             const message = "Too many attempts. Try again soon.";
             setError(message);
-            toast.warning(message);
             return;
         }
 
@@ -183,31 +222,33 @@ export default function Register() {
         const usernamePattern = /^[a-z0-9_]{3,20}$/;
 
         if (!username) {
-            showValidationError("Username is required.");
+            showValidationError("Username is required.", "username");
             return;
         }
 
         if (username.length < 3 || username.length > 20) {
             showValidationError(
-                "Username must be between 3 and 20 characters."
+                "Username must be between 3 and 20 characters.",
+                "username"
             );
             return;
         }
 
         if (!usernamePattern.test(username)) {
             showValidationError(
-                "Username can only contain letters, numbers, and underscores. Email addresses are not allowed."
+                "Username can only contain letters, numbers, and underscores. Email addresses are not allowed.",
+                "username"
             );
             return;
         }
 
         if (!form.firstName.trim()) {
-            showValidationError("First name is required.");
+            showValidationError("First name is required.", "firstName");
             return;
         }
 
         if (!form.lastName.trim()) {
-            showValidationError("Last name is required.");
+            showValidationError("Last name is required.", "lastName");
             return;
         }
 
@@ -215,12 +256,12 @@ export default function Register() {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!email) {
-            showValidationError("Email is required.");
+            showValidationError("Email is required.", "email");
             return;
         }
 
         if (email.length > 320 || !emailPattern.test(email)) {
-            showValidationError("Please enter a valid email address.");
+            showValidationError("Please enter a valid email address.", "email");
             return;
         }
 
@@ -228,54 +269,42 @@ export default function Register() {
         const phoneDigits = phone.replace(/\D/g, "");
 
         if (!phone) {
-            showValidationError("Phone number is required.");
+            showValidationError("Phone number is required.", "phone");
             return;
         }
 
         if (phoneDigits.length < 7 || phoneDigits.length > 15) {
-            showValidationError("Please enter a valid phone number.");
+            showValidationError("Please enter a valid phone number.", "phone");
             return;
         }
 
         if (!form.password) {
-            showValidationError("Password is required.");
+            showValidationError("Password is required.", "password");
             return;
         }
 
         if (form.password.length < 8) {
-            showValidationError("Password must be at least 8 characters.");
+            showValidationError("Password must be at least 8 characters.", "password");
             return;
         }
 
         if (form.password.length > 128) {
-            showValidationError("Password must not exceed 128 characters.");
-            return;
-        }
-
-        const hasNumber = /\d/.test(form.password);
-        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
-            form.password
-        );
-
-        if (!hasNumber || !hasSpecial) {
-            showValidationError(
-                "Password must contain at least 1 number and 1 special character."
-            );
+            showValidationError("Password must not exceed 128 characters.", "password");
             return;
         }
 
         if (form.password !== form.confirmPassword) {
-            showValidationError("Passwords do not match.");
+            showValidationError("Passwords do not match.", "confirmPassword");
             return;
         }
 
         if (!form.country) {
-            showValidationError("Please select a country.");
+            showValidationError("Please select a country.", "country");
             return;
         }
 
         if (!form.address.trim()) {
-            showValidationError("Please enter your street address.");
+            showValidationError("Please enter your street address.", "address");
             return;
         }
 
@@ -283,18 +312,18 @@ export default function Register() {
             const message =
                 "Please select a valid address from the address suggestions.";
 
-            setError(message);
-            toast.warning(message);
+            setError("");
+            setFieldErrors((prev) => ({ ...prev, address: message }));
             return;
         }
 
         if (!form.city.trim()) {
-            showValidationError("Please enter/select a city.");
+            showValidationError("Please enter/select a city.", "city");
             return;
         }
 
         if (!form.postalCode.trim()) {
-            showValidationError("Please enter/select a postal code.");
+            showValidationError("Please enter/select a postal code.", "postalCode");
             return;
         }
 
@@ -344,7 +373,18 @@ export default function Register() {
                     result.message ||
                     "Username or email is already in use.";
 
-                showValidationError(message);
+                if (response.status === 429) {
+                    const retryAfterHeader = Number(response.headers.get("Retry-After"));
+                    const retrySeconds = Number.isFinite(retryAfterHeader) && retryAfterHeader > 0
+                        ? retryAfterHeader
+                        : 30;
+                    retryAfterRef.current = Date.now() + retrySeconds * 1000;
+                }
+
+                const field = ["username", "email"].includes(result.field)
+                    ? result.field
+                    : null;
+                showValidationError(message, field);
                 return;
             }
 
@@ -382,6 +422,8 @@ export default function Register() {
 
             <input
                 name="username"
+                aria-invalid={Boolean(fieldErrors.username)}
+                aria-describedby={fieldErrors.username ? "username-error" : undefined}
                 value={form.username}
                 onChange={handleChange}
                 placeholder="Username"
@@ -392,9 +434,12 @@ export default function Register() {
                 title="Use 3–20 letters, numbers, or underscores. Email addresses are not allowed."
                 required
             />
+            {renderFieldError("username")}
 
             <input
                 name="firstName"
+                aria-invalid={Boolean(fieldErrors.firstName)}
+                aria-describedby={fieldErrors.firstName ? "firstName-error" : undefined}
                 value={form.firstName}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -403,9 +448,12 @@ export default function Register() {
                 maxLength={100}
                 required
             />
+            {renderFieldError("firstName")}
 
             <input
                 name="lastName"
+                aria-invalid={Boolean(fieldErrors.lastName)}
+                aria-describedby={fieldErrors.lastName ? "lastName-error" : undefined}
                 value={form.lastName}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -414,9 +462,12 @@ export default function Register() {
                 maxLength={100}
                 required
             />
+            {renderFieldError("lastName")}
 
             <input
                 name="email"
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? "email-error" : undefined}
                 type="email"
                 value={form.email}
                 onChange={handleChange}
@@ -426,9 +477,12 @@ export default function Register() {
                 maxLength={320}
                 required
             />
+            {renderFieldError("email")}
 
             <input
                 name="phone"
+                aria-invalid={Boolean(fieldErrors.phone)}
+                aria-describedby={fieldErrors.phone ? "phone-error" : undefined}
                 type="tel"
                 value={form.phone}
                 onChange={handleChange}
@@ -437,17 +491,22 @@ export default function Register() {
                 maxLength={30}
                 required
             />
+            {renderFieldError("phone")}
 
             <input
                 name="password"
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 type="password"
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Password"
                 autoComplete="new-password"
+                minLength={8}
                 maxLength={128}
                 required
             />
+            {renderFieldError("password")}
 
             {form.password && (
                 <div className="password-strength">
@@ -467,6 +526,8 @@ export default function Register() {
 
             <input
                 name="confirmPassword"
+                aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                aria-describedby={fieldErrors.confirmPassword ? "confirmPassword-error" : undefined}
                 type="password"
                 value={form.confirmPassword}
                 onChange={handleChange}
@@ -475,26 +536,33 @@ export default function Register() {
                 maxLength={128}
                 required
             />
+            {renderFieldError("confirmPassword")}
 
             <CountrySelect
                 countries={countries}
                 value={form.country}
-                onChange={(country) =>
+                onChange={(country) => {
+                    clearFieldError("country");
                     setForm((prev) => ({
                         ...prev,
                         country
-                    }))
-                }
+                    }));
+                }}
+            // language={language}
             />
+            {renderFieldError("country")}
 
             <AddressInput
                 form={form}
                 setForm={setForm}
                 loading={loading}
             />
+            {renderFieldError("address")}
 
             <input
                 name="postalCode"
+                aria-invalid={Boolean(fieldErrors.postalCode)}
+                aria-describedby={fieldErrors.postalCode ? "postalCode-error" : undefined}
                 value={form.postalCode}
                 onChange={handleChange}
                 placeholder="Postal Code"
@@ -502,9 +570,12 @@ export default function Register() {
                 maxLength={20}
                 required
             />
+            {renderFieldError("postalCode")}
 
             <input
                 name="city"
+                aria-invalid={Boolean(fieldErrors.city)}
+                aria-describedby={fieldErrors.city ? "city-error" : undefined}
                 value={form.city}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -513,19 +584,20 @@ export default function Register() {
                 maxLength={100}
                 required
             />
+            {renderFieldError("city")}
 
             <button type="submit" disabled={loading}>
                 {loading ? "Checking..." : "Register"}
             </button>
 
             {error && (
-                <p role="alert" style={{ color: "red" }}>
+                <p className="register-form-error" role="alert" aria-live="assertive" style={{ color: "red" }}>
                     {error}
                 </p>
             )}
 
             {success && (
-                <p role="status" style={{ color: "green" }}>
+                <p className="register-form-success" role="status" aria-live="polite" style={{ color: "green" }}>
                     {success}
                 </p>
             )}

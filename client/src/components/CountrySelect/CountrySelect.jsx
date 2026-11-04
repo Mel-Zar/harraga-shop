@@ -1,29 +1,56 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export default function CountrySelect({
     countries = [],
     value = "",
-    onChange
+    onChange,
+    language = "en"
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
 
+    const generatedId = useId();
+    const listboxId = `country-listbox-${generatedId}`;
+    const searchInputId = `country-search-${generatedId}`;
+
     const wrapperRef = useRef(null);
     const searchRef = useRef(null);
     const optionRefs = useRef([]);
 
+    const currentLanguage = String(language).toLowerCase().startsWith("sv")
+        ? "sv"
+        : "en";
+
     // =========================
-    // FORMAT COUNTRY NAME
+    // COUNTRY NAME TRANSLATION
     // =========================
+
+    const normalizeCountry = (country) => {
+        const name = String(country || "").trim().toLowerCase();
+
+        if (["sweden", "sverige", "se"].includes(name)) {
+            return "SE";
+        }
+
+        return name;
+    };
 
     const formatCountryName = (country) => {
         const name = String(country || "").trim();
 
         if (!name) return "";
 
+        if (normalizeCountry(name) === "SE") {
+            return currentLanguage === "sv" ? "Sverige" : "Sweden";
+        }
+
         return name.charAt(0).toUpperCase() + name.slice(1);
+    };
+
+    const isSelected = (country) => {
+        return normalizeCountry(value) === normalizeCountry(country);
     };
 
     // =========================
@@ -32,17 +59,36 @@ export default function CountrySelect({
 
     const normalizedSearch = search.trim().toLocaleLowerCase();
 
-    const filteredCountries = countries.filter((country) =>
-        String(country)
-            .toLocaleLowerCase()
-            .includes(normalizedSearch)
-    );
+    const filteredCountries = countries.filter((country) => {
+        const originalName = String(country).toLocaleLowerCase();
+        const displayName = formatCountryName(country).toLocaleLowerCase();
 
-    // Säkerställ att aktivt index alltid ligger inom resultatlistan.
+        return (
+            originalName.includes(normalizedSearch) ||
+            displayName.includes(normalizedSearch) ||
+            (
+                normalizeCountry(country) === "SE" &&
+                ["sweden", "sverige", "se"].some((name) =>
+                    name.includes(normalizedSearch)
+                )
+            )
+        );
+    });
+
     const safeActiveIndex =
         filteredCountries.length === 0
             ? -1
             : Math.min(activeIndex, filteredCountries.length - 1);
+
+    // =========================
+    // CLOSE DROPDOWN
+    // =========================
+
+    const closeDropdown = () => {
+        setIsOpen(false);
+        setSearch("");
+        setActiveIndex(0);
+    };
 
     // =========================
     // OUTSIDE CLICK + ESCAPE
@@ -54,17 +100,13 @@ export default function CountrySelect({
                 wrapperRef.current &&
                 !wrapperRef.current.contains(event.target)
             ) {
-                setIsOpen(false);
-                setSearch("");
-                setActiveIndex(0);
+                closeDropdown();
             }
         };
 
         const handleEscape = (event) => {
             if (event.key === "Escape") {
-                setIsOpen(false);
-                setSearch("");
-                setActiveIndex(0);
+                closeDropdown();
             }
         };
 
@@ -80,13 +122,17 @@ export default function CountrySelect({
     }, []);
 
     // =========================
-    // FOCUS SEARCH INPUT
+    // FOCUS SEARCH
     // =========================
 
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) return undefined;
+
+        const frameId = requestAnimationFrame(() => {
             searchRef.current?.focus();
-        }
+        });
+
+        return () => cancelAnimationFrame(frameId);
     }, [isOpen]);
 
     // =========================
@@ -97,23 +143,21 @@ export default function CountrySelect({
         if (
             isOpen &&
             safeActiveIndex >= 0 &&
-            safeActiveIndex < filteredCountries.length
+            optionRefs.current[safeActiveIndex]
         ) {
-            optionRefs.current[safeActiveIndex]?.scrollIntoView({
+            optionRefs.current[safeActiveIndex].scrollIntoView({
                 block: "nearest"
             });
         }
-    }, [safeActiveIndex, isOpen, filteredCountries.length]);
+    }, [isOpen, safeActiveIndex]);
 
     // =========================
-    // OPEN / CLOSE DROPDOWN
+    // OPEN / CLOSE
     // =========================
 
     const openDropdown = () => {
         if (isOpen) {
-            setIsOpen(false);
-            setSearch("");
-            setActiveIndex(0);
+            closeDropdown();
             return;
         }
 
@@ -131,13 +175,11 @@ export default function CountrySelect({
             onChange(country);
         }
 
-        setIsOpen(false);
-        setSearch("");
-        setActiveIndex(0);
+        closeDropdown();
     };
 
     // =========================
-    // SEARCH CHANGE
+    // SEARCH
     // =========================
 
     const handleSearchChange = (event) => {
@@ -153,13 +195,11 @@ export default function CountrySelect({
         if (!isOpen) {
             if (
                 event.key === "Enter" ||
-                event.key === "ArrowDown"
+                event.key === "ArrowDown" ||
+                event.key === " "
             ) {
                 event.preventDefault();
-
-                setSearch("");
-                setActiveIndex(0);
-                setIsOpen(true);
+                openDropdown();
             }
 
             return;
@@ -213,7 +253,7 @@ export default function CountrySelect({
 
     return (
         <div
-            className="country-select"
+            className={`country-select ${isOpen ? "is-open" : ""}`}
             ref={wrapperRef}
         >
             <button
@@ -224,16 +264,19 @@ export default function CountrySelect({
                 onKeyDown={handleKeyDown}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
-                aria-label="Select country"
+                aria-controls={listboxId}
+                aria-label={
+                    currentLanguage === "sv"
+                        ? "Välj land"
+                        : "Select country"
+                }
             >
-                <span
-                    className={
-                        value ? "has-value" : "placeholder"
-                    }
-                >
+                <span className={value ? "has-value" : "placeholder"}>
                     {value
                         ? formatCountryName(value)
-                        : "Select country"}
+                        : currentLanguage === "sv"
+                            ? "Välj land"
+                            : "Select country"}
                 </span>
 
                 <svg
@@ -246,24 +289,43 @@ export default function CountrySelect({
             </button>
 
             {isOpen && (
-                <div className="country-select__dropdown">
+                <div
+                    className="country-select__dropdown"
+                    onKeyDown={handleKeyDown}
+                >
                     <div className="country-select__search">
                         <input
+                            id={searchInputId}
                             ref={searchRef}
                             type="search"
                             value={search}
                             onChange={handleSearchChange}
                             onKeyDown={handleKeyDown}
-                            placeholder="Search country..."
-                            aria-label="Search country"
+                            placeholder={
+                                currentLanguage === "sv"
+                                    ? "Sök land..."
+                                    : "Search country..."
+                            }
+                            aria-label={
+                                currentLanguage === "sv"
+                                    ? "Sök land"
+                                    : "Search country"
+                            }
                             autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck="false"
                         />
                     </div>
 
                     <div
+                        id={listboxId}
                         className="country-select__options"
                         role="listbox"
-                        aria-label="Countries"
+                        aria-label={
+                            currentLanguage === "sv"
+                                ? "Länder"
+                                : "Countries"
+                        }
                     >
                         {filteredCountries.length > 0 ? (
                             filteredCountries.map((country, index) => (
@@ -274,8 +336,8 @@ export default function CountrySelect({
                                     }}
                                     type="button"
                                     role="option"
-                                    aria-selected={value === country}
-                                    className={`country-select__option ${value === country ? "is-selected" : ""
+                                    aria-selected={isSelected(country)}
+                                    className={`country-select__option ${isSelected(country) ? "is-selected" : ""
                                         } ${safeActiveIndex === index
                                             ? "is-active"
                                             : ""
@@ -287,7 +349,7 @@ export default function CountrySelect({
                                         {formatCountryName(country)}
                                     </span>
 
-                                    {value === country && (
+                                    {isSelected(country) && (
                                         <span className="country-select__check">
                                             ✓
                                         </span>
@@ -296,7 +358,9 @@ export default function CountrySelect({
                             ))
                         ) : (
                             <div className="country-select__empty">
-                                No countries found.
+                                {currentLanguage === "sv"
+                                    ? "Inga länder hittades."
+                                    : "No countries found."}
                             </div>
                         )}
                     </div>

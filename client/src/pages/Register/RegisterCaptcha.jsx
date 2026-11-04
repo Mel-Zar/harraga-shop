@@ -106,6 +106,16 @@ export default function RegisterCaptcha() {
             return;
         }
 
+        if (registrationData.password.length < 8) {
+            setError("Lösenordet måste innehålla minst 8 tecken.");
+            return;
+        }
+
+        if (registrationData.password.length > 128) {
+            setError("Lösenordet får innehålla högst 128 tecken.");
+            return;
+        }
+
         setLoading(true);
         setError("");
 

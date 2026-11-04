@@ -36,43 +36,17 @@ const generateRefreshToken = (id) => {
 // PASSWORD VALIDATION
 // =====================================================
 
-const validatePassword = (
-    password
-) => {
-
-    if (
-        typeof password !== "string"
-    ) {
+const validatePassword = (password) => {
+    if (typeof password !== "string") {
         return "Password is required";
     }
 
-    if (
-        password.length < 8
-    ) {
+    if (password.length < 8) {
         return "Password must be at least 8 characters";
     }
 
-    const hasNumber =
-        /\d/.test(password);
-
-    const hasSpecial =
-        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(
-            password
-        );
-
-    const hasUppercase =
-        /[A-Z]/.test(password);
-
-    if (!hasNumber) {
-        return "Password must contain at least 1 number";
-    }
-
-    if (!hasSpecial) {
-        return "Password must contain at least 1 special character";
-    }
-
-    if (!hasUppercase) {
-        return "Password must contain at least 1 uppercase letter";
+    if (password.length > 128) {
+        return "Password must be no more than 128 characters";
     }
 
     return null;

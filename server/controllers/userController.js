@@ -1001,13 +1001,21 @@ export const changePassword = async (
         // 🔐 PASSWORD LENGTH
         // =================================================
 
-        if (
-            newPassword.length < 6
-        ) {
+        // =================================================
+        // 🔐 PASSWORD VALIDATION
+        // =================================================
 
+        if (newPassword.length < 8) {
             return res.status(400).json({
                 message:
-                    "New password must be at least 6 characters.",
+                    "New password must be at least 8 characters.",
+            });
+        }
+
+        if (newPassword.length > 128) {
+            return res.status(400).json({
+                message:
+                    "New password must be no more than 128 characters.",
             });
         }
 

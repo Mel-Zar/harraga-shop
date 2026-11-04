@@ -226,6 +226,60 @@
   resize: vertical;
 }
 
+/* PASSWORD FIELD — PREMIUM */
+
+.register-form input[type="password"] {
+  min-height: 56px;
+  padding: 15px 18px;
+
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+
+  background: linear-gradient(
+    145deg,
+    rgba(34, 34, 40, 0.98),
+    rgba(13, 13, 17, 0.98)
+  );
+
+  border: 1px solid #777780;
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 5px 16px rgba(0, 0, 0, 0.2);
+
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.register-form input[type="password"]:hover {
+  border-color: #b9b9c3;
+}
+
+.register-form input[type="password"]:focus {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+
+  background: linear-gradient(145deg, #222228, #111115);
+
+  border-color: #f0f0f4;
+  outline: none;
+
+  box-shadow:
+    0 0 0 2px rgba(220, 220, 230, 0.13),
+    0 0 22px rgba(220, 220, 230, 0.16),
+    inset 0 2px 7px rgba(0, 0, 0, 0.55);
+}
+
 /* AUTOFILL */
 
 .register-form input:-webkit-autofill,
@@ -428,12 +482,22 @@
 
 /* COUNTRY SELECT */
 
+/* =========================================================
+   COUNTRY SELECT — PREMIUM DROPDOWN
+   ========================================================= */
+
 .register-form .country-select {
   position: relative;
   z-index: 20;
+
   display: block;
   width: 100%;
   min-width: 0;
+}
+
+/* Lyft hela landväljaren när listan är öppen */
+.register-form .country-select:has(.country-select__dropdown) {
+  z-index: 1300;
 }
 
 .register-form .country-select__trigger {
@@ -465,7 +529,8 @@
 
   transition:
     border-color 0.22s ease,
-    box-shadow 0.22s ease;
+    box-shadow 0.22s ease,
+    background 0.22s ease;
 }
 
 .register-form .country-select__trigger:hover {
@@ -494,6 +559,7 @@
 
 .register-form .country-select__arrow {
   flex: 0 0 18px;
+
   width: 18px;
   height: 18px;
 
@@ -510,14 +576,21 @@
   transform: rotate(180deg);
 }
 
+/* DROPDOWN PANEL */
+
 .register-form .country-select__dropdown {
   position: absolute;
-  z-index: 1000;
+  z-index: 1301;
   top: calc(100% + 7px);
   left: 0;
 
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
   width: 100%;
-  max-height: 310px;
+  max-height: min(340px, 55vh);
+  min-height: 0;
   padding: 8px;
 
   overflow: hidden;
@@ -533,17 +606,25 @@
   animation: country-dropdown-appear 0.16s ease-out;
 }
 
+/* SEARCH — stays above the results */
+
 .register-form .country-select__search {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 2;
-  padding-bottom: 8px;
+
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 9px;
+
   background: #151519;
 }
 
 .register-form .country-select__search input {
   display: block;
+
   width: 100%;
+  min-width: 0;
   min-height: 42px;
   margin: 0;
   padding: 10px 12px;
@@ -558,13 +639,18 @@
 
   font-family: inherit;
   font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
+
   outline: none;
   box-shadow: none;
+  appearance: none;
 }
 
 .register-form .country-select__search input::placeholder {
   color: #92929c;
   -webkit-text-fill-color: #92929c;
+  opacity: 1;
 }
 
 .register-form .country-select__search input:focus {
@@ -572,11 +658,22 @@
   box-shadow: 0 0 0 2px rgba(220, 220, 230, 0.12);
 }
 
+/* RESULTS — separate scroll area */
+
 .register-form .country-select__options {
-  max-height: 235px;
+  position: relative;
+
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  width: 100%;
+
   overflow-x: hidden;
   overflow-y: auto;
+
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
   scrollbar-width: thin;
   scrollbar-color: #777780 #151519;
 }
@@ -594,6 +691,7 @@
 
   color: #eeeeef;
   background: transparent;
+
   border: 1px solid transparent;
   border-radius: 4px;
 
@@ -604,6 +702,7 @@
   text-align: left;
 
   cursor: pointer;
+
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -623,6 +722,8 @@
 }
 
 .register-form .country-select__check {
+  flex: 0 0 auto;
+
   color: #ffffff;
   font-size: 16px;
   font-weight: 800;
@@ -630,10 +731,13 @@
 
 .register-form .country-select__empty {
   padding: 18px 12px;
+
   color: #92929c;
   font-size: 14px;
   text-align: center;
 }
+
+/* SCROLLBAR */
 
 .register-form .country-select__options::-webkit-scrollbar {
   width: 7px;
@@ -652,27 +756,124 @@
   background: #bfc0c8;
 }
 
-/* PASSWORD STRENGTH */
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .register-form .country-select__dropdown {
+    max-height: min(320px, 48vh);
+  }
+
+  .register-form .country-select__option {
+    min-height: 40px;
+    padding: 10px 12px;
+  }
+
+  .register-form .country-select__search input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
+/* =========================================================
+   PASSWORD STRENGTH — PREMIUM CHROME
+   ========================================================= */
 
 .register-form .password-strength {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+
   width: 100%;
   min-width: 0;
+  margin-top: 2px;
+  padding: 0;
 }
+
+/* PASSWORD STRENGTH — PREMIUM CHROME */
+
+.register-form .password-strength {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+
+  width: 100%;
+  min-width: 0;
+  margin-top: 2px;
+  padding: 0;
+}
+
+/* Strength indicator */
 
 .register-form .password-strength__bar {
+  position: relative;
   display: block;
+
+  width: 100%;
   max-width: 100%;
-  height: 6px;
-  border-radius: 10px;
-  transition: width 0.25s ease;
+  height: 7px;
+  min-height: 7px;
+
+  overflow: hidden;
+  border: 1px solid rgba(220, 220, 230, 0.12);
+  border-radius: 20px;
+
+  background: linear-gradient(90deg, #29292f, #414149);
+
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+
+  transition:
+    width 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
+/* Strength label */
+
 .register-form .password-strength__label {
-  display: block;
-  margin-top: 8px;
-  color: #bdbdc4;
-  font-size: 0.82rem;
-  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+
+  width: fit-content;
+  min-height: 27px;
+  margin: 0;
+  padding: 5px 11px;
+
+  color: #c6c6ce;
+  background: linear-gradient(
+    145deg,
+    rgba(50, 50, 57, 0.85),
+    rgba(20, 20, 24, 0.95)
+  );
+
+  border: 1px solid rgba(190, 190, 205, 0.2);
+  border-radius: 20px;
+
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Keep strength elements visually consistent */
+
+.register-form .password-strength__bar,
+.register-form .password-strength__label {
+  box-sizing: border-box;
 }
 
 /* SUBMIT BUTTON */
@@ -851,6 +1052,26 @@
     font-size: 16px;
   }
 
+  .register-form input[type="password"] {
+    min-height: 54px;
+    padding: 13px 15px;
+    font-size: 17px;
+  }
+
+  .register-form .password-strength {
+    gap: 8px;
+  }
+
+  .register-form .password-strength__bar {
+    height: 6px;
+    min-height: 6px;
+  }
+
+  .register-form .password-strength__label {
+    min-height: 25px;
+    font-size: 0.66rem;
+  }
+
   .register-form button[type="submit"] {
     min-height: 52px;
   }
@@ -911,5 +1132,116 @@
   .register-form *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* =====================================================
+   GLOBAL REGISTER TYPOGRAPHY — UNIFIED PREMIUM STYLE
+   Applies consistent typography across the form.
+   Keeps heading hierarchy and button readability.
+   ===================================================== */
+
+.register-form {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+.register-form input:not([name="website"]),
+.register-form textarea,
+.register-form .address-input input.address-input__field,
+.register-form .country-select__trigger,
+.register-form .country-select__search input {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+.register-form input::placeholder,
+.register-form textarea::placeholder,
+.register-form .address-input input.address-input__field::placeholder,
+.register-form .country-select__search input::placeholder {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.register-form label {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  line-height: 1.4;
+}
+
+.register-form .address-input .address-input__suggestion,
+.register-form .country-select__option,
+.register-form .country-select__empty {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+.register-form .password-strength__label {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  line-height: 1.3;
+}
+
+.register-form button[type="submit"] {
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  line-height: 1.5;
+}
+
+.register-form a,
+.register-form [role="alert"],
+.register-form [role="status"] {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+/* PASSWORD FIELD — MATCH THE SAME TYPOGRAPHY */
+
+.register-form input[type="password"] {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+/* MOBILE TYPOGRAPHY */
+
+@media (max-width: 600px) {
+  .register-form input:not([name="website"]),
+  .register-form textarea,
+  .register-form input[type="password"],
+  .register-form .address-input input.address-input__field,
+  .register-form .country-select__trigger,
+  .register-form .country-select__search input {
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: normal;
+  }
+
+  .register-form .address-input .address-input__suggestion,
+  .register-form .country-select__option {
+    font-size: 15px;
+    letter-spacing: normal;
   }
 }

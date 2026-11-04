@@ -457,6 +457,13 @@ export default function AddressInput({
 
         const currentRequestId = requestIdRef.current;
 
+        if (fallbackTimerRef.current) {
+            clearTimeout(fallbackTimerRef.current);
+            fallbackTimerRef.current = null;
+        }
+
+        setShowFallback(false);
+
         timeoutRef.current = setTimeout(async () => {
             const query = form.address?.trim() || "";
             const country = form.country;
@@ -580,6 +587,11 @@ export default function AddressInput({
                 }
 
                 cacheRef.current[cacheKey] = finalResults;
+
+                const cacheKeys = Object.keys(cacheRef.current);
+                if (cacheKeys.length > 50) {
+                    delete cacheRef.current[cacheKeys[0]];
+                }
 
                 setResults(finalResults);
                 setActiveIndex(-1);
@@ -975,6 +987,7 @@ export default function AddressInput({
         }
 
         setResults([]);
+        lastRequestKeyRef.current = "";
 
         setForm((previous) => ({
             ...previous,
@@ -1020,11 +1033,17 @@ export default function AddressInput({
                 aria-autocomplete="list"
                 aria-expanded={results.length > 0}
                 aria-controls="address-suggestions"
+                aria-activedescendant={
+                    activeIndex >= 0
+                        ? `address-suggestion-${activeIndex}`
+                        : undefined
+                }
+                aria-busy={loading}
             />
 
             {loading && (
-                <div className="address-input__loading">
-                    <span className="address-input__spinner" />
+                <div className="address-input__loading" role="status" aria-live="polite">
+                    <span className="address-input__spinner" aria-hidden="true" />
                     Searching addresses...
                 </div>
             )}
@@ -1035,6 +1054,7 @@ export default function AddressInput({
                     ref={listRef}
                     className="address-input__suggestions"
                     role="listbox"
+                    aria-label="Address suggestions"
                 >
                     {results.map((place, index) => (
                         <li
@@ -1044,6 +1064,7 @@ export default function AddressInput({
                                 place.google_place_id ||
                                 index
                             }
+                            id={`address-suggestion-${index}`}
                             className={`address-input__suggestion ${activeIndex === index ? "is-active" : ""
                                 }`}
                             role="option"
@@ -1076,14 +1097,14 @@ export default function AddressInput({
                 !locked &&
                 form.address.length >= MIN_SEARCH_LENGTH &&
                 results.length === 0 && (
-                    <div className="address-input__fallback">
+                    <div className="address-input__fallback" role="status" aria-live="polite">
                         No verified address found.
                     </div>
                 )}
 
             {selected && form.addressVerified && (
-                <div className="address-input__verified">
-                    <span>✓</span>
+                <div className="address-input__verified" role="status" aria-live="polite">
+                    <span aria-hidden="true">✓</span>
                     Address verified
                 </div>
             )}
