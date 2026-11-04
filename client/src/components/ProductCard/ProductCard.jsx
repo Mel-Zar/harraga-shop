@@ -1,34 +1,35 @@
-import ProductGallery from "../ProductGallery/ProductGallery";
 
-function ProductCard({
-    product,
-    onEdit,
-    onDelete,
-}) {
+import ProductGallery from "../ProductGallery/ProductGallery";
+import "./ProductCard.scss";
+
+function ProductCard({ product, onEdit, onDelete }) {
     const getStockStatus = () => {
         if (product.stock === 0) {
             return {
-                text: "🔴 Out of Stock",
-                color: "#dc2626",
+                text: "Out of Stock",
+                className: "out-of-stock",
+                icon: "🔴",
             };
         }
 
         if (product.stock <= 10) {
             return {
-                text: "🟡 Low Stock",
-                color: "#f59e0b",
+                text: "Low Stock",
+                className: "low-stock",
+                icon: "🟡",
             };
         }
 
         return {
-            text: "🟢 In Stock",
-            color: "#16a34a",
+            text: "In Stock",
+            className: "in-stock",
+            icon: "🟢",
         };
     };
 
     const stockStatus = getStockStatus();
 
-    // Stöd för både nya och gamla produkter.
+    // Support both new and legacy products.
     const categoryPath =
         Array.isArray(product.categoryPath) &&
             product.categoryPath.length > 0
@@ -45,158 +46,154 @@ function ProductCard({
             : product.subCategory || "";
 
     return (
-        <div
-            style={{
-                border: "1px solid #ddd",
-                padding: "15px",
-                marginBottom: "15px",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            }}
-        >
-            <h3
-                style={{
-                    marginTop: 0,
-                    marginBottom: "10px",
-                }}
-            >
-                {product.name}
-            </h3>
+        <article className="admin-product-card">
+            {/* PRODUCT HEADER */}
 
-            <p>{product.description}</p>
+            <div className="admin-product-card__header">
+                <h3>{product.name}</h3>
 
-            <p>
-                <strong>Price:</strong> ${product.price}
-            </p>
-
-            {/* Huvudkategori */}
-            <p>
-                <strong>Main Category:</strong>{" "}
-                {mainCategory}
-            </p>
-
-            {/* Hela kategorisökvägen */}
-            <div
-                style={{
-                    marginBottom: "12px",
-                    padding: "10px",
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "6px",
-                }}
-            >
-                <p
-                    style={{
-                        margin: "0 0 6px",
-                        fontWeight: "bold",
-                    }}
+                <span
+                    className={`admin-product-card__status ${stockStatus.className}`}
                 >
-                    Category Path:
-                </p>
+                    <span aria-hidden="true">
+                        {stockStatus.icon}
+                    </span>
+                    {stockStatus.text}
+                </span>
+            </div>
+
+            {/* DESCRIPTION */}
+
+            <p className="admin-product-card__description">
+                {product.description}
+            </p>
+
+            {/* PRICE */}
+
+            <div className="admin-product-card__price">
+                <span>Price</span>
+                <strong>${product.price}</strong>
+            </div>
+
+            {/* CATEGORIES */}
+
+            <div className="admin-product-card__categories">
+                <div className="admin-product-card__category-info">
+                    <span className="admin-product-card__label">
+                        Main Category
+                    </span>
+                    <strong>{mainCategory}</strong>
+                </div>
+
+                {/* FULL CATEGORY PATH */}
+
+                <div className="admin-product-card__category-path">
+                    <span className="admin-product-card__label">
+                        Category Path
+                    </span>
+
+                    <div className="admin-product-card__breadcrumbs">
+                        {categoryPath.length > 0 ? (
+                            categoryPath.map((category, index) => (
+                                <span
+                                    className="admin-product-card__breadcrumb-item"
+                                    key={`${category}-${index}`}
+                                >
+                                    <span
+                                        className={
+                                            index === categoryPath.length - 1
+                                                ? "current"
+                                                : ""
+                                        }
+                                    >
+                                        {category}
+                                    </span>
+
+                                    {index < categoryPath.length - 1 && (
+                                        <span
+                                            className="separator"
+                                            aria-hidden="true"
+                                        >
+                                            →
+                                        </span>
+                                    )}
+                                </span>
+                            ))
+                        ) : (
+                            <span>Uncategorized</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* SUBCATEGORY */}
+
+                {subCategory && (
+                    <div className="admin-product-card__category-info">
+                        <span className="admin-product-card__label">
+                            Subcategory
+                        </span>
+                        <strong>{subCategory}</strong>
+                    </div>
+                )}
+            </div>
+
+            {/* STOCK INFORMATION */}
+
+            <div className="admin-product-card__stock">
+                <div>
+                    <span className="admin-product-card__label">
+                        Available Stock
+                    </span>
+                    <strong>{product.stock}</strong>
+                </div>
 
                 <div
-                    style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        gap: "6px",
-                    }}
+                    className={`admin-product-card__stock-indicator ${stockStatus.className}`}
                 >
-                    {categoryPath.length > 0 ? (
-                        categoryPath.map((category, index) => (
-                            <span
-                                key={`${category}-${index}`}
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        padding: "4px 8px",
-                                        backgroundColor:
-                                            index === categoryPath.length - 1
-                                                ? "#dbeafe"
-                                                : "#e5e7eb",
-                                        color: "#1f2937",
-                                        borderRadius: "5px",
-                                        fontSize: "13px",
-                                    }}
-                                >
-                                    {category}
-                                </span>
-
-                                {index < categoryPath.length - 1 && (
-                                    <span
-                                        style={{
-                                            color: "#64748b",
-                                        }}
-                                        aria-hidden="true"
-                                    >
-                                        →
-                                    </span>
-                                )}
-                            </span>
-                        ))
-                    ) : (
-                        <span>Uncategorized</span>
-                    )}
+                    {stockStatus.text}
                 </div>
             </div>
 
-            {/* Sista underkategorin */}
-            {subCategory && (
-                <p>
-                    <strong>Subcategory:</strong>{" "}
-                    {subCategory}
-                </p>
-            )}
+            {/* PRODUCT GALLERY */}
 
-            <p>
-                <strong>Stock:</strong>{" "}
-                {product.stock}
-            </p>
-
-            <p>
-                <strong>Status:</strong>{" "}
-                <span
-                    style={{
-                        color: stockStatus.color,
-                        fontWeight: "bold",
-                    }}
-                >
-                    {stockStatus.text}
+            <div className="admin-product-card__gallery">
+                <span className="admin-product-card__label">
+                    Product Images
                 </span>
-            </p>
 
-            {/* Befintligt bildgalleri behålls */}
-            <ProductGallery
-                images={product.images}
-                productName={product.name}
-                imageStyle={{
-                    width: "150px",
-                    height: "300px",
-                    objectFit: "contain",
-                    borderRadius: "8px",
-                }}
-            />
+                <ProductGallery
+                    images={product.images}
+                    productName={product.name}
+                    imageStyle={{
+                        width: "100%",
+                        maxWidth: "230px",
+                        height: "260px",
+                        objectFit: "contain",
+                        borderRadius: "6px",
+                    }}
+                />
+            </div>
 
-            <br />
+            {/* ACTION BUTTONS */}
 
-            {/* Befintlig redigering behålls */}
-            <button onClick={onEdit}>
-                Edit
-            </button>
+            <div className="admin-product-card__actions">
+                <button
+                    type="button"
+                    className="admin-product-card__edit"
+                    onClick={onEdit}
+                >
+                    Edit Product
+                </button>
 
-            {" "}
-
-            {/* Befintlig borttagning behålls */}
-            <button onClick={onDelete}>
-                Delete
-            </button>
-        </div>
+                <button
+                    type="button"
+                    className="admin-product-card__delete"
+                    onClick={onDelete}
+                >
+                    Delete Product
+                </button>
+            </div>
+        </article>
     );
 }
 

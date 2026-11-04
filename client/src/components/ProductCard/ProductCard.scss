@@ -1,0 +1,438 @@
+@use "../../Styles/variables" as *;
+
+// =====================================================
+// HARRAGA SHOP — LUXURY ADMIN PRODUCT CARD
+// =====================================================
+
+.admin-product-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  width: 100%;
+  min-width: 0;
+  padding: clamp(20px, 2.5vw, 30px);
+
+  color: $text-color;
+  text-align: center;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(220, 220, 230, 0.09),
+      transparent 55%
+    ),
+    linear-gradient(145deg, #1c1c1c, #090909 75%);
+
+  border: 1px solid rgba(220, 220, 230, 0.2);
+  border-radius: 13px;
+
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: $chrome-gradient;
+    opacity: 0.9;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(240, 240, 245, 0.55);
+    box-shadow:
+      0 22px 55px rgba(0, 0, 0, 0.55),
+      0 0 25px rgba(220, 220, 230, 0.08);
+  }
+
+  // HEADER
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    width: 100%;
+
+    h3 {
+      margin: 0;
+      color: #f5f5f7;
+      font-family: $font-heading;
+      font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+      font-weight: 900;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  // DESCRIPTION
+
+  &__description {
+    max-width: 500px;
+    margin: 0 auto;
+    color: #a6a6ae;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  // PRICE
+
+  &__price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    width: 100%;
+    padding: 19px;
+
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(220, 220, 230, 0.17);
+    border-radius: 8px;
+
+    span {
+      color: #9999a2;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: #f4f4f6;
+      font-family: $font-heading;
+      font-size: 1.65rem;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  // LABELS
+
+  &__label {
+    display: block;
+    margin-bottom: 9px;
+    color: #9999a2;
+    font-size: 0.67rem;
+    font-weight: 900;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  // STATUS
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 30px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    white-space: nowrap;
+
+    &.in-stock {
+      color: #72e5a0;
+      background: rgba(22, 163, 74, 0.12);
+      border-color: rgba(74, 222, 128, 0.25);
+    }
+
+    &.low-stock {
+      color: #ffd36b;
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(251, 191, 36, 0.25);
+    }
+
+    &.out-of-stock {
+      color: #ff8d8d;
+      background: rgba(220, 38, 38, 0.12);
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+  }
+
+  // CATEGORIES
+
+  &__categories {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 17px;
+    width: 100%;
+    min-width: 0;
+    padding: 20px 15px;
+
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(220, 220, 230, 0.15);
+    border-radius: 8px;
+  }
+
+  &__category-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+
+    strong {
+      color: #ededf0;
+      font-size: 0.9rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  // CATEGORY PATH
+
+  &__breadcrumbs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #b5b5bd;
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+
+  &__breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    > span:first-child {
+      padding: 6px 10px;
+      color: #d6d6dc;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .current {
+      color: #080808;
+      background: $chrome-gradient !important;
+      border-color: $silver-bright !important;
+      font-weight: 900;
+    }
+
+    .separator {
+      color: #8d8d95;
+      font-weight: 900;
+    }
+  }
+
+  // STOCK
+
+  &__stock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 19px;
+
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.16);
+    border-radius: 8px;
+
+    strong {
+      display: block;
+      color: #f5f5f7;
+      font-family: $font-heading;
+      font-size: 1.6rem;
+      font-weight: 900;
+    }
+  }
+
+  &__stock-indicator {
+    font-size: 0.8rem;
+    font-weight: 900;
+
+    &.in-stock {
+      color: #72e5a0;
+    }
+    &.low-stock {
+      color: #ffd36b;
+    }
+    &.out-of-stock {
+      color: #ff8d8d;
+    }
+  }
+
+  // GALLERY
+
+  &__gallery {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+
+    width: 100%;
+    min-width: 0;
+    padding: 20px 12px;
+
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(220, 220, 230, 0.15);
+    border-radius: 8px;
+
+    > .admin-product-card__label {
+      margin: 0;
+      text-align: center;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+  }
+
+  // ACTIONS
+
+  &__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+
+    button {
+      width: 100%;
+      min-width: 0;
+      min-height: 49px;
+      padding: 12px 15px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &:focus-visible {
+        outline: 2px solid $silver-bright;
+        outline-offset: 4px;
+      }
+    }
+  }
+
+  &__edit {
+    color: #080808;
+    background: $chrome-gradient;
+    border: 1px solid $silver-bright;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $silver-glow;
+    }
+  }
+
+  &__delete {
+    color: #ff9292;
+    background: rgba(220, 38, 38, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.45);
+
+    &:hover {
+      transform: translateY(-2px);
+      background: rgba(220, 38, 38, 0.17);
+      border-color: #ff9292;
+    }
+  }
+}
+
+// TABLET
+
+@media (max-width: 768px) {
+  .admin-product-card {
+    gap: 16px;
+
+    &__price,
+    &__stock {
+      padding: 15px;
+    }
+  }
+}
+
+// MOBILE
+
+@media (max-width: 600px) {
+  .admin-product-card {
+    padding: 19px;
+    gap: 16px;
+
+    &__actions {
+      grid-template-columns: 1fr;
+    }
+
+    &__categories {
+      padding: 16px 11px;
+    }
+
+    &__gallery {
+      padding: 15px 8px;
+    }
+  }
+}
+
+// SMALL MOBILE
+
+@media (max-width: 360px) {
+  .admin-product-card {
+    padding: 13px;
+    gap: 13px;
+
+    &__breadcrumbs {
+      gap: 5px;
+      font-size: 0.73rem;
+    }
+
+    &__breadcrumb-item {
+      gap: 5px;
+    }
+  }
+}
+
+// REDUCED MOTION
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-product-card,
+  .admin-product-card * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

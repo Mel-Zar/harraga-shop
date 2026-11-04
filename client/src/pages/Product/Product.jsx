@@ -114,8 +114,12 @@ function Product() {
 
                 <span>/</span>
 
-                <span>SHOP</span>
-
+                <button
+                    type="button"
+                    onClick={() => navigate("/products")}
+                >
+                    SHOP
+                </button>
                 <span>/</span>
 
                 <span className="product-breadcrumb__current">

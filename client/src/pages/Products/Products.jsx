@@ -1,3 +1,4 @@
+
 import {
     useEffect,
     useState,
@@ -6,10 +7,13 @@ import {
 import { toast } from "react-toastify";
 
 import ProductListCard from "../../components/ProductListCard/ProductListCard";
+
 import {
     getProducts,
     getProductCategories,
 } from "../../services/productService";
+
+import "./Products.scss";
 
 function Products() {
     const [products, setProducts] = useState([]);
@@ -20,39 +24,30 @@ function Products() {
     const [sort, setSort] = useState("newest");
 
     const [loading, setLoading] = useState(true);
-    const [categoriesLoading, setCategoriesLoading] =
-        useState(true);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
 
-    // =========================
+    // =====================================================
     // GET CATEGORIES
-    // =========================
+    // =====================================================
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 setCategoriesLoading(true);
 
-                const data =
-                    await getProductCategories();
+                const data = await getProductCategories();
 
                 setCategories(
-                    Array.isArray(data)
-                        ? data
-                        : []
+                    Array.isArray(data) ? data : []
                 );
-
             } catch (error) {
-                console.error(
-                    "GET CATEGORIES ERROR:",
-                    error
-                );
+                console.error("GET CATEGORIES ERROR:", error);
 
                 toast.error(
                     error?.response?.data?.message ||
                     error?.message ||
                     "Failed to load categories."
                 );
-
             } finally {
                 setCategoriesLoading(false);
             }
@@ -61,67 +56,60 @@ function Products() {
         fetchCategories();
     }, []);
 
-    // =========================
+    // =====================================================
     // GET PRODUCTS
-    // =========================
+    // =====================================================
 
     useEffect(() => {
+        let isActive = true;
+
         const fetchProducts = async () => {
             try {
                 setLoading(true);
 
-                const data =
-                    await getProducts({
-                        search,
-                        category,
-                        sort,
-                    });
+                const data = await getProducts({
+                    search,
+                    category,
+                    sort,
+                });
 
-                setProducts(
-                    Array.isArray(data)
-                        ? data
-                        : []
-                );
-
+                if (isActive) {
+                    setProducts(
+                        Array.isArray(data) ? data : []
+                    );
+                }
             } catch (error) {
-                console.error(
-                    "GET PRODUCTS ERROR:",
-                    error
-                );
+                if (isActive) {
+                    console.error("GET PRODUCTS ERROR:", error);
 
-                toast.error(
-                    error?.response?.data?.message ||
-                    error?.message ||
-                    "Failed to load products. Please try again."
-                );
-
+                    toast.error(
+                        error?.response?.data?.message ||
+                        error?.message ||
+                        "Failed to load products. Please try again."
+                    );
+                }
             } finally {
-                setLoading(false);
+                if (isActive) {
+                    setLoading(false);
+                }
             }
         };
 
-        // =========================
         // DEBOUNCE SEARCH
-        // =========================
 
-        const timer =
-            setTimeout(() => {
-                fetchProducts();
-            }, 300);
+        const timer = setTimeout(() => {
+            fetchProducts();
+        }, 300);
 
         return () => {
+            isActive = false;
             clearTimeout(timer);
         };
+    }, [search, category, sort]);
 
-    }, [
-        search,
-        category,
-        sort,
-    ]);
-
-    // =========================
+    // =====================================================
     // CLEAR FILTERS
-    // =========================
+    // =====================================================
 
     const clearFilters = () => {
         setSearch("");
@@ -134,396 +122,214 @@ function Products() {
         category !== "" ||
         sort !== "newest";
 
+    // =====================================================
+    // RENDER
+    // =====================================================
+
     return (
-        <div
-            style={{
-                maxWidth: "1400px",
-                margin: "0 auto",
-                padding: "30px 20px",
-            }}
-        >
-            {/* =========================
-                HEADER
-            ========================= */}
+        <main className="products-page">
 
-            <div
-                style={{
-                    marginBottom: "30px",
-                }}
-            >
-                <h1
-                    style={{
-                        marginBottom: "8px",
-                    }}
+            <div className="products-page__inner">
+
+                {/* PAGE HEADER */}
+
+                <header className="products-page__header">
+                    <span className="products-page__eyebrow">
+                        HARRAGA SHOP COLLECTION
+                    </span>
+
+                    <h1 className="products-page__title">
+                        Our <span className="chrome-text">Products</span>
+                    </h1>
+
+                    <p className="products-page__subtitle">
+                        Browse our products and find exactly what
+                        you are looking for.
+                    </p>
+                </header>
+
+                {/* FILTER BAR */}
+
+                <section
+                    className="products-page__filters"
+                    aria-label="Product filters"
                 >
-                    Products
-                </h1>
 
-                <p
-                    style={{
-                        margin: 0,
-                        color: "#666",
-                    }}
-                >
-                    Browse our products and find
-                    exactly what you are looking for.
-                </p>
-            </div>
+                    {/* SEARCH */}
 
-            {/* =========================
-                FILTER BAR
-            ========================= */}
+                    <div className="products-page__field products-page__search">
+                        <label htmlFor="product-search">
+                            Search Products
+                        </label>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                        "minmax(250px, 1fr) minmax(180px, 220px) minmax(180px, 220px)",
-                    gap: "15px",
-                    marginBottom: "20px",
-                    padding: "20px",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "12px",
-                    background: "#fff",
-                    boxSizing: "border-box",
-                }}
-            >
-                {/* =========================
-                    SEARCH
-                ========================= */}
+                        <input
+                            id="product-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) =>
+                                setSearch(event.target.value)
+                            }
+                            placeholder="Search products..."
+                            autoComplete="off"
+                        />
+                    </div>
 
-                <div>
-                    <label
-                        htmlFor="product-search"
-                        style={{
-                            display: "block",
-                            marginBottom: "7px",
-                            fontWeight: "600",
-                        }}
-                    >
-                        Search
-                    </label>
+                    {/* CATEGORY */}
 
-                    <input
-                        id="product-search"
-                        type="search"
-                        value={search}
-                        onChange={(event) =>
-                            setSearch(
-                                event.target.value
-                            )
-                        }
-                        placeholder="Search products..."
-                        autoComplete="off"
-                        style={{
-                            width: "100%",
-                            padding:
-                                "12px 14px",
-                            border:
-                                "1px solid #ccc",
-                            borderRadius:
-                                "8px",
-                            fontSize:
-                                "15px",
-                            boxSizing:
-                                "border-box",
-                            outline:
-                                "none",
-                        }}
-                    />
-                </div>
+                    <div className="products-page__field">
+                        <label htmlFor="product-category">
+                            Category
+                        </label>
 
-                {/* =========================
-                    CATEGORY
-                ========================= */}
+                        <select
+                            id="product-category"
+                            value={category}
+                            onChange={(event) =>
+                                setCategory(event.target.value)
+                            }
+                            disabled={categoriesLoading}
+                        >
+                            <option value="">
+                                {categoriesLoading
+                                    ? "Loading categories..."
+                                    : "All categories"}
+                            </option>
 
-                <div>
-                    <label
-                        htmlFor="product-category"
-                        style={{
-                            display: "block",
-                            marginBottom: "7px",
-                            fontWeight: "600",
-                        }}
-                    >
-                        Category
-                    </label>
-
-                    <select
-                        id="product-category"
-                        value={category}
-                        onChange={(event) =>
-                            setCategory(
-                                event.target.value
-                            )
-                        }
-                        disabled={
-                            categoriesLoading
-                        }
-                        style={{
-                            width: "100%",
-                            padding:
-                                "12px 14px",
-                            border:
-                                "1px solid #ccc",
-                            borderRadius:
-                                "8px",
-                            fontSize:
-                                "15px",
-                            background:
-                                "#fff",
-                            cursor:
-                                categoriesLoading
-                                    ? "not-allowed"
-                                    : "pointer",
-                            boxSizing:
-                                "border-box",
-                        }}
-                    >
-                        <option value="">
-                            All categories
-                        </option>
-
-                        {categories.map(
-                            (item) => (
-                                <option
-                                    key={item}
-                                    value={item}
-                                >
+                            {categories.map((item) => (
+                                <option key={item} value={item}>
                                     {item}
                                 </option>
-                            )
-                        )}
-                    </select>
-                </div>
+                            ))}
+                        </select>
+                    </div>
 
-                {/* =========================
-                    SORT
-                ========================= */}
+                    {/* SORT */}
 
-                <div>
-                    <label
-                        htmlFor="product-sort"
-                        style={{
-                            display: "block",
-                            marginBottom: "7px",
-                            fontWeight: "600",
-                        }}
-                    >
-                        Sort by
-                    </label>
+                    <div className="products-page__field">
+                        <label htmlFor="product-sort">
+                            Sort By
+                        </label>
 
-                    <select
-                        id="product-sort"
-                        value={sort}
-                        onChange={(event) =>
-                            setSort(
-                                event.target.value
-                            )
-                        }
-                        style={{
-                            width: "100%",
-                            padding:
-                                "12px 14px",
-                            border:
-                                "1px solid #ccc",
-                            borderRadius:
-                                "8px",
-                            fontSize:
-                                "15px",
-                            background:
-                                "#fff",
-                            cursor:
-                                "pointer",
-                            boxSizing:
-                                "border-box",
-                        }}
-                    >
-                        <option value="newest">
-                            Newest
-                        </option>
+                        <select
+                            id="product-sort"
+                            value={sort}
+                            onChange={(event) =>
+                                setSort(event.target.value)
+                            }
+                        >
+                            <option value="newest">
+                                Newest
+                            </option>
 
-                        <option value="oldest">
-                            Oldest
-                        </option>
+                            <option value="oldest">
+                                Oldest
+                            </option>
 
-                        <option value="price_asc">
-                            Price: Low to High
-                        </option>
+                            <option value="price_asc">
+                                Price: Low to High
+                            </option>
 
-                        <option value="price_desc">
-                            Price: High to Low
-                        </option>
+                            <option value="price_desc">
+                                Price: High to Low
+                            </option>
 
-                        <option value="name_asc">
-                            Name: A to Z
-                        </option>
+                            <option value="name_asc">
+                                Name: A to Z
+                            </option>
 
-                        <option value="name_desc">
-                            Name: Z to A
-                        </option>
-                    </select>
-                </div>
-            </div>
+                            <option value="name_desc">
+                                Name: Z to A
+                            </option>
+                        </select>
+                    </div>
+                </section>
 
-            {/* =========================
-                FILTER STATUS
-            ========================= */}
+                {/* FILTER STATUS */}
 
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent:
-                        "space-between",
-                    alignItems: "center",
-                    gap: "15px",
-                    flexWrap: "wrap",
-                    marginBottom: "20px",
-                }}
-            >
-                <p
-                    style={{
-                        margin: 0,
-                        color: "#666",
-                    }}
-                >
-                    {loading
-                        ? "Loading products..."
-                        : products.length === 1
-                            ? "1 product found"
-                            : `${products.length} products found`}
-                </p>
-
-                {hasFilters && (
-                    <button
-                        type="button"
-                        onClick={
-                            clearFilters
-                        }
-                        style={{
-                            padding:
-                                "9px 14px",
-                            border:
-                                "1px solid #ccc",
-                            borderRadius:
-                                "8px",
-                            background:
-                                "#fff",
-                            cursor:
-                                "pointer",
-                        }}
-                    >
-                        Clear filters
-                    </button>
-                )}
-            </div>
-
-            {/* =========================
-                LOADING
-            ========================= */}
-
-            {loading ? (
-                <div
-                    style={{
-                        padding:
-                            "50px 20px",
-                        textAlign:
-                            "center",
-                    }}
-                >
-                    <p>
-                        Loading products...
-                    </p>
-                </div>
-            ) : products.length === 0 ? (
-                /* =========================
-                   NO PRODUCTS
-                ========================= */
-
-                <div
-                    style={{
-                        padding:
-                            "50px 20px",
-                        textAlign:
-                            "center",
-                        border:
-                            "1px solid #e5e5e5",
-                        borderRadius:
-                            "12px",
-                        background:
-                            "#fff",
-                    }}
-                >
-                    <h2>
-                        No products found
-                    </h2>
+                <div className="products-page__toolbar">
 
                     <p
-                        style={{
-                            color:
-                                "#666",
-                        }}
+                        className="products-page__count"
+                        aria-live="polite"
                     >
-                        Try changing your
-                        search or filters.
+                        {loading
+                            ? "Loading products..."
+                            : products.length === 1
+                                ? "1 product found"
+                                : `${products.length} products found`}
                     </p>
 
                     {hasFilters && (
                         <button
                             type="button"
-                            onClick={
-                                clearFilters
-                            }
-                            style={{
-                                marginTop:
-                                    "10px",
-                                padding:
-                                    "10px 18px",
-                                border:
-                                    "none",
-                                borderRadius:
-                                    "8px",
-                                background:
-                                    "#000",
-                                color:
-                                    "#fff",
-                                cursor:
-                                    "pointer",
-                            }}
+                            className="products-page__clear"
+                            onClick={clearFilters}
                         >
-                            Clear filters
+                            Clear Filters
+                            <span aria-hidden="true"> ×</span>
                         </button>
                     )}
                 </div>
-            ) : (
-                /* =========================
-                   PRODUCTS
-                ========================= */
 
-                <div
-                    style={{
-                        display:
-                            "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fill, minmax(350px, 1fr))",
-                        gap: "20px",
-                    }}
-                >
-                    {products.map(
-                        (product) => (
+                {/* LOADING */}
+
+                {loading ? (
+                    <div
+                        className="products-page__message"
+                        role="status"
+                    >
+                        <span className="products-page__loader" />
+                        <h2>Loading Products</h2>
+                        <p>Please wait while we load our collection.</p>
+                    </div>
+                ) : products.length === 0 ? (
+
+                    /* NO PRODUCTS */
+
+                    <div className="products-page__message">
+                        <span
+                            className="products-page__empty-icon"
+                            aria-hidden="true"
+                        >
+                            ◇
+                        </span>
+
+                        <h2>No Products Found</h2>
+
+                        <p>
+                            Try changing your search or filters
+                            to find what you are looking for.
+                        </p>
+
+                        {hasFilters && (
+                            <button
+                                type="button"
+                                className="products-page__empty-button"
+                                onClick={clearFilters}
+                            >
+                                Clear Filters
+                            </button>
+                        )}
+                    </div>
+
+                ) : (
+
+                    /* PRODUCTS GRID */
+
+                    <section
+                        className="products-page__grid"
+                        aria-label="Products"
+                    >
+                        {products.map((product) => (
                             <ProductListCard
-                                key={
-                                    product._id
-                                }
-                                product={
-                                    product
-                                }
+                                key={product._id}
+                                product={product}
                             />
-                        )
-                    )}
-                </div>
-            )}
-        </div>
+                        ))}
+                    </section>
+                )}
+            </div>
+        </main>
     );
 }
 

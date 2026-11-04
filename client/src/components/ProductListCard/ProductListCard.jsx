@@ -1,13 +1,12 @@
+
 import { useState } from "react";
 import ProductGallery from "../ProductGallery/ProductGallery";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/useCart";
+import "./ProductListCard.scss";
 
 function ProductListCard({ product }) {
-
-    const {
-        addToCart
-    } = useCart();
+    const { addToCart } = useCart();
 
     const [quantity, setQuantity] = useState(1);
 
@@ -30,111 +29,139 @@ function ProductListCard({ product }) {
 
         addToCart(product, quantity);
 
-        // Återställ efter att produkten lagts till
+        // Reset quantity after adding to cart.
         setQuantity(1);
     };
 
+    const outOfStock = product.stock === 0;
+
     return (
-        <div
-            style={{
-                border: "1px solid #ddd",
-                padding: "15px",
-                borderRadius: "8px",
-            }}
-        >
+        <article className="shop-product-card">
 
-            <ProductGallery
-                images={product.images}
-                productName={product.name}
-                imageStyle={{
-                    width: "100%",
-                    height: "220px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                }}
-            />
+            {/* PRODUCT IMAGE */}
 
-            <h2>{product.name}</h2>
-
-            <p>{product.description}</p>
-
-            <p>
-                <strong>Price:</strong> ${product.price}
-            </p>
-
-            <p>
-                <strong>Stock:</strong> {product.stock}
-            </p>
-
-            <div
-                style={{
-                    display: "flex",
-                    gap: "10px",
-                    alignItems: "center",
-                    marginTop: "15px",
-                }}
-            >
-
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
+            <div className="shop-product-card__image">
+                <ProductGallery
+                    images={product.images}
+                    productName={product.name}
+                    imageStyle={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "260px",
+                        maxHeight: "380px",
+                        objectFit: "contain",
+                        objectPosition: "center",
+                        display: "block",
+                        margin: "0 auto",
+                        borderRadius: "8px",
                     }}
-                >
+                />
+            </div>
 
-                    <button
-                        onClick={decreaseQuantity}
-                        disabled={
-                            quantity <= 1 ||
-                            product.stock === 0
-                        }
-                    >
-                        -
-                    </button>
+            {/* PRODUCT INFORMATION */}
 
-                    <span
-                        style={{
-                            minWidth: "30px",
-                            textAlign: "center",
-                            fontWeight: "bold",
-                        }}
-                    >
-                        {quantity}
+            <div className="shop-product-card__content">
+
+                <h2 className="shop-product-card__title">
+                    {product.name}
+                </h2>
+
+                <p className="shop-product-card__description">
+                    {product.description}
+                </p>
+
+                {/* PRICE */}
+
+                <div className="shop-product-card__price">
+                    <span className="shop-product-card__label">
+                        PRICE
                     </span>
 
-                    <button
-                        onClick={increaseQuantity}
-                        disabled={
-                            quantity >= product.stock ||
-                            product.stock === 0
+                    <strong>${product.price}</strong>
+                </div>
+
+                {/* STOCK */}
+
+                <div className="shop-product-card__stock">
+                    <span>Availability</span>
+
+                    <strong
+                        className={
+                            outOfStock
+                                ? "out-of-stock"
+                                : "in-stock"
                         }
                     >
-                        +
+                        {outOfStock
+                            ? "Out of Stock"
+                            : `${product.stock} Available`}
+                    </strong>
+                </div>
+
+                {/* QUANTITY */}
+
+                <div className="shop-product-card__purchase">
+
+                    <span className="shop-product-card__label">
+                        QUANTITY
+                    </span>
+
+                    <div className="shop-product-card__quantity">
+
+                        <button
+                            type="button"
+                            onClick={decreaseQuantity}
+                            disabled={quantity <= 1 || outOfStock}
+                            aria-label="Decrease quantity"
+                        >
+                            −
+                        </button>
+
+                        <span aria-live="polite">
+                            {quantity}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={increaseQuantity}
+                            disabled={
+                                quantity >= product.stock ||
+                                outOfStock
+                            }
+                            aria-label="Increase quantity"
+                        >
+                            +
+                        </button>
+
+                    </div>
+                </div>
+
+                {/* ACTIONS */}
+
+                <div className="shop-product-card__actions">
+
+                    <button
+                        type="button"
+                        className="shop-product-card__cart"
+                        onClick={buyProduct}
+                        disabled={outOfStock}
+                    >
+                        {outOfStock
+                            ? "Out of Stock"
+                            : "Add To Cart"}
                     </button>
+
+                    <Link
+                        to={`/products/${product._id}`}
+                        className="shop-product-card__view"
+                    >
+                        View Product
+                    </Link>
 
                 </div>
 
-                <button
-                    onClick={buyProduct}
-                    disabled={product.stock === 0}
-                >
-                    {product.stock === 0
-                        ? "Out of Stock"
-                        : "Add To Cart"}
-                </button>
-
-                <Link
-                    to={`/products/${product._id}`}
-                >
-                    <button>
-                        View Product
-                    </button>
-                </Link>
-
             </div>
-
-        </div>
+        </article>
     );
 }
 
