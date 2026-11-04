@@ -1,0 +1,317 @@
+@use "../../Styles/variables" as *;
+
+// =====================================================
+// HARRAGA SHOP — LOGIN & TWO FACTOR AUTHENTICATION
+// =====================================================
+
+.login {
+  min-height: calc(100vh - 80px);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 70px) 18px;
+  background:
+    radial-gradient(
+      ellipse at 50% 35%,
+      rgba(180, 180, 190, 0.09),
+      transparent 55%
+    ),
+    linear-gradient(145deg, #050505, #101010 55%, #050505);
+  color: $text-color;
+
+  > form {
+    width: 100%;
+    max-width: 490px;
+    min-width: 0;
+    padding: clamp(25px, 5vw, 46px);
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+    background: linear-gradient(145deg, #171717, #090909);
+    border: 1px solid $silver-border;
+    border-radius: 8px;
+    box-shadow:
+      0 25px 80px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: $chrome-gradient;
+    }
+  }
+
+  h2 {
+    margin: 0 0 5px;
+    color: $silver-bright;
+    font-family: $font-heading;
+    font-size: clamp(1.25rem, 4vw, 1.65rem);
+    line-height: 1.4;
+    font-weight: 800;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    margin: 0;
+    color: $muted-color;
+    font-size: 0.93rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 14px 16px;
+    background: #080808;
+    color: $silver-bright;
+    border: 1px solid rgba(220, 220, 230, 0.25);
+    border-radius: 4px;
+    font-size: 0.95rem;
+    outline: none;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: #85858c;
+    }
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:focus {
+      border-color: $silver-bright;
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.1);
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+
+  button {
+    width: 100%;
+    min-height: 49px;
+    padding: 13px 18px;
+    border: 1px solid $silver-bright;
+    border-radius: 3px;
+    background: $chrome-gradient;
+    color: #080808;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: $silver-glow;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &[type="button"] {
+      background: transparent;
+      color: $silver-bright;
+      border-color: $silver-border;
+      text-transform: none;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: $silver-bright;
+      }
+    }
+  }
+
+  a {
+    color: $silver;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $silver-bright;
+    }
+  }
+
+  // QR CODE
+
+  img[alt="Two-factor authentication QR code"] {
+    width: min(100%, 230px);
+    aspect-ratio: 1;
+    object-fit: contain;
+    align-self: center;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+  }
+
+  // MANUAL 2FA SECRET
+
+  p[style*="word-break"] {
+    padding: 15px;
+    background: #080808;
+    border: 1px solid $silver-border;
+    border-radius: 4px;
+    color: $silver-bright;
+    font-family: monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  // RECOVERY CODES
+
+  div[style*="border: 1px solid"] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 18px !important;
+    background: #080808;
+    border: 1px solid $silver-border !important;
+    border-radius: 6px !important;
+
+    p {
+      padding: 10px 7px;
+      background: #151515;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      color: $silver-bright;
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  // ACCESSIBILITY
+
+  button:focus-visible,
+  input:focus-visible,
+  a:focus-visible {
+    outline: 2px solid $silver-bright;
+    outline-offset: 4px;
+  }
+}
+
+// =====================================================
+// TABLET
+// =====================================================
+
+@media (max-width: 768px) {
+  .login {
+    min-height: calc(100vh - 65px);
+    padding: 35px 18px;
+
+    > form {
+      max-width: 460px;
+    }
+  }
+}
+
+// =====================================================
+// MOBILE
+// =====================================================
+
+@media (max-width: 600px) {
+  .login {
+    min-height: calc(100svh - 60px);
+    padding: 24px 14px;
+    align-items: flex-start;
+
+    > form {
+      margin: auto 0;
+      padding: 25px 19px;
+      gap: 15px;
+      border-radius: 6px;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+    }
+
+    input {
+      min-height: 49px;
+      font-size: 16px;
+    }
+
+    button {
+      min-height: 48px;
+      font-size: 0.74rem;
+    }
+
+    img[alt="Two-factor authentication QR code"] {
+      width: min(100%, 205px);
+    }
+
+    div[style*="border: 1px solid"] {
+      grid-template-columns: 1fr;
+      gap: 7px;
+      padding: 12px !important;
+
+      p {
+        font-size: 0.82rem;
+      }
+    }
+  }
+}
+
+// =====================================================
+// SMALL MOBILE
+// =====================================================
+
+@media (max-width: 360px) {
+  .login {
+    padding: 16px 10px;
+
+    > form {
+      padding: 22px 14px;
+    }
+
+    p {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+// =====================================================
+// REDUCED MOTION
+// =====================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .login,
+  .login * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

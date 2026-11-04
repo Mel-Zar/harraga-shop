@@ -19,6 +19,9 @@ import {
 
 import { saveUser } from "../../utils/auth";
 
+import "./Login.scss";
+
+
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
