@@ -29,6 +29,7 @@
   min-width: 0;
   padding: 65px 20px;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 /* FORM CARD */
@@ -36,6 +37,7 @@
 .register-form {
   position: relative;
   isolation: isolate;
+  overflow: visible;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -252,6 +254,7 @@
 
 .register-form .address-input {
   position: relative;
+  z-index: 100;
   width: 100%;
   min-width: 0;
 }
@@ -313,23 +316,114 @@
 
 /* ADDRESS SUGGESTIONS */
 
+.register-form .address-input:has(.address-input__suggestions) {
+  z-index: 1000;
+}
+
 .register-form .address-input .address-input__suggestions {
+  position: absolute;
+  z-index: 1001;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+
+  display: block;
   width: 100%;
+  max-height: min(280px, 45vh);
+  margin: 0;
+  padding: 6px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #85858f #151519;
+
   color: #eeeeef;
   background: linear-gradient(145deg, #29292f, #09090c);
+
   border: 1px solid #c5c5ce;
+  border-radius: 8px;
+
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(220, 220, 230, 0.08);
 }
 
 .register-form .address-input .address-input__suggestion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  padding: 11px 12px;
+
   color: #eeeeef;
   background: transparent;
+
+  border: 1px solid transparent;
+  border-radius: 5px;
+
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .register-form .address-input .address-input__suggestion:hover,
 .register-form .address-input .address-input__suggestion.is-active {
   color: #ffffff;
-  background: rgba(220, 220, 230, 0.2);
-  border-color: #a9a9b3;
+  background: rgba(220, 220, 230, 0.17);
+  border-color: rgba(220, 220, 230, 0.35);
+}
+
+.register-form .address-input__suggestion-icon {
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+
+  color: #ffffff;
+  background: rgba(220, 220, 230, 0.12);
+  border: 1px solid #777780;
+  border-radius: 50%;
+}
+
+.register-form .address-input__suggestion-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.register-form .address-input__suggestion-text mark {
+  color: #ffffff;
+  background: rgba(180, 180, 195, 0.3);
+  border-radius: 2px;
+}
+
+.register-form .address-input__suggestions::-webkit-scrollbar {
+  width: 7px;
+}
+
+.register-form .address-input__suggestions::-webkit-scrollbar-track {
+  background: #151519;
+}
+
+.register-form .address-input__suggestions::-webkit-scrollbar-thumb {
+  background: #85858f;
+  border-radius: 10px;
 }
 
 /* COUNTRY SELECT */
@@ -759,6 +853,16 @@
 
   .register-form button[type="submit"] {
     min-height: 52px;
+  }
+
+  .register-form .address-input .address-input__suggestions {
+    max-height: min(240px, 40vh);
+  }
+
+  .register-form .address-input .address-input__suggestion {
+    min-height: 48px;
+    padding: 10px;
+    font-size: 13px;
   }
 
   .register-form .country-select__dropdown {
