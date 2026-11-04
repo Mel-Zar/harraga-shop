@@ -29,7 +29,7 @@ export default function Register() {
     const [countries, setCountries] = useState([]);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const [loading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [passwordStrength, setPasswordStrength] = useState({
         score: 0,
@@ -106,7 +106,7 @@ export default function Register() {
     };
 
     const capitalizeFirstLetter = (value) => {
-        const text = value.trim();
+        const text = String(value || "").trim();
 
         if (!text) return "";
 
@@ -158,13 +158,11 @@ export default function Register() {
         setError("");
         setSuccess("");
 
-        // Bot protection: honeypot
         if (form.website.trim()) {
             showValidationError("Bot detected.");
             return;
         }
 
-        // Submit cooldown
         const now = Date.now();
 
         if (now - lastSubmitRef.current < cooldownMs) {
@@ -174,7 +172,6 @@ export default function Register() {
             return;
         }
 
-        // Rate-limit retry time, if supplied by the API
         if (retryAfterRef.current > now) {
             const message = "Too many attempts. Try again soon.";
             setError(message);
@@ -182,7 +179,6 @@ export default function Register() {
             return;
         }
 
-        // Username: email addresses are not allowed.
         const username = form.username.trim().toLowerCase();
         const usernamePattern = /^[a-z0-9_]{3,20}$/;
 
@@ -205,7 +201,6 @@ export default function Register() {
             return;
         }
 
-        // Names
         if (!form.firstName.trim()) {
             showValidationError("First name is required.");
             return;
@@ -216,7 +211,6 @@ export default function Register() {
             return;
         }
 
-        // Email
         const email = form.email.trim().toLowerCase();
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -230,7 +224,6 @@ export default function Register() {
             return;
         }
 
-        // Phone
         const phone = form.phone.trim();
         const phoneDigits = phone.replace(/\D/g, "");
 
@@ -244,7 +237,6 @@ export default function Register() {
             return;
         }
 
-        // Password
         if (!form.password) {
             showValidationError("Password is required.");
             return;
@@ -277,25 +269,15 @@ export default function Register() {
             return;
         }
 
-        // Country
         if (!form.country) {
             showValidationError("Please select a country.");
             return;
         }
 
-        // Address
         if (!form.address.trim()) {
             showValidationError("Please enter your street address.");
             return;
         }
-
-        console.log("REGISTER ADDRESS CHECK:", {
-            address: form.address,
-            city: form.city,
-            postalCode: form.postalCode,
-            country: form.country,
-            addressVerified: form.addressVerified
-        });
 
         if (!form.addressVerified) {
             const message =
@@ -316,13 +298,12 @@ export default function Register() {
             return;
         }
 
-        // Prepare validated registration data for the separate CAPTCHA page.
         const registrationData = {
-            username: username.toLowerCase(),
+            username,
             firstName: capitalizeFirstLetter(form.firstName),
             lastName: capitalizeFirstLetter(form.lastName),
             email,
-            phone: form.phone.trim(),
+            phone,
             password: form.password,
             confirmPassword: form.confirmPassword,
             address: form.address.trim(),
@@ -331,19 +312,64 @@ export default function Register() {
             country: form.country
         };
 
-        // Prevent rapid repeated submissions.
-        lastSubmitRef.current = now;
+        // Check username and email BEFORE navigating to CAPTCHA.
+        setLoading(true);
 
-        navigate("/register/captcha", {
-            state: { registrationData }
-        });
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+
+            if (!apiUrl) {
+                throw new Error("VITE_API_URL is not configured.");
+            }
+
+            const response = await fetch(
+                `${apiUrl}/auth/check-availability`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        username: registrationData.username,
+                        email: registrationData.email
+                    })
+                }
+            );
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || result.available !== true) {
+                const message =
+                    result.message ||
+                    "Username or email is already in use.";
+
+                showValidationError(message);
+                return;
+            }
+
+            // Only continue when both values are available.
+            lastSubmitRef.current = Date.now();
+
+            navigate("/register/captcha", {
+                state: { registrationData }
+            });
+
+        } catch (err) {
+            console.error("REGISTRATION AVAILABILITY ERROR:", err);
+
+            showValidationError(
+                "Could not check username and email. Please try again."
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <form className="register-form" onSubmit={handleSubmit} noValidate>
             <h2>Register</h2>
 
-            {/* Honeypot field for basic bot detection */}
             <input
                 name="website"
                 value={form.website}
@@ -423,7 +449,6 @@ export default function Register() {
                 required
             />
 
-            {/* PASSWORD STRENGTH (SASS HANDLES STYLE) */}
             {form.password && (
                 <div className="password-strength">
                     <div
@@ -490,7 +515,7 @@ export default function Register() {
             />
 
             <button type="submit" disabled={loading}>
-                Register
+                {loading ? "Checking..." : "Register"}
             </button>
 
             {error && (

@@ -8,12 +8,17 @@ const router = express.Router();
 // =========================
 router.get("/", (req, res) => {
     try {
-        const countries = Object.keys(countryMap);
+        const countries = Object.keys(countryMap).sort(
+            (a, b) => a.localeCompare(b)
+        );
 
         return res.status(200).json(countries);
-    } catch (err) {
-        console.error("Country route error:", err);
-        return res.status(200).json([]);
+    } catch (error) {
+        console.error("Country route error:", error);
+
+        return res.status(500).json({
+            message: "Failed to load countries."
+        });
     }
 });
 

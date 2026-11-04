@@ -44,10 +44,6 @@ const addressSchema = new mongoose.Schema(
             trim: true,
         },
 
-        // =================================================
-        // ⭐ PRIMARY / DEFAULT ADDRESS
-        // =================================================
-
         isDefault: {
             type: Boolean,
             default: false,
@@ -99,7 +95,6 @@ const userSchema = new mongoose.Schema(
             minlength: 6,
         },
 
-        // MAIN ADDRESS (profil)
         address: {
             type: String,
             required: true,
@@ -129,7 +124,6 @@ const userSchema = new mongoose.Schema(
             maxlength: 100,
         },
 
-        // MULTIPLE ADDRESSES (AddressBook)
         addresses: [addressSchema],
 
         isAdmin: {
@@ -187,84 +181,56 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+// =====================================================
+// UNIQUE INDEXES
+// These protect against duplicate accounts in MongoDB.
+// =====================================================
+
+userSchema.index(
+    { username: 1 },
+    { unique: true, name: "unique_username" }
+);
+
+userSchema.index(
+    { email: 1 },
+    { unique: true, name: "unique_email" }
+);
 
 // =====================================================
-// 🔐 HASH PASSWORD BEFORE SAVE
+// HASH PASSWORD BEFORE SAVE
 // =====================================================
 
-userSchema.pre(
-    "save",
-    async function () {
-
-        // Password has not changed
-        // so there is nothing to hash.
-        if (
-            !this.isModified(
-                "password"
-            )
-        ) {
-            return;
-        }
-
-        try {
-
-            // =============================================
-            // PREVENT DOUBLE HASHING
-            // =============================================
-
-            const isAlreadyHashed =
-                /^\$2[aby]\$\d{2}\$/.test(
-                    this.password
-                );
-
-            if (
-                isAlreadyHashed
-            ) {
-                return;
-            }
-
-            // =============================================
-            // HASH PASSWORD
-            // =============================================
-
-            const salt =
-                await bcrypt.genSalt(
-                    12
-                );
-
-            this.password =
-                await bcrypt.hash(
-                    this.password,
-                    salt
-                );
-
-        } catch (error) {
-
-            throw error;
-
-        }
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) {
+        return;
     }
-);
 
+    const isAlreadyHashed =
+        /^\$2[aby]\$\d{2}\$/.test(this.password);
+
+    if (isAlreadyHashed) {
+        return;
+    }
+
+    const salt = await bcrypt.genSalt(12);
+
+    this.password = await bcrypt.hash(
+        this.password,
+        salt
+    );
+});
 
 // =====================================================
-// 🔐 PASSWORD VALIDATION HELPER
+// PASSWORD VALIDATION HELPER
 // =====================================================
 
-userSchema.methods.comparePassword =
-    async function (
-        candidatePassword
-    ) {
+userSchema.methods.comparePassword = async function (
+    candidatePassword
+) {
+    return bcrypt.compare(
+        candidatePassword,
+        this.password
+    );
+};
 
-        return bcrypt.compare(
-            candidatePassword,
-            this.password
-        );
-
-    };
-
-
-export default mongoose.model(
-    "User",
-    userSchema
-);
+export default mongoose.model("User", userSchema);

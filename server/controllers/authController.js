@@ -95,13 +95,8 @@ const usernameRegex = /^[a-z0-9_]{3,20}$/;
 // REGISTER
 // =====================================================
 
-export const register = async (
-    req,
-    res
-) => {
-
+export const register = async (req, res) => {
     try {
-
         let {
             username,
             firstName,
@@ -118,30 +113,54 @@ export const register = async (
         } = req.body;
 
         // =================================================
-        // CLEAN VALUES
+        // VALIDATE INPUT TYPES
         // =================================================
 
-        email =
-            email
-                ?.toLowerCase()
-                .trim();
+        const stringFields = {
+            username,
+            firstName,
+            lastName,
+            email,
+            password,
+            confirmPassword,
+            address,
+            postalCode,
+            city,
+            country,
+        };
 
-        username =
-            username
-                ?.toLowerCase()
-                .trim();
+        for (const [field, value] of Object.entries(stringFields)) {
+            if (typeof value !== "string") {
+                return res.status(400).json({
+                    message: `Invalid or missing field: ${field}`,
+                });
+            }
+        }
+
+        // =================================================
+        // NORMALIZE VALUES
+        // =================================================
+
+        username = username.trim().toLowerCase();
+        email = email.trim().toLowerCase();
+
+        firstName = firstName.trim();
+        lastName = lastName.trim();
+        address = address.trim();
+        postalCode = postalCode.trim();
+        city = city.trim();
+        country = country.trim();
 
         // =================================================
         // HONEYPOT
         // =================================================
 
         if (
-            website &&
+            typeof website === "string" &&
             website.trim() !== ""
         ) {
             return res.status(400).json({
-                message:
-                    "Bot detected",
+                message: "Bot detected",
             });
         }
 
@@ -149,30 +168,40 @@ export const register = async (
         // CAPTCHA
         // =================================================
 
-        if (!captchaToken) {
+        if (
+            typeof captchaToken !== "string" ||
+            !captchaToken.trim()
+        ) {
             return res.status(400).json({
-                message:
-                    "Captcha required",
+                message: "Captcha required",
             });
         }
 
-        const captchaRes =
-            await axios.post(
-                "https://hcaptcha.com/siteverify",
-                new URLSearchParams({
-                    secret:
-                        process.env.HCAPTCHA_SECRET,
-                    response:
-                        captchaToken,
-                })
-            );
+        if (!process.env.HCAPTCHA_SECRET) {
+            console.error("HCAPTCHA_SECRET is missing.");
 
-        if (
-            !captchaRes.data.success
-        ) {
+            return res.status(500).json({
+                message: "CAPTCHA service is not configured.",
+            });
+        }
+
+        const captchaRes = await axios.post(
+            "https://api.hcaptcha.com/siteverify",
+            new URLSearchParams({
+                secret: process.env.HCAPTCHA_SECRET,
+                response: captchaToken,
+            }),
+            {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                timeout: 10000,
+            }
+        );
+
+        if (!captchaRes.data?.success) {
             return res.status(400).json({
-                message:
-                    "Captcha verification failed",
+                message: "Captcha verification failed",
             });
         }
 
@@ -180,83 +209,41 @@ export const register = async (
         // REQUIRED FIELDS
         // =================================================
 
-        if (
-            !username ||
-            !firstName ||
-            !lastName ||
-            !email ||
-            !password ||
-            !confirmPassword ||
-            !address ||
-            !postalCode ||
-            !city ||
-            !country
-        ) {
+        const requiredFields = {
+            username,
+            firstName,
+            lastName,
+            email,
+            password,
+            confirmPassword,
+            address,
+            postalCode,
+            city,
+            country,
+        };
+
+        const missingFields = Object.entries(requiredFields)
+            .filter(([, value]) => !value.trim())
+            .map(([field]) => field);
+
+        if (missingFields.length > 0) {
             return res.status(400).json({
-                message:
-                    "All fields are required",
+                message: "All fields are required",
+                fields: missingFields,
             });
         }
 
-        // =====================================================
+        // =================================================
         // USERNAME VALIDATION
-        // =====================================================
+        // =================================================
+
+        const usernameRegex = /^[a-z0-9_]{3,20}$/;
 
         if (!usernameRegex.test(username)) {
             return res.status(400).json({
                 message:
-                    "Username must be 3-20 characters and contain only letters, numbers, and underscores.",
-            });
-        }
-
-        // =================================================
-        // CONFIRM PASSWORD
-        // =================================================
-
-        if (
-            password !==
-            confirmPassword
-        ) {
-            return res.status(400).json({
-                message:
-                    "Passwords do not match",
-            });
-        }
-
-        // =================================================
-        // CONFIRM PASSWORD
-        // =================================================
-
-        if (
-            password !==
-            confirmPassword
-        ) {
-            return res.status(400).json({
-                message:
-                    "Passwords do not match",
-            });
-        }
-
-        // =================================================
-        // CLEAN PASSWORD
-        // =================================================
-
-        password =
-            password.trim();
-
-        // =================================================
-        // PASSWORD VALIDATION
-        // =================================================
-
-        const passwordError =
-            validatePassword(
-                password
-            );
-
-        if (passwordError) {
-            return res.status(400).json({
-                message:
-                    passwordError,
+                    "Användarnamnet måste innehålla 3–20 tecken och endast bokstäver, siffror eller understreck.",
+                field: "username",
             });
         }
 
@@ -264,31 +251,85 @@ export const register = async (
         // EMAIL VALIDATION
         // =================================================
 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (
-            !emailRegex.test(email)
+            !emailRegex.test(email) ||
+            email.length > 320
         ) {
             return res.status(400).json({
-                message:
-                    "Invalid email format",
+                message: "Ange en giltig e-postadress.",
+                field: "email",
+            });
+        }
+
+
+        // =================================================
+        // CONFIRM PASSWORD
+        // =================================================
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Lösenorden matchar inte.",
+                field: "confirmPassword",
             });
         }
 
         // =================================================
-        // CHECK EXISTING USER
+        // CLEAN PASSWORD
         // =================================================
 
-        const existingUser =
-            await User.findOne({
-                $or: [
-                    { email },
-                    { username },
-                ],
-            });
+        password = password.trim();
 
-        if (existingUser) {
+        if (!password) {
             return res.status(400).json({
-                message:
-                    "Email or username exists",
+                message: "Lösenordet får inte vara tomt.",
+                field: "password",
+            });
+        }
+
+        // =================================================
+        // PASSWORD VALIDATION
+        // =================================================
+
+        const passwordError = validatePassword(password);
+
+        if (passwordError) {
+            return res.status(400).json({
+                message: passwordError,
+                field: "password",
+            });
+        }
+
+        // =================================================
+        // CHECK DUPLICATE USERNAME
+        // =================================================
+
+        const existingUsername = await User.findOne({
+            username,
+        }).select("_id");
+
+        if (existingUsername) {
+            return res.status(409).json({
+                message: "Användarnamnet är redan upptaget.",
+                field: "username",
+                code: "USERNAME_EXISTS",
+            });
+        }
+
+        // =================================================
+        // CHECK DUPLICATE EMAIL
+        // =================================================
+
+        const existingEmail = await User.findOne({
+            email,
+        }).select("_id");
+
+        if (existingEmail) {
+            return res.status(409).json({
+                message: "E-postadressen är redan registrerad.",
+                field: "email",
+                code: "EMAIL_EXISTS",
             });
         }
 
@@ -296,64 +337,50 @@ export const register = async (
         // HASH PASSWORD
         // =================================================
 
-        const hashedPassword =
-            await bcrypt.hash(
-                password,
-                12
-            );
+        const hashedPassword = await bcrypt.hash(
+            password,
+            12
+        );
 
         // =================================================
         // CREATE USER
         // =================================================
 
-        const user =
-            await User.create({
-                username,
-                firstName,
-                lastName,
-                email,
-                password:
-                    hashedPassword,
-                address,
-                postalCode,
-                city,
-                country,
-                isVerified:
-                    false,
+        const user = await User.create({
+            username,
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            address,
+            postalCode,
+            city,
+            country,
+            isVerified: false,
 
-                passwordHistory: [
-                    {
-                        password:
-                            hashedPassword,
-                        changedAt:
-                            new Date(),
-                    },
-                ],
-            });
+            passwordHistory: [
+                {
+                    password: hashedPassword,
+                    changedAt: new Date(),
+                },
+            ],
+        });
 
         // =================================================
         // EMAIL VERIFICATION TOKEN
         // =================================================
 
-        const verificationToken =
-            crypto
-                .randomBytes(32)
-                .toString("hex");
+        const verificationToken = crypto
+            .randomBytes(32)
+            .toString("hex");
 
-        user.emailVerificationToken =
-            crypto
-                .createHash("sha256")
-                .update(
-                    verificationToken
-                )
-                .digest("hex");
+        user.emailVerificationToken = crypto
+            .createHash("sha256")
+            .update(verificationToken)
+            .digest("hex");
 
         user.emailVerificationExpire =
-            Date.now() +
-            24 *
-            60 *
-            60 *
-            1000;
+            Date.now() + 24 * 60 * 60 * 1000;
 
         await user.save();
 
@@ -369,25 +396,17 @@ export const register = async (
         // =================================================
 
         try {
-
             await sendEmail({
                 to: user.email,
-                subject:
-                    "Verify your email",
-                html:
-                    `<a href="${verifyUrl}">Verify Email</a>`,
+                subject: "Verify your email",
+                html: `<a href="${verifyUrl}">Verify Email</a>`,
             });
 
-            console.log(
-                "✅ Verification email sent"
-            );
-
+            console.log("Verification email sent");
         } catch (mailError) {
-
-            // Registreringen ska fortfarande lyckas
-            // även om mejlet inte går att skicka
+            // Registration remains successful if email delivery fails.
             console.error(
-                "❌ Failed to send verification email:",
+                "Failed to send verification email:",
                 mailError
             );
         }
@@ -397,43 +416,56 @@ export const register = async (
         // =================================================
 
         return res.status(201).json({
-            message:
-                "User created",
+            message: "User created",
         });
 
     } catch (err) {
-
-        console.error(
-            "REGISTER ERROR:",
-            err
-        );
+        console.error("REGISTER ERROR:", err);
 
         // =================================================
-        // DUPLICATE KEY
+        // DUPLICATE KEY PROTECTION
+        // This also handles simultaneous registration attempts.
         // =================================================
 
-        if (
-            err?.code === 11000
-        ) {
+        if (err?.code === 11000) {
+            const duplicateField =
+                Object.keys(err.keyPattern || {})[0] ||
+                Object.keys(err.keyValue || {})[0];
 
-            const field =
-                Object.keys(
-                    err.keyPattern ||
-                    {}
-                )[0];
+            if (duplicateField === "username") {
+                return res.status(409).json({
+                    message: "Användarnamnet är redan upptaget.",
+                    field: "username",
+                    code: "USERNAME_EXISTS",
+                });
+            }
 
-            return res.status(400).json({
-                message:
-                    `${field || "Email or username"} already exists`,
+            if (duplicateField === "email") {
+                return res.status(409).json({
+                    message: "E-postadressen är redan registrerad.",
+                    field: "email",
+                    code: "EMAIL_EXISTS",
+                });
+            }
+
+            return res.status(409).json({
+                message: "Uppgiften finns redan registrerad.",
+                code: "DUPLICATE_VALUE",
+            });
+        }
+
+        if (err?.code === "ECONNABORTED") {
+            return res.status(503).json({
+                message: "CAPTCHA-tjänsten svarar inte. Försök igen.",
             });
         }
 
         return res.status(500).json({
-            message:
-                "Server error",
+            message: "Server error",
         });
     }
 };
+
 
 // =====================================================
 // LOGIN
@@ -1259,6 +1291,80 @@ export const resendVerifyEmail = async (
         return res.status(500).json({
             message:
                 "Server error",
+        });
+    }
+};
+
+export const checkRegistrationAvailability = async (req, res) => {
+    try {
+        let { username, email } = req.body;
+
+        if (
+            typeof username !== "string" ||
+            typeof email !== "string"
+        ) {
+            return res.status(400).json({
+                available: false,
+                message: "Användarnamn och e-postadress krävs.",
+            });
+        }
+
+        username = username.trim().toLowerCase();
+        email = email.trim().toLowerCase();
+
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({
+                available: false,
+                field: "username",
+                message: "Ogiltigt användarnamn.",
+            });
+        }
+
+        if (!emailRegex.test(email) || email.length > 320) {
+            return res.status(400).json({
+                available: false,
+                field: "email",
+                message: "Ange en giltig e-postadress.",
+            });
+        }
+
+        const [existingUsername, existingEmail] = await Promise.all([
+            User.findOne({ username }).select("_id"),
+            User.findOne({ email }).select("_id"),
+        ]);
+
+        if (existingUsername) {
+            return res.status(409).json({
+                available: false,
+                field: "username",
+                code: "USERNAME_EXISTS",
+                message: "Användarnamnet är redan upptaget.",
+            });
+        }
+
+        if (existingEmail) {
+            return res.status(409).json({
+                available: false,
+                field: "email",
+                code: "EMAIL_EXISTS",
+                message: "E-postadressen är redan registrerad.",
+            });
+        }
+
+        return res.status(200).json({
+            available: true,
+            message: "Användarnamn och e-postadress är lediga.",
+        });
+
+    } catch (err) {
+        console.error(
+            "CHECK REGISTRATION AVAILABILITY ERROR:",
+            err
+        );
+
+        return res.status(500).json({
+            available: false,
+            message: "Kunde inte kontrollera uppgifterna. Försök igen.",
         });
     }
 };

@@ -1,19 +1,70 @@
 {
-  "sweden": "se",
-  "norway": "no",
-  "denmark": "dk",
-  "finland": "fi",
-  "germany": "de",
-  "france": "fr",
-  "netherlands": "nl",
-  "belgium": "be",
-  "spain": "es",
-  "italy": "it",
-  "portugal": "pt",
-  "austria": "at",
-  "switzerland": "ch",
-  "united kingdom": "gb",
-  "usa": "us",
-  "canada": "ca",
-  "australia": "au"
+  "Sweden": {
+    "code": "se",
+    "aliases": ["Sverige"]
+  },
+  "Norway": {
+    "code": "no",
+    "aliases": ["Norge"]
+  },
+  "Denmark": {
+    "code": "dk",
+    "aliases": ["Danmark"]
+  },
+  "Finland": {
+    "code": "fi",
+    "aliases": []
+  },
+  "Germany": {
+    "code": "de",
+    "aliases": ["Tyskland"]
+  },
+  "France": {
+    "code": "fr",
+    "aliases": ["Frankrike"]
+  },
+  "Netherlands": {
+    "code": "nl",
+    "aliases": ["Nederländerna"]
+  },
+  "Belgium": {
+    "code": "be",
+    "aliases": ["Belgien"]
+  },
+  "Spain": {
+    "code": "es",
+    "aliases": ["Spanien"]
+  },
+  "Italy": {
+    "code": "it",
+    "aliases": ["Italien"]
+  },
+  "Portugal": {
+    "code": "pt",
+    "aliases": []
+  },
+  "Austria": {
+    "code": "at",
+    "aliases": ["Österrike"]
+  },
+  "Switzerland": {
+    "code": "ch",
+    "aliases": ["Schweiz"]
+  },
+  "United Kingdom": {
+    "code": "gb",
+    "aliases": ["Storbritannien", "UK"]
+  },
+  "United States": {
+    "code": "us",
+    "aliases": ["USA", "United States of America"]
+  },
+  "Canada": {
+    "code": "ca",
+    "aliases": ["Kanada"]
+  },
+  "Australia": {
+    "code": "au",
+    "aliases": ["Australien"]
+  }
 }

@@ -15,6 +15,15 @@ const router = express.Router();
 // =========================
 // AUTH
 // =========================
+
+// Kontrollera användarnamn och e-post innan CAPTCHA
+router.post(
+    "/check-availability",
+    registerLimiter,
+    controller.checkRegistrationAvailability
+);
+
+// Slutför registrering efter CAPTCHA
 router.post(
     "/register",
     registerLimiter,
@@ -30,6 +39,7 @@ router.post(
 // =========================
 // JWT FLOW
 // =========================
+
 router.post(
     "/refresh",
     controller.refreshToken
@@ -43,6 +53,7 @@ router.post(
 // =========================
 // PASSWORD RESET
 // =========================
+
 router.post(
     "/forgot-password",
     forgotPasswordLimiter,
@@ -58,6 +69,7 @@ router.post(
 // =========================
 // EMAIL VERIFY
 // =========================
+
 router.get(
     "/verify-email/:userId/:token",
     verifyEmailLimiter,

@@ -1,3 +1,4 @@
+
 const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 // =====================================================
@@ -50,20 +51,63 @@ const postJSON = async (endpoint, body) => {
 };
 
 // =====================================================
+// CHECK REGISTRATION AVAILABILITY
+// =====================================================
+
+export const checkRegistrationAvailability = async (
+    username,
+    email
+) => {
+    if (
+        typeof username !== "string" ||
+        typeof email !== "string"
+    ) {
+        throw new Error(
+            "Användarnamn och e-postadress måste anges."
+        );
+    }
+
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanUsername || !cleanEmail) {
+        throw new Error(
+            "Användarnamn och e-postadress måste anges."
+        );
+    }
+
+    return postJSON("/check-availability", {
+        username: cleanUsername,
+        email: cleanEmail,
+    });
+};
+
+// =====================================================
 // REGISTER
 // =====================================================
 
 export const registerUser = async (userData) => {
-    if (!userData || typeof userData !== "object" || Array.isArray(userData)) {
-        throw new Error("Registreringsuppgifterna saknas eller är ogiltiga.");
+    if (
+        !userData ||
+        typeof userData !== "object" ||
+        Array.isArray(userData)
+    ) {
+        throw new Error(
+            "Registreringsuppgifterna saknas eller är ogiltiga."
+        );
     }
 
-    // Skicka samtliga registreringsfält och CAPTCHA-token
-    // vidare utan att ändra fältnamn eller ta bort data.
-    if (!userData.captchaToken) {
-        throw new Error("CAPTCHA-verifieringen saknas. Försök igen.");
+    // CAPTCHA måste vara godkänd innan registrering.
+    if (
+        typeof userData.captchaToken !== "string" ||
+        !userData.captchaToken.trim()
+    ) {
+        throw new Error(
+            "CAPTCHA-verifieringen saknas. Försök igen."
+        );
     }
 
+    // Skicka samtliga registreringsfält vidare.
     return postJSON("/register", userData);
 };
 
@@ -79,7 +123,10 @@ export const loginUser = async (userData) => {
     }
 
     if (data?.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem(
+            "user",
+            JSON.stringify(data.user)
+        );
     }
 
     window.dispatchEvent(new Event("auth-change"));
@@ -92,7 +139,9 @@ export const loginUser = async (userData) => {
 // =====================================================
 
 export const forgotPassword = async (email) => {
-    return postJSON("/forgot-password", { email });
+    return postJSON("/forgot-password", {
+        email,
+    });
 };
 
 // =====================================================
@@ -104,10 +153,13 @@ export const resetPassword = async (
     password,
     confirmPassword
 ) => {
-    return postJSON(`/reset-password/${encodeURIComponent(token)}`, {
-        password,
-        confirmPassword,
-    });
+    return postJSON(
+        `/reset-password/${encodeURIComponent(token)}`,
+        {
+            password,
+            confirmPassword,
+        }
+    );
 };
 
 // =====================================================
@@ -115,5 +167,7 @@ export const resetPassword = async (
 // =====================================================
 
 export const resendVerifyEmail = async (email) => {
-    return postJSON("/resend-verify-email", { email });
+    return postJSON("/resend-verify-email", {
+        email,
+    });
 };

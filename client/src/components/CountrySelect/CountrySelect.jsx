@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 
 export default function CountrySelect({
@@ -13,20 +14,39 @@ export default function CountrySelect({
     const searchRef = useRef(null);
     const optionRefs = useRef([]);
 
-    // Gör första bokstaven i landets namn till stor bokstav
+    // =========================
+    // FORMAT COUNTRY NAME
+    // =========================
+
     const formatCountryName = (country) => {
-        const name = String(country).trim();
+        const name = String(country || "").trim();
 
         if (!name) return "";
 
         return name.charAt(0).toUpperCase() + name.slice(1);
     };
 
+    // =========================
+    // FILTER COUNTRIES
+    // =========================
+
+    const normalizedSearch = search.trim().toLocaleLowerCase();
+
     const filteredCountries = countries.filter((country) =>
         String(country)
-            .toLowerCase()
-            .includes(search.trim().toLowerCase())
+            .toLocaleLowerCase()
+            .includes(normalizedSearch)
     );
+
+    // Säkerställ att aktivt index alltid ligger inom resultatlistan.
+    const safeActiveIndex =
+        filteredCountries.length === 0
+            ? -1
+            : Math.min(activeIndex, filteredCountries.length - 1);
+
+    // =========================
+    // OUTSIDE CLICK + ESCAPE
+    // =========================
 
     useEffect(() => {
         const handleOutsideClick = (event) => {
@@ -36,6 +56,7 @@ export default function CountrySelect({
             ) {
                 setIsOpen(false);
                 setSearch("");
+                setActiveIndex(0);
             }
         };
 
@@ -43,6 +64,7 @@ export default function CountrySelect({
             if (event.key === "Escape") {
                 setIsOpen(false);
                 setSearch("");
+                setActiveIndex(0);
             }
         };
 
@@ -57,37 +79,86 @@ export default function CountrySelect({
         };
     }, []);
 
+    // =========================
+    // FOCUS SEARCH INPUT
+    // =========================
+
     useEffect(() => {
         if (isOpen) {
             searchRef.current?.focus();
         }
     }, [isOpen]);
 
+    // =========================
+    // SCROLL ACTIVE OPTION
+    // =========================
+
     useEffect(() => {
-        if (isOpen && filteredCountries.length > 0) {
-            optionRefs.current[activeIndex]?.scrollIntoView({
+        if (
+            isOpen &&
+            safeActiveIndex >= 0 &&
+            safeActiveIndex < filteredCountries.length
+        ) {
+            optionRefs.current[safeActiveIndex]?.scrollIntoView({
                 block: "nearest"
             });
         }
-    }, [activeIndex, isOpen, filteredCountries.length]);
+    }, [safeActiveIndex, isOpen, filteredCountries.length]);
+
+    // =========================
+    // OPEN / CLOSE DROPDOWN
+    // =========================
 
     const openDropdown = () => {
-        setIsOpen((previous) => !previous);
+        if (isOpen) {
+            setIsOpen(false);
+            setSearch("");
+            setActiveIndex(0);
+            return;
+        }
+
         setSearch("");
         setActiveIndex(0);
+        setIsOpen(true);
     };
 
+    // =========================
+    // SELECT COUNTRY
+    // =========================
+
     const selectCountry = (country) => {
-        onChange(country);
+        if (typeof onChange === "function") {
+            onChange(country);
+        }
+
         setIsOpen(false);
         setSearch("");
         setActiveIndex(0);
     };
 
+    // =========================
+    // SEARCH CHANGE
+    // =========================
+
+    const handleSearchChange = (event) => {
+        setSearch(event.target.value);
+        setActiveIndex(0);
+    };
+
+    // =========================
+    // KEYBOARD NAVIGATION
+    // =========================
+
     const handleKeyDown = (event) => {
         if (!isOpen) {
-            if (event.key === "Enter" || event.key === "ArrowDown") {
+            if (
+                event.key === "Enter" ||
+                event.key === "ArrowDown"
+            ) {
                 event.preventDefault();
+
+                setSearch("");
+                setActiveIndex(0);
                 setIsOpen(true);
             }
 
@@ -97,28 +168,54 @@ export default function CountrySelect({
         if (event.key === "ArrowDown") {
             event.preventDefault();
 
-            setActiveIndex((current) =>
-                Math.min(current + 1, filteredCountries.length - 1)
-            );
+            if (filteredCountries.length > 0) {
+                setActiveIndex((current) =>
+                    Math.min(current + 1, filteredCountries.length - 1)
+                );
+            }
         }
 
         if (event.key === "ArrowUp") {
             event.preventDefault();
 
-            setActiveIndex((current) => Math.max(current - 1, 0));
+            if (filteredCountries.length > 0) {
+                setActiveIndex((current) =>
+                    Math.max(current - 1, 0)
+                );
+            }
+        }
+
+        if (event.key === "Home") {
+            event.preventDefault();
+            setActiveIndex(0);
+        }
+
+        if (event.key === "End") {
+            event.preventDefault();
+
+            if (filteredCountries.length > 0) {
+                setActiveIndex(filteredCountries.length - 1);
+            }
         }
 
         if (event.key === "Enter") {
             event.preventDefault();
 
-            if (filteredCountries[activeIndex]) {
-                selectCountry(filteredCountries[activeIndex]);
+            if (safeActiveIndex >= 0) {
+                selectCountry(filteredCountries[safeActiveIndex]);
             }
         }
     };
 
+    // =========================
+    // RENDER
+    // =========================
+
     return (
-        <div className="country-select" ref={wrapperRef}>
+        <div
+            className="country-select"
+            ref={wrapperRef}
+        >
             <button
                 type="button"
                 className={`country-select__trigger ${isOpen ? "is-open" : ""
@@ -129,7 +226,11 @@ export default function CountrySelect({
                 aria-expanded={isOpen}
                 aria-label="Select country"
             >
-                <span className={value ? "has-value" : "placeholder"}>
+                <span
+                    className={
+                        value ? "has-value" : "placeholder"
+                    }
+                >
                     {value
                         ? formatCountryName(value)
                         : "Select country"}
@@ -151,10 +252,7 @@ export default function CountrySelect({
                             ref={searchRef}
                             type="search"
                             value={search}
-                            onChange={(event) => {
-                                setSearch(event.target.value);
-                                setActiveIndex(0);
-                            }}
+                            onChange={handleSearchChange}
                             onKeyDown={handleKeyDown}
                             placeholder="Search country..."
                             aria-label="Search country"
@@ -170,7 +268,7 @@ export default function CountrySelect({
                         {filteredCountries.length > 0 ? (
                             filteredCountries.map((country, index) => (
                                 <button
-                                    key={`${country}-${index}`}
+                                    key={country}
                                     ref={(element) => {
                                         optionRefs.current[index] = element;
                                     }}
@@ -178,11 +276,11 @@ export default function CountrySelect({
                                     role="option"
                                     aria-selected={value === country}
                                     className={`country-select__option ${value === country ? "is-selected" : ""
-                                        } ${activeIndex === index ? "is-active" : ""
+                                        } ${safeActiveIndex === index
+                                            ? "is-active"
+                                            : ""
                                         }`}
-                                    onMouseEnter={() =>
-                                        setActiveIndex(index)
-                                    }
+                                    onMouseEnter={() => setActiveIndex(index)}
                                     onClick={() => selectCountry(country)}
                                 >
                                     <span>

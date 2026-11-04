@@ -3,62 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import User from "../models/User.js";
+import countries from "../config/countries.json" with { type: "json" };
 
-// =========================
-// GOOGLE COUNTRY CODES
-// =========================
-
-const countryCodeMap = {
-    sverige: "se",
-    sweden: "se",
-
-    norge: "no",
-    norway: "no",
-
-    danmark: "dk",
-    denmark: "dk",
-
-    finland: "fi",
-
-    tyskland: "de",
-    germany: "de",
-
-    frankrike: "fr",
-    france: "fr",
-
-    nederländerna: "nl",
-    netherlands: "nl",
-
-    belgien: "be",
-    belgium: "be",
-
-    spanien: "es",
-    spain: "es",
-
-    italien: "it",
-    italy: "it",
-
-    portugal: "pt",
-
-    österrike: "at",
-    austria: "at",
-
-    schweiz: "ch",
-    switzerland: "ch",
-
-    storbritannien: "gb",
-    "united kingdom": "gb",
-    uk: "gb",
-
-    usa: "us",
-    "united states": "us",
-
-    kanada: "ca",
-    canada: "ca",
-
-    australien: "au",
-    australia: "au",
-};
 
 // =========================
 // ADDRESS SEARCH CACHE
@@ -80,6 +26,37 @@ const normalize = (value) => {
         .replace(/[^\p{L}\p{N}]+/gu, " ")
         .trim();
 };
+
+// =========================
+// COUNTRY CODE MAP
+// =========================
+
+const countryCodeMap = Object.fromEntries(
+    Object.entries(countries).flatMap(([countryName, countryData]) => {
+        if (
+            !countryData ||
+            typeof countryData.code !== "string" ||
+            !/^[a-z]{2}$/i.test(countryData.code.trim())
+        ) {
+            return [];
+        }
+
+        const aliases = Array.isArray(countryData.aliases)
+            ? countryData.aliases
+            : [];
+
+        return [countryName, ...aliases]
+            .filter(
+                (name) =>
+                    typeof name === "string" &&
+                    name.trim()
+            )
+            .map((name) => [
+                normalize(name),
+                countryData.code.trim().toLowerCase()
+            ]);
+    })
+);
 
 // =========================
 // NORMALIZE HOUSE NUMBER
@@ -291,7 +268,18 @@ const getCityAfterPostalCode = (value) => {
 // COUNTRY CODE
 // =========================
 
+// =========================
+// GET COUNTRY CODE
+// =========================
+
 const getCountryCode = (country) => {
+    if (
+        typeof country !== "string" ||
+        !country.trim()
+    ) {
+        return "";
+    }
+
     return countryCodeMap[normalize(country)] || "";
 };
 
