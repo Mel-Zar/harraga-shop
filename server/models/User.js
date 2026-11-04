@@ -131,6 +131,27 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        twoFactorEnabled: {
+            type: Boolean,
+            default: false,
+        },
+
+        twoFactorSecret: {
+            type: String,
+            default: undefined,
+            select: false,
+        },
+
+        twoFactorRecoveryCodes: {
+            type: [String],
+            default: [],
+            select: false,
+        },
+
+        twoFactorVerifiedAt: {
+            type: Date,
+            default: undefined,
+        },
 
         isVerified: {
             type: Boolean,

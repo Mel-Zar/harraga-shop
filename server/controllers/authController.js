@@ -33,6 +33,25 @@ const generateRefreshToken = (id) => {
 };
 
 // =====================================================
+// TEMPORARY 2FA LOGIN TOKEN
+// =====================================================
+
+const generateTwoFactorTempToken = (
+    id,
+    purpose = "2fa-login"
+) => {
+    if (!process.env.TWO_FACTOR_TEMP_SECRET) {
+        throw new Error("TWO_FACTOR_TEMP_SECRET is missing");
+    }
+
+    return jwt.sign(
+        { id, purpose },
+        process.env.TWO_FACTOR_TEMP_SECRET,
+        { expiresIn: "5m" }
+    );
+};
+
+// =====================================================
 // PASSWORD VALIDATION
 // =====================================================
 
@@ -445,241 +464,181 @@ export const register = async (req, res) => {
 // LOGIN
 // =====================================================
 
-export const login = async (
-    req,
-    res
-) => {
-
+export const login = async (req, res) => {
     try {
+        const { identifier, password } = req.body;
 
-        const {
-            identifier,
-            password,
-        } = req.body;
-
-        if (
-            !identifier ||
-            !password
-        ) {
+        if (!identifier || !password) {
             return res.status(400).json({
-                message:
-                    "All fields are required",
+                message: "All fields are required",
             });
         }
 
-        const cleanIdentifier =
-            identifier
-                .toLowerCase()
-                .trim();
+        const cleanIdentifier = identifier.toLowerCase().trim();
 
-        const user =
-            await User.findOne({
-                $or: [
-                    {
-                        email:
-                            cleanIdentifier,
-                    },
-                    {
-                        username:
-                            cleanIdentifier,
-                    },
-                ],
-            });
+        const user = await User.findOne({
+            $or: [
+                { email: cleanIdentifier },
+                { username: cleanIdentifier },
+            ],
+        }).select("+twoFactorSecret");
 
         if (!user) {
             return res.status(401).json({
-                message:
-                    "Invalid credentials",
+                message: "Invalid credentials",
             });
         }
 
-        // =================================================
-        // CHECK PASSWORD
-        // =================================================
-
-        const match =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
+        const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
             return res.status(401).json({
-                message:
-                    "Invalid credentials",
+                message: "Invalid credentials",
             });
         }
 
-        // =================================================
-        // EMAIL VERIFICATION
-        // =================================================
-
-        if (
-            !user.isVerified
-        ) {
+        if (!user.isVerified) {
             return res.status(401).json({
-                message:
-                    "Please verify your email before login",
+                message: "Please verify your email before login",
             });
         }
 
-        // =================================================
-        // TOKENS
-        // =================================================
-
-        const accessToken =
-            generateAccessToken(
-                user._id
+        // Administrators must enroll in 2FA before normal login.
+        if (user.isAdmin && !user.twoFactorEnabled) {
+            const challengeToken = generateTwoFactorTempToken(
+                user._id,
+                "2fa-enroll"
             );
 
-        const refreshToken =
-            generateRefreshToken(
-                user._id
-            );
-
-        // =================================================
-        // STORE REFRESH TOKEN
-        // =================================================
-
-        if (
-            !Array.isArray(
-                user.refreshTokens
-            )
-        ) {
-            user.refreshTokens =
-                [];
+            return res.json({
+                twoFactorSetupRequired: true,
+                challengeToken,
+                challengeType: "setup",
+            });
         }
 
-        user.refreshTokens.push(
-            refreshToken
-        );
+        // Users with 2FA enabled must verify before normal login.
+        if (user.twoFactorEnabled) {
+            const challengeToken = generateTwoFactorTempToken(
+                user._id,
+                "2fa-login"
+            );
 
+            return res.json({
+                twoFactorRequired: true,
+                challengeToken,
+                challengeType: "login",
+            });
+        }
+
+        // Normal login for customers without 2FA.
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
+
+        if (!Array.isArray(user.refreshTokens)) {
+            user.refreshTokens = [];
+        }
+
+        user.refreshTokens.push(refreshToken);
         await user.save();
 
-        // =================================================
-        // REFRESH TOKEN COOKIE
-        // =================================================
-
-        res.cookie(
-            "refreshToken",
-            refreshToken,
-            {
-                httpOnly: true,
-                secure: false,
-                sameSite: "lax",
-                path: "/",
-            }
-        );
-
-        // =================================================
-        // RESPONSE
-        // =================================================
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            path: "/",
+        });
 
         return res.json({
             accessToken,
-
             user: {
-                id:
-                    user._id,
-                username:
-                    user.username,
-                firstName:
-                    user.firstName,
-                lastName:
-                    user.lastName,
-                email:
-                    user.email,
-                isAdmin:
-                    user.isAdmin,
-                isVerified:
-                    user.isVerified,
+                id: user._id,
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                isVerified: user.isVerified,
             },
         });
 
     } catch (err) {
-
-        console.error(
-            "LOGIN ERROR:",
-            err
-        );
+        console.error("LOGIN ERROR:", err);
 
         return res.status(500).json({
-            message:
-                "Server error",
+            message: "Server error",
         });
     }
 };
+
 
 // =====================================================
 // REFRESH TOKEN
 // =====================================================
 
-export const refreshToken = async (
-    req,
-    res
-) => {
-
+export const refreshToken = async (req, res) => {
     try {
-
-        const token =
-            req.cookies.refreshToken;
+        const token = req.cookies.refreshToken;
 
         if (!token) {
             return res.status(401).json({
-                message:
-                    "No refresh token",
+                message: "No refresh token",
             });
         }
 
-        const decoded =
-            jwt.verify(
-                token,
-                process.env.JWT_REFRESH_SECRET
-            );
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_REFRESH_SECRET
+        );
 
-        const user =
-            await User.findById(
-                decoded.id
-            );
+        const user = await User.findById(decoded.id);
 
         if (
             !user ||
-            !Array.isArray(
-                user.refreshTokens
-            ) ||
-            !user.refreshTokens.includes(
-                token
-            )
+            !Array.isArray(user.refreshTokens) ||
+            !user.refreshTokens.includes(token)
         ) {
             return res.status(403).json({
-                message:
-                    "Invalid refresh token",
+                message: "Invalid refresh token",
             });
         }
 
-        const newAccessToken =
-            generateAccessToken(
-                user._id
+        // Administrators must have 2FA enabled.
+        if (user.isAdmin && !user.twoFactorEnabled) {
+            user.refreshTokens = user.refreshTokens.filter(
+                (savedToken) => savedToken !== token
             );
 
+            await user.save();
+
+            res.clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: false,
+                sameSite: "lax",
+                path: "/",
+            });
+
+            return res.status(403).json({
+                message: "Administrator must enable two-factor authentication",
+                twoFactorSetupRequired: true,
+            });
+        }
+
+        const newAccessToken = generateAccessToken(user._id);
+
         return res.json({
-            accessToken:
-                newAccessToken,
+            accessToken: newAccessToken,
         });
 
     } catch (err) {
-
-        console.error(
-            "REFRESH TOKEN ERROR:",
-            err
-        );
+        console.error("REFRESH TOKEN ERROR:", err);
 
         return res.status(403).json({
-            message:
-                "Invalid refresh token",
+            message: "Invalid refresh token",
         });
     }
 };
+
 
 // =====================================================
 // LOGOUT

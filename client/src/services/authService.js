@@ -129,7 +129,9 @@ export const loginUser = async (userData) => {
         );
     }
 
-    window.dispatchEvent(new Event("auth-change"));
+    if (data?.accessToken && data?.user) {
+        window.dispatchEvent(new Event("auth-change"));
+    }
 
     return data;
 };
@@ -170,4 +172,72 @@ export const resendVerifyEmail = async (email) => {
     return postJSON("/resend-verify-email", {
         email,
     });
+};
+
+// =====================================================
+// TWO-FACTOR LOGIN VERIFICATION
+// =====================================================
+
+export const verifyTwoFactorLogin = async (
+    challengeToken,
+    token,
+    recoveryCode
+) => {
+    const response = await fetch(
+        `${API_URL}/2fa/login-verify`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${challengeToken}`,
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                token,
+                recoveryCode,
+            }),
+        }
+    );
+
+    return parseResponse(response);
+};
+
+// =====================================================
+// TWO-FACTOR ADMIN ENROLLMENT SETUP
+// =====================================================
+
+export const setupTwoFactorEnrollment = async (
+    challengeToken
+) => {
+    const res = await fetch(`${API_URL}/2fa/enroll-setup`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${challengeToken}`,
+        },
+        credentials: "include",
+    });
+
+    return parseResponse(res);
+};
+
+
+// =====================================================
+// TWO-FACTOR ADMIN ENROLLMENT ENABLE
+// =====================================================
+
+export const enableTwoFactorEnrollment = async (
+    challengeToken,
+    token
+) => {
+    const res = await fetch(`${API_URL}/2fa/enroll-enable`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${challengeToken}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ token }),
+    });
+
+    return parseResponse(res);
 };
