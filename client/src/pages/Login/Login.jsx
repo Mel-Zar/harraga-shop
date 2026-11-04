@@ -32,6 +32,7 @@ export default function Login() {
 
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -414,17 +415,29 @@ export default function Login() {
                             autoComplete="username"
                         />
 
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                                setError("");
-                            }}
-                            disabled={disabled}
-                            autoComplete="current-password"
-                        />
+                        <div className="password-field">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    setError("");
+                                }}
+                                disabled={disabled}
+                                autoComplete="current-password"
+                            />
+
+                            <button
+                                type="button"
+                                className="toggle-password"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                disabled={disabled}
+                            >
+                                {showPassword ? "🙈" : "👁️"}
+                            </button>
+                        </div>
 
                         <button
                             type="submit"
