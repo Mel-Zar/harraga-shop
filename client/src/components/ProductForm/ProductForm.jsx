@@ -2,91 +2,32 @@ import { useEffect, useRef, useState } from "react";
 
 import { toast } from "react-toastify";
 
+import "./ProductForm.scss";
 
 
 const MAX_IMAGES = 4;
 
 const MAX_CATEGORY_LEVELS = 20;
 
-
-
-const inputStyle = {
-
-    width: "100%",
-
-    boxSizing: "border-box",
-
-    padding: "11px 12px",
-
-    border: "1px solid #d1d5db",
-
-    borderRadius: "8px",
-
-    fontSize: "14px",
-
-    background: "#fff",
-
-    color: "#111827",
-
-};
-
-
-
-const labelStyle = {
-
-    display: "flex",
-
-    flexDirection: "column",
-
-    gap: "7px",
-
-    fontSize: "14px",
-
-    fontWeight: 600,
-
-    color: "#111827",
-
-};
-
-
-
-const helpStyle = { color: "#6b7280", fontSize: "12px", fontWeight: 400 };
-
-
+// Capitalize the first letter while preserving the rest of the user's chosen casing.
+const capitalizeFirstLetter = (value) =>
+    value.replace(/^(\s*)(\p{L})/u, (_, whitespace, character) =>
+        whitespace + character.toLocaleUpperCase()
+    );
 
 function Section({ title, description, children }) {
 
     return (
 
-        <section
+        <section className="product-form__section">
 
-            style={{
+            <div className="product-form__section-heading">
 
-                display: "flex",
-
-                flexDirection: "column",
-
-                gap: "16px",
-
-                padding: "20px",
-
-                border: "1px solid #e5e7eb",
-
-                borderRadius: "12px",
-
-                background: "#fff",
-
-            }}
-
-        >
-
-            <div>
-
-                <h3 style={{ margin: 0, fontSize: "17px", color: "#111827" }}>{title}</h3>
+                <h3>{title}</h3>
 
                 {description && (
 
-                    <p style={{ margin: "5px 0 0", color: "#6b7280", fontSize: "13px" }}>
+                    <p>
 
                         {description}
 
@@ -104,31 +45,27 @@ function Section({ title, description, children }) {
 
 }
 
-
-
 function Field({ label, required, help, children }) {
 
     return (
 
-        <label style={labelStyle}>
+        <label className="product-form__field">
 
-            <span>
+            <span className="product-form__field-label">
 
-                {label} {required && <span style={{ color: "#dc2626" }}>*</span>}
+                {label} {required && <span>*</span>}
 
             </span>
 
             {children}
 
-            {help && <span style={helpStyle}>{help}</span>}
+            {help && <span className="product-form__field-help">{help}</span>}
 
         </label>
 
     );
 
 }
-
-
 
 function ProductForm({ onSubmit }) {
 
@@ -201,16 +138,24 @@ function ProductForm({ onSubmit }) {
     const [submitting, setSubmitting] = useState(false);
 
     const fileInputRef = useRef(null);
+    const submittingRef = useRef(false);
+    const objectUrlsRef = useRef(new Set());
 
-
+    const revokePreview = (preview) => {
+        if (!preview || !objectUrlsRef.current.has(preview)) return;
+        URL.revokeObjectURL(preview);
+        objectUrlsRef.current.delete(preview);
+    };
 
     useEffect(() => {
+        // Keep the same Set instance for this effect's cleanup.
+        const objectUrls = objectUrlsRef.current;
 
-        return () => imagePreviews.forEach((item) => URL.revokeObjectURL(item.preview));
-
-    }, [imagePreviews]);
-
-
+        return () => {
+            objectUrls.forEach((preview) => URL.revokeObjectURL(preview));
+            objectUrls.clear();
+        };
+    }, []);
 
     const updateCategoryLevel = (index, value) => {
 
@@ -221,8 +166,6 @@ function ProductForm({ onSubmit }) {
         );
 
     };
-
-
 
     const addCategoryLevel = () => {
 
@@ -246,8 +189,6 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const removeCategoryLevel = (index) => {
 
         setCategoryLevels((previous) =>
@@ -258,17 +199,13 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const handleImageChange = (event) => {
 
         const files = Array.from(event.target.files || []);
 
         if (!files.length) return;
 
-
-
-        if (files.some((file) => !file.type.startsWith("image/"))) {
+        if (files.some((file) => !file.type || !file.type.startsWith("image/") || file.size === 0)) {
 
             toast.error("Only image files are allowed.");
 
@@ -298,8 +235,6 @@ function ProductForm({ onSubmit }) {
 
         }
 
-
-
         const newPreviews = files.map((file) => ({
 
             file,
@@ -318,33 +253,21 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const handleRemoveImage = (index) => {
+        const item = imagePreviews[index];
+        if (item) revokePreview(item.preview);
 
-        setImagePreviews((previous) => {
-
-            const item = previous[index];
-
-            if (item?.preview) URL.revokeObjectURL(item.preview);
-
-            return previous.filter((_, i) => i !== index);
-
-        });
-
+        setImagePreviews((previous) => previous.filter((_, i) => i !== index));
         setImages((previous) => previous.filter((_, i) => i !== index));
-
     };
 
-
-
-    const toggleListValue = (value, setter, current) => {
-
-        setter(current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-
+    const toggleListValue = (value, setter) => {
+        setter((previous) =>
+            previous.includes(value)
+                ? previous.filter((item) => item !== value)
+                : [...previous, value]
+        );
     };
-
-
 
     const resetForm = () => {
 
@@ -410,7 +333,7 @@ function ProductForm({ onSubmit }) {
 
         setSlug("");
 
-        imagePreviews.forEach((item) => URL.revokeObjectURL(item.preview));
+        imagePreviews.forEach((item) => revokePreview(item.preview));
 
         setImages([]);
 
@@ -420,15 +343,15 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const handleSubmit = async (event) => {
 
         event.preventDefault();
 
-        if (submitting) return;
-
-
+        if (submittingRef.current) return;
+        if (typeof onSubmit !== "function") {
+            toast.error("Product save handler is not configured.");
+            return;
+        }
 
         if (!name.trim()) return toast.error("Product name is required.");
 
@@ -437,8 +360,6 @@ function ProductForm({ onSubmit }) {
         if (name.trim().length > 200) return toast.error("Product name must be 200 characters or fewer.");
 
         if (description.trim().length > 5000) return toast.error("Description must be 5000 characters or fewer.");
-
-
 
         const categoryPath = categoryLevels.map((value) => value.trim());
 
@@ -453,8 +374,6 @@ function ProductForm({ onSubmit }) {
             return toast.error("Check category levels. Each level must be 100 characters or fewer.");
 
         }
-
-
 
         const numericFields = [
 
@@ -506,8 +425,6 @@ function ProductForm({ onSubmit }) {
 
         if (colors.length === 0) return toast.error("Select at least one color.");
 
-
-
         const finalSlug = (slug.trim() || name.trim())
 
             .toLowerCase()
@@ -520,13 +437,11 @@ function ProductForm({ onSubmit }) {
 
             .replace(/^-+|-+$/g, "");
 
-
-
         const formData = new FormData();
 
         const fields = {
 
-            name: name.trim(),
+            name: capitalizeFirstLetter(name.trim()),
 
             description: description.trim(),
 
@@ -596,16 +511,12 @@ function ProductForm({ onSubmit }) {
 
         };
 
-
-
         Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
 
         images.forEach((image) => formData.append("images", image));
 
-
-
         try {
-
+            submittingRef.current = true;
             setSubmitting(true);
 
             await onSubmit(formData);
@@ -619,18 +530,15 @@ function ProductForm({ onSubmit }) {
             toast.error(error?.response?.data?.message || error?.message || "Could not save product.");
 
         } finally {
-
+            submittingRef.current = false;
             setSubmitting(false);
-
         }
 
     };
 
-
-
     const addCustomSize = () => {
 
-        const value = customSize.trim();
+        const value = customSize.trim().toUpperCase();
 
         if (!value) return;
 
@@ -640,11 +548,9 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const addCustomColor = () => {
 
-        const value = customColor.trim();
+        const value = customColor.trim().toLowerCase().replace(/\b\w/g, (character) => character.toUpperCase());
 
         if (!value) return;
 
@@ -654,29 +560,25 @@ function ProductForm({ onSubmit }) {
 
     };
 
-
-
     const sizesOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One size"];
 
     const colorsOptions = ["Black", "White", "Grey", "Navy", "Blue", "Red", "Green", "Beige", "Brown"];
 
-
-
     return (
 
-        <form onSubmit={handleSubmit} noValidate style={{ maxWidth: 980, margin: "0 auto 28px", color: "#111827" }}>
+        <form className="product-form" onSubmit={handleSubmit} noValidate>
 
-            <header style={{ marginBottom: 22 }}>
+            <header className="product-form__header">
 
-                <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 700, letterSpacing: 1.5, color: "#6b7280", textTransform: "uppercase" }}>
+                <p>
 
                     HARRAGA SHOP · CATALOG
 
                 </p>
 
-                <h2 style={{ margin: 0, fontSize: 28, letterSpacing: -0.6 }}>Create product</h2>
+                <h2>Create product</h2>
 
-                <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 14 }}>
+                <p>
 
                     Add product details, variants, images and search information.
 
@@ -684,73 +586,74 @@ function ProductForm({ onSubmit }) {
 
             </header>
 
-
-
-            <div style={{ display: "grid", gap: 16 }}>
+            <div className="product-form__content">
 
                 <Section title="1. Basic information" description="The details customers see on the product page.">
 
                     <Field label="Product name" required>
 
-                        <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="e.g. Premium Essential Tracksuit" required />
+                        <input value={name} onChange={(e) => setName(capitalizeFirstLetter(e.target.value))} autoCapitalize="sentences" spellCheck={false} maxLength={200} placeholder="e.g. Premium Essential Tracksuit" required />
 
                     </Field>
 
                     <Field label="Short description" help="A concise summary for product cards (recommended).">
 
-                        <textarea style={{ ...inputStyle, minHeight: 72, resize: "vertical" }} value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} maxLength={300} placeholder="A short summary of the product" />
+                        <textarea value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} autoCapitalize="sentences" maxLength={300} placeholder="A short summary of the product" />
 
                     </Field>
 
                     <Field label="Full description" required>
 
-                        <textarea style={{ ...inputStyle, minHeight: 130, resize: "vertical" }} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} placeholder="Describe the product, fit, features and care instructions..." required />
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} autoCapitalize="sentences" maxLength={5000} placeholder="Describe the product, fit, features and care instructions..." required />
 
                     </Field>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+                    <div className="product-form__field-grid">
 
-                        <Field label="Brand"><input style={inputStyle} value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={100} placeholder="e.g. Harraga" /></Field>
+                        <Field label="Brand"><input value={brand} onChange={(e) => setBrand(e.target.value)} autoCapitalize="words" maxLength={100} placeholder="e.g. Harraga" /></Field>
 
-                        <Field label="SKU / product code"><input style={inputStyle} value={sku} onChange={(e) => setSku(e.target.value)} maxLength={100} placeholder="e.g. HRG-TRK-001" /></Field>
+                        <Field label="SKU / product code"><input value={sku} onChange={(e) => setSku(e.target.value.toUpperCase())} className="product-form__input-uppercase" maxLength={100} placeholder="e.g. HRG-TRK-001" /></Field>
 
-                        <Field label="Barcode / EAN"><input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} maxLength={100} placeholder="Optional" /></Field>
+                        <Field label="Barcode / EAN"><input value={barcode} onChange={(e) => setBarcode(e.target.value)} maxLength={100} placeholder="Optional" /></Field>
 
                     </div>
 
                 </Section>
 
-
-
                 <Section title="2. Categories" description="Build the full category path, from the broad category to the most specific one.">
 
                     {categoryLevels.map((category, index) => (
 
-                        <div key={index} style={{ display: "grid", gridTemplateColumns: "32px minmax(0, 1fr) auto", gap: 8, alignItems: "center" }}>
+                        <div className="product-form__category-row" key={index}>
 
-                            <span style={{ color: "#6b7280", fontSize: 13 }}>{index + 1}.</span>
+                            <span>{index + 1}.</span>
 
-                            <input style={inputStyle} value={category} onChange={(e) => updateCategoryLevel(index, e.target.value)} maxLength={100} placeholder={index === 0 ? "Main category, e.g. Clothing" : `Category level ${index + 1}`} required />
+                            <input value={category} onChange={(e) => updateCategoryLevel(index, e.target.value)} autoCapitalize="words" maxLength={100} placeholder={index === 0 ? "Main category, e.g. Clothing" : `Category level ${index + 1}`} required />
 
-                            <button type="button" onClick={() => removeCategoryLevel(index)} aria-label={`Remove category level ${index + 1}`} style={{ ...inputStyle, width: 42, padding: 9, cursor: "pointer" }}>×</button>
+                            <button type="button" onClick={() => removeCategoryLevel(index)} aria-label={`Remove category level ${index + 1}`}>×</button>
 
                         </div>
 
                     ))}
 
-                    <button type="button" onClick={addCategoryLevel} disabled={categoryLevels.length >= MAX_CATEGORY_LEVELS} style={{ justifySelf: "start", padding: "10px 14px", border: "1px solid #d1d5db", background: "#fff", borderRadius: 8, cursor: "pointer" }}>
+                    <button
+                        className="product-form__add-category"
+                        type="button"
+                        onClick={addCategoryLevel}
+                        disabled={categoryLevels.length >= MAX_CATEGORY_LEVELS}
+                    >
 
-                        \+ Add subcategory
+                        + Add subcategory
 
                     </button>
 
                     <Field label="Tags" help="Separate tags with commas, e.g. streetwear, new collection, sportswear.">
 
-                        <input style={inputStyle} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="streetwear, new collection" />
+                        <input value={tags} onChange={(e) => setTags(e.target.value)} autoCapitalize="none" placeholder="streetwear, new collection" />
 
                     </Field>
 
-                    <div style={{ padding: 12, borderRadius: 8, background: "#f9fafb", color: "#374151", fontSize: 13, overflowWrap: "anywhere" }}>
+                    <div className="product-form__category-path">
 
                         <strong>Category path:</strong> {categoryLevels.filter((item) => item.trim()).join(" → ") || "Not set"}
 
@@ -758,25 +661,23 @@ function ProductForm({ onSubmit }) {
 
                 </Section>
 
-
-
                 <Section title="3. Pricing and inventory" description="Prices are non-negative. Keep internal costs for administration only.">
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+                    <div className="product-form__field-grid product-form__field-grid--two">
 
-                        <Field label="Selling price" required><input style={inputStyle} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" required /></Field>
+                        <Field label="Selling price" required><input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" required /></Field>
 
-                        <Field label="Original / compare-at price" help="Optional crossed-out price."><input style={inputStyle} type="number" min="0" step="0.01" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} placeholder="0.00" /></Field>
+                        <Field label="Original / compare-at price" help="Optional crossed-out price."><input type="number" min="0" step="0.01" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} placeholder="0.00" /></Field>
 
-                        <Field label="Purchase cost" help="Internal admin information."><input style={inputStyle} type="number" min="0" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0.00" /></Field>
+                        <Field label="Purchase cost" help="Internal admin information."><input type="number" min="0" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0.00" /></Field>
 
-                        <Field label="Stock quantity" required><input style={inputStyle} type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} required /></Field>
+                        <Field label="Stock quantity" required><input type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} required /></Field>
 
-                        <Field label="Low-stock alert at"><input style={inputStyle} type="number" min="0" step="1" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} /></Field>
+                        <Field label="Low-stock alert at"><input type="number" min="0" step="1" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} /></Field>
 
                     </div>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14 }}>
+                    <label className="product-form__checkbox-field">
 
                         <input type="checkbox" checked={allowBackorders} onChange={(e) => setAllowBackorders(e.target.checked)} />
 
@@ -786,21 +687,19 @@ function ProductForm({ onSubmit }) {
 
                 </Section>
 
-
-
                 <Section title="4. Size and colour variants" description="Select all options that apply. For true variant-level stock and prices, the backend must store each combination separately.">
 
-                    <div>
+                    <div className="product-form__variant-group">
 
-                        <p style={{ margin: "0 0 9px", fontSize: 14, fontWeight: 600 }}>Sizes *</p>
+                        <p className="product-form__group-label">Sizes *</p>
 
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <div className="product-form__option-list">
 
                             {sizesOptions.map((size) => (
 
-                                <label key={size} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", border: `1px solid ${sizes.includes(size) ? "#111827" : "#d1d5db"}`, borderRadius: 8, background: sizes.includes(size) ? "#f3f4f6" : "#fff", fontSize: 13 }}>
+                                <label className="product-form__option" key={size}>
 
-                                    <input type="checkbox" checked={sizes.includes(size)} onChange={() => toggleListValue(size, setSizes, sizes)} />{size}
+                                    <input type="checkbox" checked={sizes.includes(size)} onChange={() => toggleListValue(size, setSizes)} />{size}
 
                                 </label>
 
@@ -808,29 +707,29 @@ function ProductForm({ onSubmit }) {
 
                         </div>
 
-                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                        <div className="product-form__custom-option-row">
 
-                            <input style={inputStyle} value={customSize} onChange={(e) => setCustomSize(e.target.value)} placeholder="Add custom size" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} />
+                            <input value={customSize} onChange={(e) => setCustomSize(e.target.value.toUpperCase())} className="product-form__input-uppercase" placeholder="Add custom size" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} />
 
-                            <button type="button" onClick={addCustomSize} style={{ padding: "0 14px", border: "1px solid #d1d5db", borderRadius: 8, background: "#fff" }}>Add</button>
+                            <button type="button" onClick={addCustomSize}>Add</button>
 
                         </div>
 
-                        {sizes.filter((size) => !sizesOptions.includes(size)).map((size) => <button type="button" key={size} onClick={() => setSizes((previous) => previous.filter((item) => item !== size))} style={{ margin: "8px 8px 0 0", padding: "5px 9px", borderRadius: 20, border: "1px solid #d1d5db", background: "#fff" }}>{size} ×</button>)}
+                        {sizes.filter((size) => !sizesOptions.includes(size)).map((size) => <button className="product-form__custom-chip" type="button" key={size} onClick={() => setSizes((previous) => previous.filter((item) => item !== size))}>{size} ×</button>)}
 
                     </div>
 
-                    <div>
+                    <div className="product-form__variant-group">
 
-                        <p style={{ margin: "0 0 9px", fontSize: 14, fontWeight: 600 }}>Colours *</p>
+                        <p className="product-form__group-label">Colours *</p>
 
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <div className="product-form__option-list">
 
                             {colorsOptions.map((color) => (
 
-                                <label key={color} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", border: `1px solid ${colors.includes(color) ? "#111827" : "#d1d5db"}`, borderRadius: 8, background: colors.includes(color) ? "#f3f4f6" : "#fff", fontSize: 13 }}>
+                                <label className="product-form__option" key={color}>
 
-                                    <input type="checkbox" checked={colors.includes(color)} onChange={() => toggleListValue(color, setColors, colors)} />{color}
+                                    <input type="checkbox" checked={colors.includes(color)} onChange={() => toggleListValue(color, setColors)} />{color}
 
                                 </label>
 
@@ -838,27 +737,27 @@ function ProductForm({ onSubmit }) {
 
                         </div>
 
-                        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                        <div className="product-form__custom-option-row">
 
-                            <input style={inputStyle} value={customColor} onChange={(e) => setCustomColor(e.target.value)} placeholder="Add custom colour" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomColor(); } }} />
+                            <input value={customColor} onChange={(e) => setCustomColor(e.target.value.toLowerCase().replace(/\b\w/g, (character) => character.toUpperCase()))} className="product-form__input-capitalize" placeholder="Add custom colour" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomColor(); } }} />
 
-                            <button type="button" onClick={addCustomColor} style={{ padding: "0 14px", border: "1px solid #d1d5db", borderRadius: 8, background: "#fff" }}>Add</button>
+                            <button type="button" onClick={addCustomColor}>Add</button>
 
                         </div>
 
-                        {colors.filter((color) => !colorsOptions.includes(color)).map((color) => <button type="button" key={color} onClick={() => setColors((previous) => previous.filter((item) => item !== color))} style={{ margin: "8px 8px 0 0", padding: "5px 9px", borderRadius: 20, border: "1px solid #d1d5db", background: "#fff" }}>{color} ×</button>)}
+                        {colors.filter((color) => !colorsOptions.includes(color)).map((color) => <button className="product-form__custom-chip" type="button" key={color} onClick={() => setColors((previous) => previous.filter((item) => item !== color))}>{color} ×</button>)}
 
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+                    <div className="product-form__field-grid product-form__field-grid--three">
 
-                        <Field label="Material"><input style={inputStyle} value={material} onChange={(e) => setMaterial(e.target.value)} placeholder="e.g. 80% cotton, 20% polyester" /></Field>
+                        <Field label="Material"><input value={material} onChange={(e) => setMaterial(e.target.value)} autoCapitalize="sentences" placeholder="e.g. 80% cotton, 20% polyester" /></Field>
 
-                        <Field label="Fit / style"><input style={inputStyle} value={fit} onChange={(e) => setFit(e.target.value)} placeholder="Regular, slim, oversized..." /></Field>
+                        <Field label="Fit / style"><input value={fit} onChange={(e) => setFit(e.target.value)} autoCapitalize="words" placeholder="Regular, slim, oversized..." /></Field>
 
                         <Field label="Target group">
 
-                            <select style={inputStyle} value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)}>
+                            <select value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)}>
 
                                 <option>Unisex</option><option>Men</option><option>Women</option><option>Kids</option><option>Baby</option>
 
@@ -870,33 +769,31 @@ function ProductForm({ onSubmit }) {
 
                 </Section>
 
-
-
                 <Section title="5. Product images" description="Use clear product photography. The first image is treated as the main image.">
 
-                    <div style={{ padding: 18, border: "1px dashed #9ca3af", borderRadius: 10, background: "#f9fafb" }}>
+                    <div className="product-form__image-upload">
 
                         <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} disabled={images.length >= MAX_IMAGES} />
 
-                        <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 12 }}>Maximum 4 images, 10 MB per image. Supported formats depend on your server configuration.</p>
+                        <p>Maximum 4 images, 10 MB per image. Supported formats depend on your server configuration.</p>
 
-                        <p style={{ margin: "6px 0 0", fontSize: 13, fontWeight: 600 }}>Selected: {images.length}/{MAX_IMAGES}</p>
+                        <p>Selected: {images.length}/{MAX_IMAGES}</p>
 
                     </div>
 
                     {imagePreviews.length > 0 && (
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(125px, 1fr))", gap: 12 }}>
+                        <div className="product-form__image-grid">
 
                             {imagePreviews.map((item, index) => (
 
-                                <div key={item.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 8 }}>
+                                <div className="product-form__image-card" key={item.id}>
 
-                                    <img src={item.preview} alt={`Product preview ${index + 1}`} style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 7 }} />
+                                    <img src={item.preview} alt={`Product preview ${index + 1}`} />
 
-                                    <p style={{ margin: "7px 0", fontSize: 11, color: "#6b7280", overflowWrap: "anywhere" }}>{index === 0 ? "Main image" : `Image ${index + 1}`}</p>
+                                    <p>{index === 0 ? "Main image" : `Image ${index + 1}`}</p>
 
-                                    <button type="button" onClick={() => handleRemoveImage(index)} style={{ width: "100%", padding: 7, border: "1px solid #d1d5db", borderRadius: 7, background: "#fff", cursor: "pointer" }}>Remove</button>
+                                    <button type="button" onClick={() => handleRemoveImage(index)}>Remove</button>
 
                                 </div>
 
@@ -908,49 +805,45 @@ function ProductForm({ onSubmit }) {
 
                 </Section>
 
-
-
                 <Section title="6. Shipping details" description="Optional information for shipping calculations.">
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14 }}>
+                    <div className="product-form__field-grid product-form__field-grid--two">
 
-                        <Field label="Weight (grams)"><input style={inputStyle} type="number" min="0" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 650" /></Field>
+                        <Field label="Weight (grams)"><input type="number" min="0" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 650" /></Field>
 
-                        <Field label="Length (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={length} onChange={(e) => setLength(e.target.value)} /></Field>
+                        <Field label="Length (cm)"><input type="number" min="0" step="0.1" value={length} onChange={(e) => setLength(e.target.value)} /></Field>
 
-                        <Field label="Width (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
+                        <Field label="Width (cm)"><input type="number" min="0" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
 
-                        <Field label="Height (cm)"><input style={inputStyle} type="number" min="0" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} /></Field>
+                        <Field label="Height (cm)"><input type="number" min="0" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} /></Field>
 
                     </div>
 
-                    <Field label="Shipping class"><input style={inputStyle} value={shippingClass} onChange={(e) => setShippingClass(e.target.value)} placeholder="e.g. standard, bulky" /></Field>
+                    <Field label="Shipping class"><input value={shippingClass} onChange={(e) => setShippingClass(e.target.value)} autoCapitalize="none" placeholder="e.g. standard, bulky" /></Field>
 
                 </Section>
-
-
 
                 <Section title="7. Search engine and visibility" description="Improve how the product appears in your store and search results.">
 
                     <Field label="URL slug" help="Generated from the product name if left blank.">
 
-                        <input style={inputStyle} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="premium-essential-tracksuit" />
+                        <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))} className="product-form__input-lowercase" placeholder="premium-essential-tracksuit" />
 
                     </Field>
 
                     <Field label="SEO title" help="Defaults to the product name.">
 
-                        <input style={inputStyle} value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={70} placeholder="Product title for search engines" />
+                        <input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} autoCapitalize="sentences" maxLength={70} placeholder="Product title for search engines" />
 
                     </Field>
 
                     <Field label="Meta description" help="Defaults to the short description or the beginning of the full description.">
 
-                        <textarea style={{ ...inputStyle, minHeight: 75, resize: "vertical" }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} maxLength={320} placeholder="Short search-result description" />
+                        <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} autoCapitalize="sentences" maxLength={320} placeholder="Short search-result description" />
 
                     </Field>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14 }}>
+                    <label className="product-form__checkbox-field">
 
                         <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
 
@@ -960,7 +853,7 @@ function ProductForm({ onSubmit }) {
 
                     <Field label="Publication status" required>
 
-                        <select style={inputStyle} value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <select value={status} onChange={(e) => setStatus(e.target.value)}>
 
                             <option value="draft">Draft — save without publishing</option>
 
@@ -972,17 +865,15 @@ function ProductForm({ onSubmit }) {
 
                 </Section>
 
+                <footer className="product-form__footer">
 
-
-                <footer style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "flex-end", padding: "4px 0 10px" }}>
-
-                    <button type="button" onClick={resetForm} disabled={submitting} style={{ padding: "12px 16px", border: "1px solid #d1d5db", borderRadius: 9, background: "#fff", cursor: "pointer" }}>
+                    <button type="button" onClick={resetForm} disabled={submitting}>
 
                         Reset form
 
                     </button>
 
-                    <button type="submit" disabled={submitting} style={{ padding: "12px 20px", border: "none", borderRadius: 9, background: submitting ? "#6b7280" : "#111827", color: "#fff", fontWeight: 700, cursor: submitting ? "wait" : "pointer" }}>
+                    <button type="submit" disabled={submitting}>
 
                         {submitting ? "Saving product…" : status === "published" ? "Publish product" : "Save as draft"}
 
@@ -992,7 +883,7 @@ function ProductForm({ onSubmit }) {
 
             </div>
 
-            <p style={{ marginTop: 8, color: "#6b7280", fontSize: 12, lineHeight: 1.5 }}>
+            <p className="product-form__note">
 
                 Note: This form sends additional fields such as variants, SEO, shipping and publication status. Your Express controller and Product model must explicitly support these fields for them to be saved. The current basic Product schema may ignore fields it does not define.
 
@@ -1004,6 +895,5 @@ function ProductForm({ onSubmit }) {
 
 }
 
-
-
 export default ProductForm;
+

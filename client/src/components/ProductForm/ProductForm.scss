@@ -1,0 +1,867 @@
+@use "../../Styles/variables" as *;
+
+/* ==========================================
+   HARRAGA SHOP – PRODUCT FORM
+   CHROME SILVER EDITION
+   Styling is kept here; JSX contains no inline styles.
+========================================== */
+
+.product-form {
+  width: 100%;
+  max-width: 980px;
+  min-width: 0;
+  margin: 0 auto 28px;
+  padding: clamp(14px, 3vw, 30px);
+  color: $text-color;
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 255, 255, 0.075),
+      transparent 48%
+    ),
+    linear-gradient(145deg, #141414, #050505);
+  border: 1px solid $silver-border;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 55px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  &__header {
+    display: block;
+    margin-bottom: 25px;
+    padding: 0 0 20px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid $silver-border;
+
+    p {
+      margin: 8px 0 0;
+      color: $muted-color;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    h2 {
+      margin: 8px 0;
+      color: $silver-bright;
+      font-family: $font-heading;
+      font-size: clamp(21px, 4vw, 30px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__content {
+    display: grid;
+    gap: 17px;
+    min-width: 0;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    padding: clamp(14px, 2.5vw, 22px);
+    background: linear-gradient(145deg, #191919, #0b0b0b);
+    border: 1px solid rgba(220, 220, 230, 0.28);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    h3 {
+      margin: 0 0 6px;
+      color: $silver-bright;
+      font-family: $font-heading;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.025em;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    p {
+      margin: 0;
+      color: $muted-color;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    strong {
+      color: $silver-bright;
+    }
+  }
+
+  &__section-heading {
+    min-width: 0;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    color: $silver;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  &__field-label {
+    color: $silver;
+
+    > span {
+      color: $silver-bright;
+    }
+  }
+
+  &__field-help {
+    color: $muted-color;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  &__field-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    min-width: 0;
+
+    &--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  input:not([type="checkbox"]):not([type="file"]),
+  textarea,
+  select {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 11px 12px;
+    color: $text-color;
+    background: #080808;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    border-radius: 7px;
+    font-family: $font-body;
+    font-size: 14px;
+    line-height: 1.5;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+
+    &::placeholder {
+      color: #888890;
+      opacity: 1;
+    }
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.65);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $silver-bright;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.09);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    min-height: 85px;
+    resize: vertical;
+  }
+
+  select {
+    cursor: pointer;
+
+    option {
+      color: $text-color;
+      background: #101010;
+    }
+  }
+
+  input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    margin: 0;
+    accent-color: $silver-bright;
+    cursor: pointer;
+  }
+
+  &__checkbox-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    color: $silver;
+    cursor: pointer;
+  }
+
+  &__category-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 42px;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+
+    > span {
+      color: $silver;
+    }
+
+    > button {
+      min-width: 42px;
+      min-height: 44px;
+      color: $silver-bright;
+      background: #171717;
+      border: 1px solid $silver-border;
+      border-radius: 7px;
+      cursor: pointer;
+
+      &:hover {
+        background: #303030;
+        border-color: $silver-bright;
+      }
+    }
+  }
+
+  &__input-uppercase {
+    text-transform: uppercase;
+  }
+
+  &__input-capitalize {
+    text-transform: capitalize;
+  }
+
+  &__input-lowercase {
+    text-transform: lowercase;
+  }
+
+  &__add-category {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 16px;
+    color: #080808;
+    background: $chrome-gradient;
+    border: 1px solid $silver-bright;
+    border-radius: 7px;
+    font-family: $font-body;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.025em;
+    line-height: 1.3;
+    box-shadow: 0 4px 14px rgba(220, 220, 230, 0.12);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: $silver-glow;
+      filter: brightness(1.08);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $silver-bright;
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+      filter: none;
+    }
+  }
+
+  &__category-path {
+    padding: 12px;
+    color: $silver;
+    background: #080808;
+    border: 1px solid rgba(220, 220, 230, 0.25);
+    border-radius: 7px;
+    overflow-wrap: anywhere;
+
+    strong {
+      color: $silver-bright;
+    }
+  }
+
+  &__variant-group {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    min-width: 0;
+  }
+
+  &__group-label {
+    color: $silver-bright !important;
+    font-weight: 700;
+  }
+
+  &__option-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .product-form__option {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 38px;
+      padding: 8px 11px;
+      color: $silver;
+      background: #090909;
+      border: 1px solid rgba(220, 220, 230, 0.3);
+      border-radius: 7px;
+      cursor: pointer;
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+
+      &:hover {
+        background: #202020;
+        border-color: $silver-bright;
+      }
+    }
+  }
+
+  &__custom-option-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 9px;
+    min-width: 0;
+
+    > input {
+      flex: 1 1 180px;
+      min-width: 0;
+    }
+
+    > button {
+      flex: 0 0 auto;
+      min-height: 43px;
+      padding: 0 16px;
+    }
+  }
+
+  button {
+    max-width: 100%;
+    font-family: $font-body;
+    overflow-wrap: anywhere;
+    transition:
+      transform 0.2s ease,
+      background 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:focus-visible {
+      outline: 2px solid $silver-bright;
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+
+  &__section button:not([type="submit"]),
+  &__custom-chip {
+    color: $silver-bright;
+    background: #151515;
+    border: 1px solid $silver-border;
+    border-radius: 7px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #292929;
+      border-color: $silver-bright;
+      box-shadow: $silver-glow;
+    }
+  }
+
+  &__custom-chip {
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
+  &__image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: clamp(12px, 2.5vw, 20px);
+    color: $silver;
+    background: #090909;
+    border: 1px dashed rgba(220, 220, 230, 0.6);
+    border-radius: 10px;
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      color: $silver;
+      font-size: 13px;
+
+      &::file-selector-button {
+        margin-right: 10px;
+        padding: 9px 12px;
+        color: #080808;
+        background: $chrome-gradient;
+        border: 1px solid $silver-bright;
+        border-radius: 5px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+    }
+  }
+
+  &__image-grid {
+    display: grid;
+    // Keep image cards comfortably wide so narrow layouts don't create
+    // an awkward three-plus-one arrangement.
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 12px;
+    min-width: 0;
+    align-items: start;
+  }
+
+  &__image-card {
+    min-width: 0;
+    padding: 9px;
+    background: #101010;
+    border: 1px solid $silver-border;
+    border-radius: 9px;
+
+    img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      background: #eeeeef;
+      border-radius: 7px;
+    }
+
+    p {
+      margin: 8px 0;
+      color: $muted-color;
+    }
+
+    button {
+      width: 100%;
+      min-height: 36px;
+      color: $silver-bright;
+      background: #1a1a1a;
+      border: 1px solid $silver-border;
+      border-radius: 6px;
+
+      &:hover {
+        background: #333;
+      }
+    }
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 0 10px;
+
+    button {
+      min-height: 45px;
+      padding: 12px 20px;
+      border-radius: 7px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button[type="button"] {
+      color: $silver-bright;
+      background: #151515;
+      border: 1px solid $silver-border;
+
+      &:hover:not(:disabled) {
+        background: #292929;
+        border-color: $silver-bright;
+      }
+    }
+
+    button[type="submit"] {
+      color: #080808;
+      background: $chrome-gradient;
+      border: 1px solid $silver-bright;
+      letter-spacing: 0.04em;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: $silver-glow;
+      }
+    }
+  }
+
+  &__note {
+    margin: 16px 0 0;
+    color: $muted-color;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-form {
+    padding: 18px;
+
+    &__field-grid,
+    &__field-grid--two,
+    &__field-grid--three {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__footer button {
+      flex: 1 1 180px;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-form {
+    width: 100%;
+    margin-bottom: 18px;
+    padding: 12px;
+    border-radius: 10px;
+
+    &__header {
+      margin-bottom: 18px;
+      padding-bottom: 15px;
+    }
+
+    &__section {
+      padding: 13px;
+      gap: 13px;
+      border-radius: 9px;
+    }
+
+    &__category-row {
+      grid-template-columns: 24px minmax(0, 1fr) 38px;
+      gap: 6px;
+
+      > button {
+        width: 38px;
+        min-width: 38px;
+        padding: 8px;
+      }
+    }
+
+    &__field-grid,
+    &__field-grid--two,
+    &__field-grid--three {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &__custom-option-row {
+      flex-direction: column;
+
+      > input,
+      > button {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+    }
+
+    &__footer {
+      flex-direction: column-reverse;
+      align-items: stretch;
+
+      button {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .product-form {
+    padding: 9px;
+
+    &__section {
+      padding: 10px;
+    }
+
+    input:not([type="checkbox"]):not([type="file"]),
+    textarea,
+    select {
+      font-size: 13px;
+    }
+
+    &__image-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-form,
+  .product-form * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================
+   RESPONSIVE HARDENING
+   Keeps every existing form section and control.
+========================================== */
+
+.product-form,
+.product-form * {
+  min-width: 0;
+}
+
+.product-form {
+  width: 100%;
+  max-width: min(980px, 100%);
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  img {
+    height: auto;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    max-width: 100%;
+  }
+
+  input:not([type="checkbox"]):not([type="file"]),
+  textarea,
+  select {
+    min-width: 0;
+  }
+
+  &__header,
+  &__section,
+  &__section-heading,
+  &__content,
+  &__field,
+  &__image-upload,
+  &__image-grid,
+  &__image-card,
+  &__note {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  &__field-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  &__image-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  &__image-card {
+    img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      object-position: center;
+    }
+  }
+
+  &__image-upload {
+    input[type="file"] {
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__footer {
+    min-width: 0;
+
+    button {
+      max-width: 100%;
+      white-space: normal;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .product-form {
+    max-width: 100%;
+    padding: clamp(12px, 3vw, 18px);
+
+    &__field-grid,
+    &__field-grid--two,
+    &__field-grid--three {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__image-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__footer {
+      button {
+        flex: 1 1 160px;
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-form {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding: 12px;
+
+    &__field-grid,
+    &__field-grid--two,
+    &__field-grid--three {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &__category-row {
+      grid-template-columns: 24px minmax(0, 1fr) 40px;
+    }
+
+    &__add-category {
+      width: 100%;
+      align-self: stretch;
+    }
+
+    &__image-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__custom-option-row {
+      > input {
+        flex-basis: 100%;
+        width: 100%;
+      }
+
+      > button {
+        min-height: 44px;
+      }
+    }
+
+    &__footer {
+      flex-direction: column-reverse;
+      align-items: stretch;
+
+      button {
+        width: 100%;
+        min-height: 46px;
+        flex: 1 1 auto;
+      }
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .product-form {
+    padding: 9px;
+
+    &__section {
+      padding: 10px;
+    }
+
+    &__category-row {
+      grid-template-columns: 20px minmax(0, 1fr) 36px;
+      gap: 5px;
+
+      > button {
+        width: 36px;
+        min-width: 36px;
+        min-height: 42px;
+      }
+    }
+
+    &__image-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &__image-card {
+      img {
+        max-height: 360px;
+      }
+    }
+
+    input:not([type="checkbox"]):not([type="file"]),
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .product-form {
+    button,
+    input[type="checkbox"],
+    select {
+      touch-action: manipulation;
+    }
+
+    button {
+      min-height: 42px;
+    }
+  }
+}

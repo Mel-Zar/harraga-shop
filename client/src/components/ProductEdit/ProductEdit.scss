@@ -1,0 +1,646 @@
+@use "../../Styles/variables" as *;
+
+/* =========================================================
+   HARRAGA SHOP — PRODUCT EDIT
+   Chrome Silver / responsive admin form
+   ========================================================= */
+
+.product-edit {
+  --edit-surface: #0b0b0d;
+  --edit-panel: #111114;
+  --edit-panel-raised: #17171b;
+  --edit-border: rgba(220, 220, 230, 0.22);
+  --edit-border-strong: rgba(235, 235, 242, 0.48);
+  --edit-muted: #a7a7b0;
+  --edit-radius: 14px;
+
+  width: min(100%, 1120px);
+  min-width: 0;
+  margin-inline: auto;
+  padding: clamp(14px, 3vw, 34px);
+  color: $text-color;
+  color-scheme: dark;
+  font-family: $font-body;
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(220, 220, 230, 0.075),
+      transparent 42%
+    ),
+    linear-gradient(145deg, #0d0d10 0%, #070708 58%, #101014 100%);
+  border: 1px solid var(--edit-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  > header {
+    position: relative;
+    padding: clamp(20px, 4vw, 38px);
+    margin: calc(clamp(14px, 3vw, 34px) * -1);
+    margin-bottom: clamp(22px, 3vw, 34px);
+    background:
+      linear-gradient(115deg, rgba(255, 255, 255, 0.075), transparent 45%),
+      linear-gradient(135deg, #19191e, #09090b 72%);
+    border-bottom: 1px solid $silver-border;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 1px;
+      background: $chrome-gradient;
+      opacity: 0.65;
+    }
+
+    p:first-child {
+      margin: 0 0 10px;
+      color: $silver;
+      font-family: $font-heading;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+    }
+
+    h2 {
+      margin: 0;
+      color: $silver-bright;
+      font-family: $font-heading;
+      font-size: clamp(1.45rem, 3.6vw, 2.35rem);
+      font-weight: 800;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+      text-shadow: 0 0 22px rgba(255, 255, 255, 0.16);
+    }
+
+    p:last-child {
+      max-width: 680px;
+      margin: 12px 0 0;
+      color: $muted-color;
+      font-size: 0.92rem;
+      line-height: 1.65;
+    }
+  }
+
+  > div {
+    display: grid;
+    gap: clamp(16px, 2.4vw, 24px);
+    min-width: 0;
+  }
+
+  section {
+    min-width: 0;
+    padding: clamp(16px, 2.5vw, 26px);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 48%),
+      var(--edit-panel);
+    border: 1px solid var(--edit-border);
+    border-radius: var(--edit-radius);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+    > div:first-child {
+      margin-bottom: 20px;
+
+      h3 {
+        margin: 0;
+        color: $silver-bright;
+        font-family: $font-heading;
+        font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+        font-weight: 800;
+        line-height: 1.45;
+        letter-spacing: 0.035em;
+        overflow-wrap: anywhere;
+      }
+
+      p {
+        margin: 7px 0 0;
+        color: var(--edit-muted);
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+    }
+
+    > div:not(:first-child) {
+      min-width: 0;
+    }
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    color: #e7e7eb;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+
+    > span:first-child {
+      color: #dedee3;
+      line-height: 1.4;
+
+      > span {
+        color: $silver-bright;
+      }
+    }
+
+    > span:last-child:not(:first-child) {
+      color: var(--edit-muted);
+      font-size: 0.72rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+
+  input:not([type="checkbox"]):not([type="file"]),
+  textarea,
+  select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 12px 14px;
+    color: $text-color;
+    background: linear-gradient(180deg, #17171b, #101013);
+    border: 1px solid rgba(220, 220, 230, 0.24);
+    border-radius: 8px;
+    outline: none;
+    font: 500 0.88rem/1.45 $font-body;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background 180ms ease;
+
+    &::placeholder {
+      color: #777780;
+      opacity: 1;
+    }
+
+    &:hover {
+      border-color: rgba(235, 235, 242, 0.42);
+    }
+
+    &:focus {
+      border-color: $silver-bright;
+      background: #19191e;
+      box-shadow:
+        0 0 0 3px rgba(230, 230, 238, 0.1),
+        0 0 18px rgba(230, 230, 238, 0.07);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+  }
+
+  textarea {
+    min-height: 112px;
+    resize: vertical;
+  }
+
+  select {
+    cursor: pointer;
+    color-scheme: dark;
+  }
+
+  input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: $silver-bright;
+    cursor: pointer;
+  }
+
+  /* Form grids: generic wrappers in the existing JSX are covered by
+     the section's direct-child layout without requiring field removal. */
+  section > div:nth-child(2):has(> label) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  section > div:nth-child(2):has(> label):has(input[type="number"]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Basic information field wrapper */
+  section:first-child > div:nth-child(2) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    > label:nth-child(1),
+    > label:nth-child(2),
+    > label:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Category path and nested category rows */
+  section:nth-child(2) {
+    > div:has(> span:first-child) {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 42px;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 10px;
+
+      > span {
+        color: $silver;
+        font-family: $font-heading;
+        font-size: 0.72rem;
+        text-align: center;
+      }
+
+      input {
+        min-width: 0;
+      }
+
+      button {
+        min-height: 44px;
+        padding: 0;
+        color: $silver-bright;
+        background: #1b1b20;
+        border: 1px solid var(--edit-border);
+        border-radius: 8px;
+        font-size: 1.25rem;
+        cursor: pointer;
+
+        &:hover {
+          border-color: $silver-bright;
+          background: #29292f;
+        }
+      }
+    }
+
+    > button {
+      margin: 4px 0 18px;
+    }
+
+    > div:last-child {
+      margin-top: 16px;
+      padding: 12px 14px;
+      color: $muted-color;
+      background: #09090b;
+      border: 1px solid var(--edit-border);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+
+      strong {
+        color: $silver-bright;
+      }
+    }
+  }
+
+  /* Checkbox rows */
+  section > label:has(input[type="checkbox"]) {
+    flex-direction: row;
+    align-items: center;
+    gap: 11px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 16px;
+    color: #d8d8de;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  /* Variant option groups */
+  section:nth-child(4) {
+    > div:nth-child(2),
+    > div:nth-child(3) {
+      min-width: 0;
+      margin-bottom: 22px;
+
+      > p {
+        margin: 0 0 12px;
+        color: $silver-bright;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      > div:nth-child(2) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+
+        label {
+          display: inline-flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 8px;
+          min-height: 38px;
+          padding: 8px 11px;
+          color: #dedee4;
+          background: #19191e;
+          border: 1px solid var(--edit-border);
+          border-radius: 7px;
+          font-size: 0.76rem;
+          cursor: pointer;
+          transition:
+            border-color 180ms ease,
+            background 180ms ease;
+
+          &:hover {
+            background: #24242a;
+            border-color: $silver;
+          }
+        }
+      }
+
+      > div:nth-child(3) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 9px;
+        margin-top: 12px;
+
+        button {
+          min-width: 76px;
+        }
+      }
+
+      > button {
+        margin: 9px 7px 0 0;
+      }
+    }
+
+    /* Material, fit and target group */
+    > div:last-child {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--edit-border);
+    }
+  }
+
+  /* Image upload and previews */
+  section:nth-child(5) {
+    > div:nth-child(2) {
+      padding: 16px;
+      background: #09090b;
+      border: 1px dashed var(--edit-border-strong);
+      border-radius: 10px;
+
+      input[type="file"] {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        color: $muted-color;
+        font-size: 0.78rem;
+
+        &::file-selector-button {
+          min-height: 40px;
+          margin-right: 12px;
+          padding: 9px 13px;
+          color: #080808;
+          background: $chrome-gradient;
+          border: 1px solid #f4f4f6;
+          border-radius: 6px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+      }
+
+      p {
+        margin: 10px 0 0;
+        color: var(--edit-muted);
+        font-size: 0.75rem;
+        line-height: 1.5;
+      }
+    }
+
+    > div:has(> div > img) {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+      gap: 14px;
+      margin-top: 16px;
+
+      > div {
+        min-width: 0;
+        padding: 10px;
+        overflow: hidden;
+        background: #09090b;
+        border: 1px solid var(--edit-border);
+        border-radius: 10px;
+
+        img {
+          display: block;
+          width: 100%;
+          aspect-ratio: 4 / 5;
+          object-fit: cover;
+          background: #18181d;
+          border-radius: 6px;
+        }
+
+        p {
+          margin: 10px 0;
+          color: $muted-color;
+          font-size: 0.75rem;
+          overflow-wrap: anywhere;
+        }
+      }
+    }
+  }
+
+  /* SEO, shipping and other simple field groups */
+  section:nth-child(6),
+  section:nth-child(7) {
+    > div:nth-child(2) {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+  }
+
+  section:nth-child(6) > label {
+    margin-top: 16px;
+  }
+
+  /* Buttons */
+  button {
+    max-width: 100%;
+    min-height: 42px;
+    padding: 10px 16px;
+    color: #080808;
+    background: $chrome-gradient;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 7px;
+    font: 800 0.72rem/1.3 $font-body;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: $silver-glow;
+      filter: brightness(1.08);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+  }
+
+  /* Footer actions */
+  > div > footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 8px;
+
+    button:first-child {
+      color: $silver;
+      background: linear-gradient(145deg, #202025, #101013);
+      border-color: var(--edit-border-strong);
+    }
+
+    button:last-child {
+      min-width: 170px;
+    }
+  }
+
+  > p:last-child {
+    margin: 20px 0 0;
+    padding: 14px 16px;
+    color: var(--edit-muted);
+    background: rgba(255, 255, 255, 0.025);
+    border-left: 2px solid $silver-dark;
+    font-size: 0.73rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 760px) {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+
+    > header {
+      margin: -16px -16px 22px;
+      padding: 24px 18px;
+    }
+
+    section:first-child > div:nth-child(2),
+    section:nth-child(4) > div:last-child,
+    section:nth-child(6) > div:nth-child(2),
+    section:nth-child(7) > div:nth-child(2) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    section:first-child > div:nth-child(2) > label {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    padding: 12px;
+
+    > header {
+      margin: -12px -12px 18px;
+      padding: 22px 14px;
+    }
+
+    > div {
+      gap: 14px;
+    }
+
+    section {
+      padding: 15px;
+      border-radius: 10px;
+
+      > div:first-child {
+        margin-bottom: 16px;
+      }
+    }
+
+    section:first-child > div:nth-child(2),
+    section:nth-child(4) > div:last-child,
+    section:nth-child(6) > div:nth-child(2),
+    section:nth-child(7) > div:nth-child(2) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    section:first-child > div:nth-child(2) > label {
+      grid-column: auto;
+    }
+
+    section:nth-child(4) {
+      > div:nth-child(2) > div:nth-child(3),
+      > div:nth-child(3) > div:nth-child(3) {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+    }
+
+    section:nth-child(5) > div:has(> div > img) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    > div > footer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+
+      button,
+      button:last-child {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+  }
+
+  @media (max-width: 340px) {
+    padding: 9px;
+
+    > header {
+      margin: -9px -9px 16px;
+      padding: 20px 12px;
+    }
+
+    section {
+      padding: 12px;
+    }
+
+    section:nth-child(2) > div:has(> span:first-child) {
+      grid-template-columns: 22px minmax(0, 1fr) 36px;
+      gap: 6px;
+    }
+
+    section:nth-child(5) > div:has(> div > img) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-edit,
+  .product-edit * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
