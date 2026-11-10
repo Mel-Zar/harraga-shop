@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { toast } from "react-toastify";
+import ProductGallery from "../ProductGallery/ProductGallery";
 
 import "./ProductEdit.scss";
 
@@ -158,6 +159,48 @@ function ProductEdit({ product, onSave, onCancel }) {
         };
     }, []);
 
+    // Refill every field when the selected product changes.
+    useEffect(() => {
+        if (!product) return;
+        setName(product.name || "");
+        setDescription(product.description || "");
+        setShortDescription(product.shortDescription || "");
+        setBrand(product.brand || "");
+        setSku(product.sku || "");
+        setBarcode(product.barcode || "");
+        setPrice(product.price ?? "");
+        setCompareAtPrice(product.compareAtPrice ?? "");
+        setCostPrice(product.costPrice ?? "");
+        setStock(String(product.stock ?? 0));
+        setLowStockThreshold(String(product.lowStockThreshold ?? 5));
+        setCategoryLevels(Array.isArray(product.categoryPath) && product.categoryPath.length ? product.categoryPath : [product.category || ""]);
+        setTags(Array.isArray(product.tags) ? product.tags.join(", ") : "");
+        setSizes(Array.isArray(product.sizes) ? product.sizes : []);
+        setCustomSize(product.customSize || "");
+        setColors(Array.isArray(product.colors) ? product.colors : []);
+        setCustomColor(product.customColor || "");
+        setMaterial(product.material || "");
+        setFit(product.fit || "");
+        setTargetGroup(product.targetGroup || "Unisex");
+        setWeight(product.weight ?? "");
+        setLength(product.dimensions?.length ?? "");
+        setWidth(product.dimensions?.width ?? "");
+        setHeight(product.dimensions?.height ?? "");
+        setShippingClass(product.shippingClass || "");
+        setStatus(product.status || (product.isActive ? "published" : "draft"));
+        setFeatured(Boolean(product.isFeatured ?? product.featured));
+        setAllowBackorders(Boolean(product.allowBackorders));
+        setSeoTitle(product.seoTitle || "");
+        setMetaDescription(product.metaDescription || "");
+        setSlug(product.slug || "");
+        setExistingImages(Array.isArray(product.images) && product.images.length ? product.images : (product.image ? [product.image] : []));
+        setRemovedImages([]);
+        setImages([]);
+        setImagePreviews([]);
+        setSubmitting(false);
+        submittingRef.current = false;
+    }, [product]);
+
     const updateCategoryLevel = (index, value) => {
 
         setCategoryLevels((previous) =>
@@ -274,7 +317,7 @@ function ProductEdit({ product, onSave, onCancel }) {
 
         event.preventDefault();
 
-        if (submitting) return;
+        if (submittingRef.current || submitting) return;
 
         if (!name.trim()) return toast.error("Product name is required.");
 
@@ -340,13 +383,9 @@ function ProductEdit({ product, onSave, onCancel }) {
 
         }
 
-        if (images.length + existingImages.length === 0) return toast.error("Please keep or upload at least one product image.");
+        if (images.length + existingImages.length > MAX_IMAGES) return toast.error(`You can only keep or upload ${MAX_IMAGES} images.`);
 
         if (images.length > MAX_IMAGES) return toast.error(`You can only upload ${MAX_IMAGES} images.`);
-
-        if (sizes.length === 0) return toast.error("Select at least one size, or add One size.");
-
-        if (colors.length === 0) return toast.error("Select at least one color.");
 
         const finalSlug = (slug.trim() || name.trim())
 
@@ -444,6 +483,7 @@ function ProductEdit({ product, onSave, onCancel }) {
 
         try {
 
+            submittingRef.current = true;
             setSubmitting(true);
 
             await onSave(product._id, formData);
@@ -705,21 +745,38 @@ function ProductEdit({ product, onSave, onCancel }) {
 
                     {existingImages.length > 0 && (
 
-                        <div>
+                        <div className="product-edit__existing-images">
 
-                            {existingImages.map((url, index) => (
+                            <ProductGallery
+                                images={existingImages}
+                                productName={name || product?.name || "Product"}
+                                imageStyle={{
+                                    width: "100%",
+                                    maxWidth: "230px",
+                                    height: "260px",
+                                    objectFit: "contain",
+                                    borderRadius: "6px",
+                                }}
+                            />
 
-                                <div key={`${url} - ${index}`} >
+                            <div className="product-edit__image-removal-list">
+                                {existingImages.map((url, index) => (
 
-                                    <img src={url} alt={`Existing product image ${index + 1} `} />
+                                    <div key={`${typeof url === "string" ? url : JSON.stringify(url)}-${index}`}>
+                                        <span>{index === 0 ? "Current main image" : `Current image ${index + 1}`}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setExistingImages((prev) => prev.filter((_, i) => i !== index));
+                                                setRemovedImages((prev) => [...prev, url]);
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
 
-                                    <p>{index === 0 ? "Current main image" : `Current image ${index + 1} `}</p>
-
-                                    <button type="button" onClick={() => { setExistingImages((prev) => prev.filter((_, i) => i !== index)); setRemovedImages((prev) => [...prev, url]); }} >Remove</button>
-
-                                </div>
-
-                            ))}
+                                ))}
+                            </div>
 
                         </div>
 
