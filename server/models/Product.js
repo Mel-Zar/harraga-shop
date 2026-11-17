@@ -34,19 +34,14 @@ const productSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["draft", "published"],
-            default: "published",
+            default: "draft",
         },
         isFeatured: { type: Boolean, default: false },
         allowBackorders: { type: Boolean, default: false },
         seoTitle: { type: String, default: "", trim: true, maxlength: 200 },
         metaDescription: { type: String, default: "", trim: true, maxlength: 500 },
         slug: { type: String, default: "", trim: true, maxlength: 200 },
-        brand: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 100,
-        },
+        brand: { type: String, default: "", trim: true, maxlength: 100 },
         description: {
             type: String,
             required: [true, "Product description is required."],
@@ -63,37 +58,22 @@ const productSchema = new mongoose.Schema(
                 message: "Price must be a valid number.",
             },
         },
-        color: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 100,
-        },
-        sku: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 100,
-        },
+        // Kept for compatibility with older products; the current form uses colors.
+        color: { type: String, default: "", trim: true, maxlength: 100 },
+        sku: { type: String, default: "", trim: true, maxlength: 100 },
         sizes: {
             type: [String],
             default: [],
             validate: {
                 validator: (arr) =>
                     Array.isArray(arr) &&
-                    arr.every(
-                        (size) => typeof size === "string" && size.trim().length > 0,
-                    ),
+                    arr.every((size) => typeof size === "string" && size.trim().length > 0),
                 message: "Sizes must contain valid text values.",
             },
         },
-        // Första bilden används som thumbnail.
-        image: {
-            type: String,
-            default: "",
-            trim: true,
-        },
-        // Alla produktbilder, max 4.
+        // First image is used as the thumbnail.
+        image: { type: String, default: "", trim: true },
+        // All product images, max 4.
         images: {
             type: [String],
             default: [],
@@ -101,13 +81,10 @@ const productSchema = new mongoose.Schema(
                 validator: (arr) =>
                     Array.isArray(arr) &&
                     arr.length <= 4 &&
-                    arr.every(
-                        (item) => typeof item === "string" && item.trim().length > 0,
-                    ),
+                    arr.every((item) => typeof item === "string" && item.trim().length > 0),
                 message: "Maximum 4 valid images are allowed.",
             },
         },
-        // Huvudkategori; behåller kompatibilitet med befintliga produkter.
         category: {
             type: String,
             required: [true, "Product category is required."],
@@ -115,7 +92,6 @@ const productSchema = new mongoose.Schema(
             minlength: 1,
             maxlength: 100,
         },
-        // Hela kategorisökvägen från huvudkategori till sista nivån.
         categoryPath: {
             type: [String],
             default: [],
@@ -123,23 +99,15 @@ const productSchema = new mongoose.Schema(
                 validator: (arr) =>
                     Array.isArray(arr) &&
                     arr.length <= 20 &&
-                    arr.every(
-                        (item) =>
-                            typeof item === "string" &&
-                            item.trim().length > 0 &&
-                            item.trim().length <= 100,
+                    arr.every((item) =>
+                        typeof item === "string" &&
+                        item.trim().length > 0 &&
+                        item.trim().length <= 100
                     ),
-                message:
-                    "Category path must contain no more than 20 valid category levels.",
+                message: "Category path must contain no more than 20 valid category levels.",
             },
         },
-        // Sista nivån i categoryPath.
-        subCategory: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 100,
-        },
+        subCategory: { type: String, default: "", trim: true, maxlength: 100 },
         stock: {
             type: Number,
             default: 0,
@@ -149,10 +117,7 @@ const productSchema = new mongoose.Schema(
                 message: "Stock must be a whole number.",
             },
         },
-        isActive: {
-            type: Boolean,
-            default: true,
-        },
+        isActive: { type: Boolean, default: false },
     },
     { timestamps: true },
 );
@@ -162,7 +127,7 @@ productSchema.index({ categoryPath: 1 });
 productSchema.index({ subCategory: 1 });
 productSchema.index({ sku: 1 });
 
-// Synkronisera kategorifälten före Mongoose-validering.
+// Keep category fields and the legacy active flag in sync before validation.
 productSchema.pre("validate", function () {
     if (Array.isArray(this.categoryPath)) {
         this.categoryPath = this.categoryPath
@@ -181,6 +146,10 @@ productSchema.pre("validate", function () {
         this.categoryPath = [];
         this.subCategory = "";
     }
+
+    if (this.status === "published") this.isActive = true;
+    if (this.status === "draft") this.isActive = false;
+    if (!this.status && this.isActive) this.status = "published";
 });
 
 export default mongoose.model("Product", productSchema);

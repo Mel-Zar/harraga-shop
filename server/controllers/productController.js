@@ -187,21 +187,18 @@ export const createProduct = async (req, res) => {
 
         const categoryFields = getCategoryFields(categoryPath);
 
+        const extras = parseProductExtras(req.body);
+
         const product = await Product.create({
             name: name.trim(),
-
             description: description.trim(),
-
             price: parsedPrice,
-
             ...categoryFields,
-
             stock:
                 stock === undefined || stock === null || stock === "" ? 0 : parsedStock,
-
             image: images[0] || "",
-
             images,
+            ...extras,
         });
 
         return res.status(201).json(product);
@@ -665,6 +662,21 @@ export const updateProduct = async (req, res) => {
         product.stock =
             req.body.stock !== undefined ? Number(req.body.stock) : product.stock;
 
+        // Update every optional field sent by ProductForm without overwriting
+        // fields omitted by partial updates (PATCH-style behavior).
+        const extras = parseProductExtras(req.body, { partial: true });
+        Object.entries(extras).forEach(([key, value]) => {
+            product[key] = value;
+        });
+
+        // Keep the legacy active flag consistent with the publication status.
+        if (req.body.status !== undefined && req.body.isActive === undefined) {
+            product.isActive = extras.status === "published";
+        }
+        if (req.body.isActive !== undefined && req.body.status === undefined) {
+            product.status = extras.isActive ? "published" : "draft";
+        }
+
         // =========================
 
         // CATEGORY INFORMATION
@@ -848,46 +860,67 @@ const parseJsonField = (value, fallback) => {
     }
 };
 
-const parseProductExtras = (body = {}) => {
-    const numberOrNull = (value) =>
-        value === undefined || value === null || value === ""
-            ? null
-            : Number(value);
-    const dimensions = parseJsonField(body.dimensions, {});
-    return {
-        brand: body.brand ?? "",
-        shortDescription: body.shortDescription ?? "",
-        sku: body.sku ?? "",
-        barcode: body.barcode ?? "",
-        compareAtPrice: numberOrNull(body.compareAtPrice),
-        costPrice: numberOrNull(body.costPrice),
-        lowStockThreshold:
-            body.lowStockThreshold === "" || body.lowStockThreshold === undefined
-                ? 5
-                : Number(body.lowStockThreshold),
-        tags: parseJsonField(body.tags, []),
-        sizes: parseJsonField(body.sizes, []),
-        colors: parseJsonField(body.colors, []),
-        material: body.material ?? "",
-        fit: body.fit ?? "",
-        targetGroup: body.targetGroup ?? "Unisex",
-        weight: numberOrNull(body.weight),
-        dimensions: {
-            length: numberOrNull(dimensions.length),
-            width: numberOrNull(dimensions.width),
-            height: numberOrNull(dimensions.height),
-        },
-        shippingClass: body.shippingClass ?? "",
-        status: body.status ?? (body.isActive === "false" ? "draft" : "published"),
-        isActive:
-            body.isActive === undefined
-                ? true
-                : body.isActive === true || body.isActive === "true",
-        isFeatured: body.isFeatured === true || body.isFeatured === "true",
-        allowBackorders:
-            body.allowBackorders === true || body.allowBackorders === "true",
-        seoTitle: body.seoTitle ?? "",
-        metaDescription: body.metaDescription ?? "",
-        slug: body.slug ?? "",
+const parseBooleanField = (value, fallback = false) => {
+    if (value === undefined || value === null || value === "") return fallback;
+    return value === true || value === 1 || value === "1" || value === "true";
+};
+
+const parseNumberField = (value, fallback = null) => {
+    if (value === undefined || value === null || value === "") return fallback;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+};
+
+// Create mode supplies defaults; partial mode only returns fields actually sent.
+const parseProductExtras = (body = {}, { partial = false } = {}) => {
+    const result = {};
+    const has = (key) => Object.prototype.hasOwnProperty.call(body, key);
+    const assign = (key, value, fallback) => {
+        if (!partial || has(key)) result[key] = has(key) ? value : fallback;
     };
+    const parsed = (key, fallback) => parseJsonField(body[key], fallback);
+
+    assign("brand", body.brand ?? "", "");
+    assign("shortDescription", body.shortDescription ?? "", "");
+    assign("sku", body.sku ?? "", "");
+    assign("barcode", body.barcode ?? "", "");
+    assign("compareAtPrice", parseNumberField(body.compareAtPrice), null);
+    assign("costPrice", parseNumberField(body.costPrice), null);
+    assign("lowStockThreshold", parseNumberField(body.lowStockThreshold, 5), 5);
+    assign("tags", parsed("tags", []), []);
+    assign("sizes", parsed("sizes", []), []);
+    assign("colors", parsed("colors", []), []);
+    assign("material", body.material ?? "", "");
+    assign("fit", body.fit ?? "", "");
+    assign("targetGroup", body.targetGroup ?? "Unisex", "Unisex");
+    assign("weight", parseNumberField(body.weight), null);
+
+    if (!partial || has("dimensions")) {
+        const dimensions = parsed("dimensions", {});
+        result.dimensions = {
+            length: parseNumberField(dimensions?.length),
+            width: parseNumberField(dimensions?.width),
+            height: parseNumberField(dimensions?.height),
+        };
+    }
+
+    assign("shippingClass", body.shippingClass ?? "", "");
+
+    if (!partial || has("status") || has("isActive")) {
+        const status = body.status ?? (has("isActive")
+            ? (parseBooleanField(body.isActive) ? "published" : "draft")
+            : "draft");
+        result.status = status;
+        result.isActive = has("isActive")
+            ? parseBooleanField(body.isActive)
+            : status === "published";
+    }
+
+    assign("isFeatured", parseBooleanField(body.isFeatured), false);
+    assign("allowBackorders", parseBooleanField(body.allowBackorders), false);
+    assign("seoTitle", body.seoTitle ?? "", "");
+    assign("metaDescription", body.metaDescription ?? "", "");
+    assign("slug", body.slug ?? "", "");
+
+    return result;
 };
