@@ -70,6 +70,52 @@ function Field({ label, required, help, children }) {
 
 }
 
+// Number input with the same compact silver up/down arrows as ProductForm.
+function NumberField({ value, onChange, min = 0, step = 1, ...inputProps }) {
+    const changeBy = (direction) => {
+        const current = value === "" ? Number(min) || 0 : Number(value);
+        const precision = String(step).includes(".") ? String(step).split(".")[1].length : 0;
+        const next = Math.max(Number(min) || 0, current + direction * Number(step));
+        onChange(Number(next.toFixed(precision)).toString());
+    };
+
+    return (
+        <div className="product-edit__number-control">
+            <input
+                {...inputProps}
+                className="product-edit__number-input"
+                type="number"
+                min={min}
+                step={step}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+            />
+            <div className="product-edit__number-buttons">
+                <button
+                    className="product-edit__number-button"
+                    type="button"
+                    aria-label="Increase value"
+                    onClick={() => changeBy(1)}
+                >
+                    <svg viewBox="0 0 12 12" aria-hidden="true">
+                        <path d="M2 7.5 6 3.5 10 7.5" />
+                    </svg>
+                </button>
+                <button
+                    className="product-edit__number-button"
+                    type="button"
+                    aria-label="Decrease value"
+                    onClick={() => changeBy(-1)}
+                >
+                    <svg viewBox="0 0 12 12" aria-hidden="true">
+                        <path d="m2 4.5 4 4 4-4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function SortableProductImage({ entry, index, getImageSource, onRemove, productName }) {
     const {
         attributes,
@@ -754,13 +800,13 @@ function ProductEdit({ product, onSave, onCancel }) {
             {/* PRICING */}
             <div className="admin-product-card__pricing">
                 <Field label="Selling Price" required>
-                    <input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" required />
+                    <NumberField min="0" step="0.01" value={price} onChange={setPrice} placeholder="0.00" required />
                 </Field>
                 <Field label="Original Price">
-                    <input type="number" min="0" step="0.01" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} placeholder="0.00" />
+                    <NumberField min="0" step="0.01" value={compareAtPrice} onChange={setCompareAtPrice} placeholder="0.00" />
                 </Field>
                 <Field label="Purchase Cost">
-                    <input type="number" min="0" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0.00" />
+                    <NumberField min="0" step="0.01" value={costPrice} onChange={setCostPrice} placeholder="0.00" />
                 </Field>
             </div>
 
@@ -846,8 +892,8 @@ function ProductEdit({ product, onSave, onCancel }) {
 
             {/* STOCK INFORMATION */}
             <div className="admin-product-card__stock">
-                <Field label="Available Stock" required><input type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} required /></Field>
-                <Field label="Low Stock Alert At"><input type="number" min="0" step="1" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} /></Field>
+                <Field label="Available Stock" required><NumberField min="0" step="1" value={stock} onChange={setStock} required /></Field>
+                <Field label="Low Stock Alert At"><NumberField min="0" step="1" value={lowStockThreshold} onChange={setLowStockThreshold} /></Field>
                 <div className={`admin-product-card__stock-indicator ${stockStatus.className}`}>{stockStatus.text}</div>
                 <label className="product-edit__toggle"><input type="checkbox" checked={allowBackorders} onChange={(e) => setAllowBackorders(e.target.checked)} />Allow Backorders</label>
             </div>
@@ -893,10 +939,10 @@ function ProductEdit({ product, onSave, onCancel }) {
             {/* SHIPPING DETAILS */}
             <div className="admin-product-card__shipping">
                 <h4>Shipping Details</h4>
-                <Field label="Weight (g)"><input type="number" min="0" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 650" /></Field>
-                <Field label="Length (cm)"><input type="number" min="0" step="0.1" value={length} onChange={(e) => setLength(e.target.value)} /></Field>
-                <Field label="Width (cm)"><input type="number" min="0" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} /></Field>
-                <Field label="Height (cm)"><input type="number" min="0" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} /></Field>
+                <Field label="Weight (g)"><NumberField min="0" step="1" value={weight} onChange={setWeight} placeholder="e.g. 650" /></Field>
+                <Field label="Length (cm)"><NumberField min="0" step="0.1" value={length} onChange={setLength} /></Field>
+                <Field label="Width (cm)"><NumberField min="0" step="0.1" value={width} onChange={setWidth} /></Field>
+                <Field label="Height (cm)"><NumberField min="0" step="0.1" value={height} onChange={setHeight} /></Field>
                 <Field label="Shipping Class"><input value={shippingClass} onChange={(e) => setShippingClass(e.target.value)} placeholder="e.g. standard, bulky" /></Field>
             </div>
 

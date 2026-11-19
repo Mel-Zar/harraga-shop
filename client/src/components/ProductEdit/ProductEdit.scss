@@ -1186,3 +1186,118 @@
     height: 240px;
   }
 }
+
+/* NUMBER INPUTS — match ProductForm's black fields and silver arrow steppers. */
+.product-edit {
+  .product-edit__number-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    overflow: hidden;
+    background: #080808;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    border-radius: 8px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.65);
+    }
+
+    &:focus-within {
+      border-color: rgba(235, 235, 242, 0.85);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.09);
+    }
+  }
+
+  input.product-edit__number-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 12px;
+    color: #f1f1f4;
+    background: #080808;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    appearance: textfield;
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+
+    &:focus {
+      border: 0;
+      outline: none;
+      box-shadow: none;
+      background: #080808;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+    }
+  }
+
+  .product-edit__number-buttons {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    min-width: 28px;
+    background: #080808;
+    border: 0;
+  }
+
+  .product-edit__number-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 20px;
+    padding: 2px 5px;
+    color: #dfe0e6;
+    background: #080808;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #080808;
+      border: 0;
+      box-shadow: none;
+      filter: none;
+    }
+
+    &:focus-visible {
+      position: relative;
+      z-index: 1;
+      outline: 2px solid #fff;
+      outline-offset: -3px;
+    }
+
+    svg {
+      display: block;
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: #dfe0e6;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__number-control {
+    min-height: 46px;
+  }
+}
