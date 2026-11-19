@@ -1,4 +1,20 @@
 import { useEffect, useRef, useState } from "react";
+import {
+    DndContext,
+    PointerSensor,
+    KeyboardSensor,
+    closestCenter,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    useSortable,
+    arrayMove,
+    rectSortingStrategy,
+    sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { toast } from "react-toastify";
 import "./ProductForm.scss";
 
@@ -37,6 +53,52 @@ function Section({ title, description, children }) {
             </div>
             {children}
         </section>
+    );
+}
+
+
+
+function SortableFormImage({ item, index, onRemove }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 5 : "auto",
+        opacity: isDragging ? 0.65 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`product-form__image-card${index === 0 ? " is-main-image" : ""}`}
+            style={style}
+        >
+            <span className="product-form__image-position">
+                {index === 0 ? "BILD 1 · HUVUDBILD" : `BILD ${index + 1}`}
+            </span>
+            <img
+                src={item.preview}
+                alt={`Product image ${index + 1}`}
+                draggable="false"
+                {...attributes}
+                {...listeners}
+            />
+            <button
+                type="button"
+                onClick={() => onRemove(index)}
+                onPointerDown={(event) => event.stopPropagation()}
+            >
+                Remove
+            </button>
+        </div>
     );
 }
 
@@ -478,6 +540,28 @@ function ProductForm({ onSubmit }) {
     const fileInputRef = useRef(null);
     const submittingRef = useRef(false);
     const objectUrlsRef = useRef(new Set());
+    const imageSensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleImageDragEnd = ({ active, over }) => {
+        if (!over || active.id === over.id) return;
+
+        setImagePreviews((previous) => {
+            const oldIndex = previous.findIndex((item) => item.id === active.id);
+            const newIndex = previous.findIndex((item) => item.id === over.id);
+            if (oldIndex < 0 || newIndex < 0) return previous;
+            return arrayMove(previous, oldIndex, newIndex);
+        });
+
+        setImages((previous) => {
+            const oldIndex = imagePreviews.findIndex((item) => item.id === active.id);
+            const newIndex = imagePreviews.findIndex((item) => item.id === over.id);
+            if (oldIndex < 0 || newIndex < 0) return previous;
+            return arrayMove(previous, oldIndex, newIndex);
+        });
+    };
 
     useEffect(() => {
         const objectUrls = objectUrlsRef.current;
@@ -846,15 +930,27 @@ function ProductForm({ onSubmit }) {
                         <p>{images.length} of {MAX_IMAGES} images selected · Max 10 MB per image</p>
                     </div>
                     {imagePreviews.length > 0 && (
-                        <div className="product-form__image-grid">
-                            {imagePreviews.map((item, index) => (
-                                <div className="product-form__image-card" key={item.id}>
-                                    <img src={item.preview} alt={`Product image ${index + 1}`} />
-                                    <p>{index === 0 ? "Main image" : `Bild ${index + 1}`}</p>
-                                    <button type="button" onClick={() => handleRemoveImage(index)}>Remove</button>
+                        <DndContext
+                            sensors={imageSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleImageDragEnd}
+                        >
+                            <SortableContext
+                                items={imagePreviews.map((item) => item.id)}
+                                strategy={rectSortingStrategy}
+                            >
+                                <div className="product-form__image-grid">
+                                    {imagePreviews.map((item, index) => (
+                                        <SortableFormImage
+                                            key={item.id}
+                                            item={item}
+                                            index={index}
+                                            onRemove={handleRemoveImage}
+                                        />
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            </SortableContext>
+                        </DndContext>
                     )}
                 </Section>
 
