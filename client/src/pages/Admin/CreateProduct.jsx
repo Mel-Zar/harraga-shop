@@ -1148,39 +1148,23 @@ function CreateProduct() {
 
         <div
 
-
+            className="create-product-page"
 
             style={{
 
+                width: "100%",
 
+                maxWidth: "1200px",
 
-                maxWidth:
+                minWidth: 0,
 
+                boxSizing: "border-box",
 
+                margin: "40px auto",
 
-                    "1200px",
-
-
-
-                margin:
-
-
-
-                    "40px auto",
-
-
-
-                padding:
-
-
-
-                    "20px",
-
-
+                padding: "clamp(10px, 2.5vw, 20px)",
 
             }}
-
-
 
         >
 
@@ -1862,9 +1846,25 @@ function CreateProduct() {
 
 
 
-                <div>
+                <div
 
+                    className="create-product-list"
 
+                    style={{
+
+                        display: "grid",
+
+                        gridTemplateColumns: "minmax(0, 1fr)",
+
+                        width: "100%",
+
+                        minWidth: 0,
+
+                        gap: "15px",
+
+                    }}
+
+                >
 
                     {filteredProducts.map(
 
@@ -1892,27 +1892,23 @@ function CreateProduct() {
 
                                 <div
 
+                                    key={product._id}
 
-
-                                    key={
-
-
-
-                                        product._id
-
-
-
-                                    }
-
-
+                                    className="create-product-item"
 
                                     style={{
 
+                                        width: "100%",
 
+                                        maxWidth: "100%",
+
+                                        minWidth: 0,
+
+                                        boxSizing: "border-box",
+
+                                        overflow: "hidden",
 
                                         border:
-
-
 
                                             "1px solid #ddd",
 

@@ -1301,3 +1301,1750 @@
     min-height: 46px;
   }
 }
+
+/* PRODUCT EDIT — match ProductForm's image file picker without changing upload logic. */
+.product-edit {
+  .product-edit__image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    margin-top: 4px;
+    padding: clamp(13px, 2.2vw, 19px);
+    color: #bdbdc5;
+    background:
+      linear-gradient(135deg, rgba(220, 220, 230, 0.035), transparent 62%),
+      #090909;
+    border: 1px dashed rgba(220, 220, 230, 0.34);
+    border-radius: 9px;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover,
+    &:focus-within {
+      border-color: rgba(220, 220, 230, 0.62);
+      background-color: #0d0d0e;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 0;
+      color: #bdbdc5;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.5;
+
+      &::file-selector-button {
+        min-height: 36px;
+        margin: 0 10px 0 0;
+        padding: 7px 12px;
+        color: #dedee4;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(220, 220, 230, 0.28);
+        border-radius: 7px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+        transition:
+          color 0.18s ease,
+          background 0.18s ease,
+          border-color 0.18s ease;
+      }
+
+      &::file-selector-button:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(220, 220, 230, 0.55);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+
+        &::file-selector-button {
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    > p {
+      margin: 0;
+      color: #92929b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__image-upload {
+    padding: 12px;
+
+    input[type="file"] {
+      font-size: 11px;
+
+      &::file-selector-button {
+        min-height: 38px;
+        margin-right: 8px;
+        padding: 7px 10px;
+      }
+    }
+  }
+}
+
+/* PRODUCT EDIT — Add buttons match ProductForm custom size/colour buttons.
+   Only styles the existing Add buttons; all fields and handlers stay intact. */
+.product-edit {
+  .product-edit__custom-value {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+
+    > input {
+      flex: 1 1 auto;
+      width: 1%;
+      min-width: 0;
+      min-height: 42px;
+    }
+
+    > button {
+      flex: 0 0 auto;
+      min-width: 62px;
+      min-height: 42px;
+      padding: 8px 14px;
+      color: #dedee4;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(220, 220, 230, 0.28);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      transition:
+        color 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+
+      &:hover:not(:disabled) {
+        color: #fff;
+        background: rgba(220, 220, 230, 0.09);
+        border-color: rgba(220, 220, 230, 0.62);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
+      }
+
+      &:active:not(:disabled) {
+        background: rgba(220, 220, 230, 0.14);
+      }
+
+      &:focus-visible {
+        outline: 2px solid rgba(220, 220, 230, 0.78);
+        outline-offset: 3px;
+      }
+
+      &:disabled {
+        opacity: 0.48;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__custom-value {
+    flex-direction: row;
+    gap: 8px;
+
+    > button {
+      min-width: 58px;
+      min-height: 42px;
+      padding-inline: 11px;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CHECKBOXES MATCH PRODUCTFORM
+   Same silver unchecked/checked appearance, hover and focus.
+   Styling only: existing checkbox values and handlers are untouched.
+===================================================== */
+
+.product-edit {
+  input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-grid !important;
+    place-content: center;
+    width: 19px !important;
+    height: 19px !important;
+    min-width: 19px !important;
+    min-height: 19px !important;
+    flex: 0 0 19px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color-scheme: dark;
+    background: linear-gradient(145deg, #101012, #202024) !important;
+    border: 1px solid rgba(220, 220, 230, 0.7) !important;
+    border-radius: 5px !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
+    accent-color: auto;
+    cursor: pointer;
+    vertical-align: middle;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+
+    &::before {
+      content: "";
+      width: 9px;
+      height: 5px;
+      border: solid #111113;
+      border-width: 0 0 2px 2px;
+      transform: rotate(-45deg) scale(0);
+      transform-origin: center;
+      transition: transform 130ms ease;
+    }
+
+    &:checked {
+      background: linear-gradient(
+        135deg,
+        #f3f3f6 0%,
+        #ceced5 48%,
+        #9999a2 100%
+      ) !important;
+      border-color: #f5f5f8 !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        0 0 0 2px rgba(220, 220, 230, 0.1),
+        0 2px 9px rgba(220, 220, 230, 0.15);
+
+      &::before {
+        transform: rotate(-45deg) scale(1);
+      }
+    }
+
+    &:hover {
+      border-color: #f5f5f8 !important;
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:active {
+      transform: scale(0.94);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  .product-edit__choice-list label,
+  .product-edit__toggle {
+    color: #d7d7dd;
+    transition: color 160ms ease;
+
+    &:has(> input[type="checkbox"]:checked) {
+      color: #f2f2f5;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .product-edit__choice-list label {
+    gap: 9px !important;
+    min-height: 38px;
+    cursor: pointer;
+  }
+
+  .product-edit__toggle {
+    gap: 11px !important;
+    min-height: 32px;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit {
+    .product-edit__choice-list label,
+    .product-edit__toggle {
+      min-height: 44px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-edit input[type="checkbox"] {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CATEGORY PATH CONTROLS
+   Match ProductForm's charcoal / silver styling.
+   Styles only: category values, remove handlers and add logic
+   remain unchanged.
+===================================================== */
+
+.product-edit {
+  .product-edit__category-level {
+    gap: 10px;
+    align-items: center;
+  }
+
+  .product-edit__category-level > span {
+    color: #a7a7b0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .product-edit__category-level input:not([type="checkbox"]) {
+    min-height: 44px;
+    padding: 10px 13px;
+    color: #f1f1f4;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.22);
+    border-radius: 8px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      border-color: rgba(220, 220, 230, 0.48);
+    }
+
+    &:focus {
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    }
+  }
+
+  /* Remove-category X buttons: muted silver, like ProductForm controls. */
+  .product-edit__category-level > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 7px 11px;
+    color: #f0f0f3;
+    background: linear-gradient(145deg, #343438, #242427);
+    border: 1px solid rgba(220, 220, 230, 0.32);
+    border-radius: 7px;
+    font-size: 1rem;
+    font-weight: 750;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover:not(:disabled) {
+      color: #080808;
+      background: linear-gradient(135deg, #f3f3f6, #bfc0c7 52%, #e8e8ec);
+      border-color: #f5f5f8;
+      box-shadow: 0 3px 12px rgba(220, 220, 230, 0.13);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* Add subcategory button — silver-grey fill like the ProductForm add controls. */
+  .product-edit__category-path > button,
+  .product-edit__category-path > .product-edit__add-category,
+  .product-edit__add-category {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    margin-top: 10px;
+    padding: 9px 14px;
+    color: #f5f5f7;
+    background: linear-gradient(135deg, #55555a 0%, #77777d 50%, #5d5d62 100%);
+    border: 1px solid rgba(235, 235, 242, 0.34);
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover:not(:disabled) {
+      color: #080808;
+      background: linear-gradient(
+        135deg,
+        #f3f3f6 0%,
+        #bfc0c7 52%,
+        #e8e8ec 100%
+      );
+      border-color: #f5f5f8;
+      box-shadow: 0 4px 14px rgba(220, 220, 230, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+  }
+
+  .admin-product-card__breadcrumbs {
+    gap: 8px;
+  }
+
+  .admin-product-card__breadcrumb-item > span:first-child {
+    color: #d6d6dc;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(220, 220, 230, 0.16);
+    border-radius: 7px;
+  }
+
+  .admin-product-card__breadcrumb-item .current {
+    color: #f4f4f6;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid $silver-bright;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit {
+    .product-edit__category-level {
+      grid-template-columns: 22px minmax(0, 1fr) 36px;
+      gap: 7px;
+    }
+
+    .product-edit__category-level > button {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 6px;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CATEGORY BUTTON HOVER REFINEMENT
+   Match the input surface on hover and the number-stepper
+   arrows' silver tone for the remove X.
+   Styling only; no category logic or markup is changed.
+===================================================== */
+
+.product-edit {
+  .product-edit__category-level > button {
+    color: #dfe0e6;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      color: #dfe0e6;
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #101014;
+      transform: scale(0.96);
+    }
+  }
+
+  .product-edit__category-path > button,
+  .product-edit__category-path > .product-edit__add-category,
+  .product-edit__add-category {
+    color: #dfe0e6;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      color: #f1f1f4;
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #101014;
+      transform: scale(0.99);
+    }
+  }
+}
+
+/* FIX: the Add subcategory button is inside .product-edit__category-levels.
+   Target the actual JSX structure so the intended styling is applied. */
+.product-edit .product-edit__category-levels > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  padding: 9px 14px;
+  color: #dfe0e6;
+  background: #090909;
+  border: 1px solid rgba(220, 220, 230, 0.38);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover:not(:disabled) {
+    color: #f1f1f4;
+    background: #101014;
+    border-color: rgba(235, 235, 242, 0.78);
+    box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    transform: none;
+  }
+
+  &:active:not(:disabled) {
+    color: #fff;
+    background: #101014;
+    transform: scale(0.99);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(238, 238, 244, 0.95);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE LAYOUT FIX — PRODUCT EDIT / ADMIN CARD
+   Appended overrides only. All existing styles, fields,
+   category controls, handlers and functionality are kept.
+===================================================== */
+
+.product-edit,
+.product-edit.admin-product-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.product-edit *,
+.product-edit *::before,
+.product-edit *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.product-edit > *,
+.product-edit .admin-product-card__header,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select,
+.product-edit button {
+  max-width: 100%;
+}
+
+.product-edit textarea {
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__categories {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+}
+
+.product-edit .product-edit__category-levels,
+.product-edit .product-edit__category-level,
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-edit .product-edit__category-level {
+  grid-template-columns: 24px minmax(0, 1fr) 40px;
+}
+
+.product-edit .product-edit__category-level input {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__category-levels > button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__custom-value {
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 15px;
+    padding: clamp(12px, 3vw, 18px);
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .admin-product-card__categories {
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 14px;
+  }
+
+  .product-edit .admin-product-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__status {
+    align-self: flex-start;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 22px minmax(0, 1fr) 36px;
+    gap: 7px;
+  }
+
+  .product-edit .product-edit__category-level > button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 40px;
+    padding: 6px;
+  }
+
+  .product-edit .admin-product-card__breadcrumbs {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .product-edit .admin-product-card__breadcrumb-item {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 12px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 220px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+
+  .product-edit .product-edit__category-level > button {
+    width: 34px;
+    min-width: 34px;
+    min-height: 38px;
+  }
+
+  .product-edit .product-edit__custom-value {
+    flex-wrap: nowrap;
+  }
+
+  .product-edit .product-edit__custom-value > button {
+    min-width: 54px;
+    padding-inline: 9px;
+  }
+}
+
+/* =====================================================
+   FIX: PRODUCT EDIT IMAGE GRID — SAME CARD LAYOUT AS PRODUCTFORM
+   Keep all existing upload, remove and drag-and-drop behavior.
+   This final override prevents older gallery rules from forcing
+   the sortable images into a single oversized column.
+===================================================== */
+
+.product-edit .product-edit__image-sort {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__sortable-image {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  gap: 12px;
+}
+
+.product-edit .product-edit__sortable-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(190px, 18vw, 270px) !important;
+  min-height: 0;
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.product-edit .product-edit__image-position {
+  align-self: flex-start;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.product-edit .product-edit__image-remove {
+  width: 100%;
+  min-width: 0;
+  margin-top: auto;
+}
+
+@media (max-width: 1000px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: clamp(190px, 28vw, 250px) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 9px;
+    gap: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 180px !important;
+  }
+
+  .product-edit .product-edit__image-position {
+    padding: 5px 7px;
+    font-size: 0.62rem;
+  }
+
+  .product-edit .product-edit__image-remove {
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 230px !important;
+  }
+}
+
+/* =========================================================
+   FINAL RESPONSIVE FIX — PRODUCT EDIT
+   Keeps every existing field, image control and handler.
+   Prevents the edit card and its sections from forcing
+   horizontal overflow when the available window is narrow.
+========================================================= */
+
+.product-edit,
+.product-edit.admin-product-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start;
+  justify-self: stretch;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-inline: 0 !important;
+  padding: clamp(12px, 2.2vw, 28px);
+  overflow-x: hidden;
+}
+
+.product-edit > *,
+.product-edit > * > *,
+.product-edit .admin-product-card__header,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo,
+.product-edit .product-edit__heading {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > button {
+  flex: 0 0 auto;
+  max-width: 42%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__actions,
+.product-edit .admin-product-card__actions button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-edit .admin-product-card__actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__image-sort,
+.product-edit .product-edit__image-sort-list,
+.product-edit .product-edit__sortable-image,
+.product-edit .product-edit__sortable-image-preview {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  height: clamp(150px, 24vw, 250px) !important;
+  object-fit: contain;
+}
+
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item,
+.product-edit .admin-product-card__breadcrumb-item > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .admin-product-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__status {
+    align-self: flex-start;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 14px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 22px minmax(0, 1fr) 36px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 190px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 12px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: clamp(210px, 65vw, 280px) !important;
+  }
+
+  .product-edit .admin-product-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__custom-value {
+    gap: 7px;
+  }
+
+  .product-edit .product-edit__custom-value > button {
+    max-width: 38%;
+    min-width: 52px;
+    padding-inline: 9px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    padding: 8px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 9px;
+  }
+}
+
+/* =====================================================
+   FINAL RESPONSIVE OVERRIDES — PRODUCT EDIT
+   Appended only. All existing fields, sections, gallery,
+   drag-and-drop, upload and save behavior are preserved.
+===================================================== */
+
+.product-edit,
+form.product-edit.admin-product-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: min-content;
+  align-content: start;
+  align-items: start;
+  justify-items: stretch;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.product-edit,
+.product-edit *,
+.product-edit *::before,
+.product-edit *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.product-edit > *,
+.product-edit .admin-product-card__header,
+.product-edit .product-edit__heading,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo,
+.product-edit .admin-product-card__actions {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+}
+
+.product-edit .admin-product-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  align-content: start;
+  gap: 16px;
+}
+
+.product-edit .product-edit__heading {
+  flex: 1 1 auto;
+}
+
+.product-edit .admin-product-card__status {
+  position: static;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select,
+.product-edit button {
+  max-width: 100%;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select {
+  width: 100%;
+}
+
+.product-edit textarea {
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .admin-product-card__categories {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+}
+
+.product-edit .product-edit__category-levels,
+.product-edit .product-edit__category-level,
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__category-level {
+  grid-template-columns: 24px minmax(0, 1fr) 40px;
+}
+
+.product-edit .product-edit__image-sort,
+.product-edit .product-edit__image-sort-list,
+.product-edit .product-edit__sortable-image,
+.product-edit .product-edit__sortable-image-preview {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(150px, 18vw, 240px) !important;
+  object-fit: contain;
+}
+
+.product-edit .product-edit__custom-value {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit,
+  form.product-edit.admin-product-card {
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__header {
+    gap: 13px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 13px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 180px !important;
+  }
+
+  .product-edit .admin-product-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .product-edit,
+  form.product-edit.admin-product-card {
+    gap: 11px;
+    padding: 9px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 220px !important;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+}
+
+/* CATEGORY BREADCRUMBS — keep each level beside the previous one,
+   wrapping naturally only when the available width is too small. */
+.product-edit .admin-product-card__breadcrumbs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 7px 9px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .admin-product-card__breadcrumb-item {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  gap: 7px;
+  white-space: normal;
+}
+
+.product-edit .admin-product-card__breadcrumb-item > span:first-child {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__breadcrumb-item .separator {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .product-edit .admin-product-card__breadcrumbs {
+    align-items: center;
+    gap: 6px 8px;
+  }
+
+  .product-edit .admin-product-card__breadcrumb-item {
+    width: auto;
+    flex: 0 1 auto;
+  }
+}
+
+/* =========================================================
+   PRODUCT EDIT — CUSTOM DROPDOWNS MATCHING PRODUCT FORM
+   Native browser select menus are replaced in ProductEdit.jsx.
+   All previous ProductEdit styles remain intact above.
+========================================================= */
+
+.product-edit {
+  /* The dropdown panels must be able to extend beyond the card. */
+  overflow: visible;
+
+  .admin-product-card__variants:has(.product-edit__select.is-open),
+  .admin-product-card__seo:has(.product-edit__select.is-open) {
+    position: relative;
+    z-index: 120;
+    overflow: visible;
+  }
+
+  .product-edit__select {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    min-width: 0;
+
+    &.is-open {
+      z-index: 220;
+    }
+  }
+
+  .product-edit__select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 11px 13px;
+    color: #e8e8ed;
+    text-align: left;
+    background: #080809;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    cursor: pointer;
+    transition:
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease;
+
+    &:hover,
+    &[aria-expanded="true"] {
+      background: #111113;
+      border-color: rgba(225, 225, 235, 0.72);
+    }
+
+    &[aria-expanded="true"] {
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.055);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(225, 225, 235, 0.82);
+      outline-offset: 3px;
+    }
+  }
+
+  .product-edit__select-trigger-copy,
+  .product-edit__select-option-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .product-edit__select-current {
+    overflow: hidden;
+    color: #f0f0f2;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-edit__select-caption {
+    color: rgba(205, 205, 214, 0.62);
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .product-edit__select-chevron {
+    display: block;
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+    fill: none;
+    stroke: #dedee5;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 180ms ease;
+  }
+
+  .product-edit__select.is-open .product-edit__select-chevron {
+    transform: rotate(180deg);
+  }
+
+  .product-edit__select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    z-index: 250;
+    display: grid;
+    gap: 4px;
+    max-height: min(280px, 48vh);
+    padding: 7px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: linear-gradient(155deg, #1a1a1a, #0d0d0d);
+    border: 1px solid rgba(220, 220, 230, 0.48);
+    border-radius: 11px;
+    box-shadow:
+      0 16px 38px rgba(0, 0, 0, 0.62),
+      inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    animation: product-edit-select-menu-in 140ms ease-out;
+  }
+
+  .product-edit__select-option {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-width: 0;
+    min-height: 43px;
+    padding: 10px 12px;
+    color: #ededf0;
+    text-align: left;
+    background: #151515;
+    border: 1px solid rgba(220, 220, 230, 0.34);
+    border-radius: 9px;
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition:
+      background 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+
+    &:hover,
+    &.is-active {
+      background: #242424;
+      border-color: rgba(235, 235, 242, 0.78);
+    }
+
+    &.is-selected {
+      background: #2b2b2b;
+      border-color: rgba(225, 225, 233, 0.82);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    }
+
+    &.is-selected .product-edit__select-option-label {
+      color: #fff;
+    }
+  }
+
+  .product-edit__select-option-copy {
+    flex: 1 1 auto;
+  }
+
+  .product-edit__select-option-label {
+    color: #ededf0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .product-edit__select-option-description {
+    color: rgba(205, 205, 214, 0.58);
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .product-edit__select-check {
+    display: grid;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    place-items: center;
+    color: #171717;
+    background: #e6e7ec;
+    border: 1px solid #f2f2f5;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .product-edit__select-indicator {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    place-items: center;
+    color: transparent;
+    background: #171717;
+    border: 1.5px solid rgba(220, 220, 230, 0.38);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 850;
+    line-height: 1;
+  }
+
+  .product-edit__select-option.is-selected .product-edit__select-indicator {
+    color: #171717;
+    background: #e6e7ec;
+    border-color: #f2f2f5;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.8),
+      0 1px 3px rgba(0, 0, 0, 0.25);
+  }
+
+  .product-edit__select--status .product-edit__select-trigger {
+    min-height: 58px;
+    padding: 12px 16px;
+    background: linear-gradient(145deg, #111, #090909);
+    border-radius: 10px;
+  }
+
+  .product-edit__select--status .product-edit__select-option {
+    min-height: 56px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+}
+
+@keyframes product-edit-select-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit {
+    .product-edit__select-menu {
+      max-height: min(240px, 42vh);
+    }
+
+    .product-edit__select-trigger {
+      min-height: 46px;
+      padding: 11px 12px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-edit .product-edit__select-trigger,
+  .product-edit .product-edit__select-chevron,
+  .product-edit .product-edit__select-option,
+  .product-edit .product-edit__select-menu {
+    animation: none;
+    transition: none;
+  }
+}

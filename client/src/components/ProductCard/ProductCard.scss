@@ -17,28 +17,14 @@
   padding: clamp(20px, 2.2vw, 30px);
   color: $text-color;
   text-align: left;
-  // Dark interior stays unchanged; ONLY the outer frame gets chrome.
   background:
     radial-gradient(
-        ellipse at 15% 0%,
-        rgba(220, 220, 230, 0.075),
-        transparent 34%
-      )
-      padding-box,
-    linear-gradient(145deg, #191919 0%, #101010 52%, #090909 100%) padding-box,
-    linear-gradient(
-        115deg,
-        #f8f8fa 0%,
-        #777780 13%,
-        #eeeef2 25%,
-        #8c8c95 39%,
-        #ffffff 52%,
-        #777780 68%,
-        #e7e7eb 82%,
-        #96969f 100%
-      )
-      border-box;
-  border: 3px solid transparent;
+      ellipse at 15% 0%,
+      rgba(220, 220, 230, 0.075),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #191919 0%, #101010 52%, #090909 100%);
+  border: 1px solid rgba(220, 220, 230, 0.18);
   border-radius: 16px;
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.38),
@@ -60,7 +46,7 @@
   }
 
   &:hover {
-    border-color: transparent;
+    border-color: rgba(235, 235, 242, 0.34);
     box-shadow:
       0 24px 58px rgba(0, 0, 0, 0.48),
       0 0 26px rgba(220, 220, 230, 0.045);
@@ -80,7 +66,7 @@
     min-width: 0;
     padding: 20px;
     background: rgba(255, 255, 255, 0.027);
-    border: 1px solid rgba(220, 220, 230, 0.2);
+    border: 1px solid rgba(220, 220, 230, 0.12);
     border-radius: 12px;
   }
 
@@ -282,8 +268,8 @@
     }
 
     .current {
-      // Current breadcrumb is NOT a filled chrome button.
-      // Keep the dark surface and use chrome only on its outline.
+      // Match ProductCard: dark breadcrumb surface with a silver outline.
+      // The active category is highlighted, not rendered as a chrome button.
       color: #f4f4f6 !important;
       background: rgba(255, 255, 255, 0.055) !important;
       border: 1px solid $silver-bright !important;
@@ -625,5 +611,2367 @@
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* EDIT CONTROLS — retain the same ProductCard section structure and chrome styling. */
+.product-edit {
+  color-scheme: dark;
+  font-family: $font-body;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .product-edit__heading {
+    flex: 1 1 320px;
+    min-width: 0;
+  }
+  .product-edit__heading > .admin-product-card__label {
+    margin-bottom: 12px;
+  }
+
+  label:not(.admin-product-card__label) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    min-width: 0;
+    color: #c9c9d0;
+    font-size: 0.82rem;
+    font-weight: 650;
+
+    > span:first-child {
+      color: #a7a7b0;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  }
+
+  input:not([type="checkbox"]),
+  textarea,
+  select {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 13px;
+    color: #f1f1f4;
+    background: rgba(5, 5, 7, 0.72);
+    border: 1px solid rgba(220, 220, 230, 0.2);
+    border-radius: 8px;
+    outline: none;
+    font: inherit;
+    font-size: 0.88rem;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+
+    &:focus {
+      border-color: rgba(235, 235, 242, 0.72);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+      background: #101014;
+    }
+    &::placeholder {
+      color: #686871;
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    min-height: 112px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  select {
+    cursor: pointer;
+  }
+  input[type="file"] {
+    padding: 10px;
+  }
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #d7d7df;
+  }
+
+  .admin-product-card__basic-info > label,
+  .admin-product-card__pricing > label,
+  .admin-product-card__variants > label,
+  .admin-product-card__stock > label,
+  .admin-product-card__shipping > label,
+  .admin-product-card__seo > label {
+    padding: 4px 12px;
+    border-left: 2px solid rgba(220, 220, 230, 0.28);
+  }
+
+  .admin-product-card__categories input,
+  .admin-product-card__tags input {
+    margin-top: 4px;
+  }
+  .admin-product-card__category-path {
+    min-width: 0;
+  }
+  .product-edit__category-levels {
+    display: grid;
+    gap: 9px;
+    margin: 10px 0 14px;
+  }
+  .product-edit__category-level {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .product-edit__category-level > span {
+    color: #a7a7b0;
+  }
+
+  .product-edit
+    button:not(.admin-product-card__edit):not(.admin-product-card__delete) {
+    min-height: 34px;
+    padding: 7px 11px;
+    color: #e4e4e9;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(220, 220, 230, 0.2);
+    border-radius: 7px;
+    cursor: pointer;
+    &:hover {
+      background: rgba(255, 255, 255, 0.11);
+      border-color: rgba(235, 235, 242, 0.48);
+    }
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  .admin-product-card__breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    color: #bcbcc5;
+  }
+  .admin-product-card__breadcrumb-item {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+  }
+  .admin-product-card__breadcrumb-item .current {
+    color: #fff;
+    font-weight: 800;
+  }
+  .admin-product-card__tag-list,
+  .admin-product-card__variant-list,
+  .product-edit__choice-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .admin-product-card__tag-list > span,
+  .admin-product-card__variant-list > button {
+    padding: 6px 10px;
+    color: #e8e8ed;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(220, 220, 230, 0.17);
+    border-radius: 999px;
+    font-size: 0.76rem;
+  }
+  .product-edit__choice-list label {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 7px 9px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(220, 220, 230, 0.14);
+    border-radius: 7px;
+  }
+  .product-edit__custom-value {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .product-edit__custom-value input {
+    flex: 1;
+  }
+  .product-edit__toggle {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 9px !important;
+    padding: 10px 12px;
+  }
+  .product-edit__help,
+  .product-edit__note {
+    color: #92929b;
+    font-size: 0.76rem;
+    line-height: 1.6;
+  }
+  .product-edit__existing-images,
+  .product-edit__new-image-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    margin-top: 14px;
+  }
+  .product-edit__image-removal-list {
+    display: grid;
+    gap: 8px;
+  }
+  .product-edit__image-removal-list > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: #c9c9d0;
+  }
+  .product-edit__new-image-previews > div {
+    display: grid;
+    gap: 8px;
+    width: min(100%, 230px);
+  }
+  .product-edit__new-image-previews img {
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+  }
+  .product-edit__note {
+    margin: 0;
+  }
+  .admin-product-card__shipping,
+  .admin-product-card__seo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .admin-product-card__shipping h4,
+  .admin-product-card__seo h4 {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #f0f0f3;
+    font-family: $font-heading;
+  }
+  .admin-product-card__seo .admin-product-card__publication-status {
+    align-self: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo {
+    grid-template-columns: 1fr;
+  }
+  .product-edit .product-edit__custom-value {
+    flex-direction: column;
+  }
+}
+
+/* ADDITION: image ordering controls. Existing gallery styles and components remain unchanged. */
+.product-edit {
+  .product-edit__image-sort {
+    width: 100%;
+    margin-top: 18px;
+
+    > p {
+      margin: 0 0 12px;
+      color: #9999a2;
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+  }
+
+  .product-edit__image-sort-list {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .product-edit__image-sort-item {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(220, 220, 230, 0.16);
+    border-radius: 9px;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    &.is-main {
+      border-color: rgba(235, 235, 242, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    > img {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      background: #090909;
+      border-radius: 6px;
+    }
+
+    > div {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    strong {
+      color: #ededf1;
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+    }
+
+    span {
+      color: #9999a2;
+      font-size: 0.75rem;
+    }
+
+    button {
+      min-width: 34px;
+      min-height: 34px;
+      padding: 5px 9px;
+      color: #e8e8ed;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(220, 220, 230, 0.2);
+      border-radius: 6px;
+
+      &:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .product-edit .product-edit__image-sort-item {
+    grid-template-columns: 52px minmax(0, 1fr) 32px 32px;
+    gap: 7px;
+    padding: 8px;
+
+    > img {
+      width: 52px;
+      height: 52px;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — SORTABLE PRODUCT IMAGES
+   Four images displayed side by side where space allows.
+   Keeps the main-image badge and all existing form styles.
+===================================================== */
+
+.product-edit {
+  .product-edit__image-sort {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+    margin-top: 18px;
+  }
+
+  .product-edit__image-sort > p {
+    margin: 0;
+    color: #9999a2;
+    font-size: 0.84rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive image grid: up to four cards in one row. */
+  .product-edit__image-sort-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .product-edit__sortable-image {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    padding: 14px;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.2)),
+      #101010;
+    border: 1px solid rgba(220, 220, 230, 0.2);
+    border-radius: 12px;
+    cursor: grab;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      border-color: rgba(235, 235, 242, 0.48);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    &.is-main-image {
+      border: 2px solid rgba(235, 235, 242, 0.86);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+        0 0 18px rgba(220, 220, 230, 0.08);
+    }
+
+    &.is-dragging {
+      z-index: 2;
+      opacity: 0.72;
+      border-color: #f0f0f4;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+      transform: scale(1.02);
+    }
+  }
+
+  .product-edit__sortable-image-preview {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .product-edit__image-position {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    min-height: 30px;
+    padding: 6px 11px;
+    color: #e8e8ed;
+    background: rgba(255, 255, 255, 0.065);
+    border: 1px solid rgba(220, 220, 230, 0.2);
+    border-radius: 7px;
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.045em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .product-edit__sortable-image.is-main-image .product-edit__image-position {
+    color: #080808;
+    background: linear-gradient(135deg, #fff, #bfc0c7 48%, #f5f5f7);
+    border-color: #f5f5f7;
+    box-shadow: 0 3px 12px rgba(255, 255, 255, 0.12);
+  }
+
+  .product-edit__sortable-image img.product-gallery__image {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: clamp(190px, 23vw, 270px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0;
+    object-fit: contain;
+    object-position: center center;
+    background: #fff;
+    border: 0;
+    border-radius: 6px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-drag: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  .product-edit__image-remove {
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    margin-top: auto;
+    padding: 9px 14px;
+    color: #ededf1;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(220, 220, 230, 0.28);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(235, 235, 242, 0.7);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+/* Tablet: two cards per row. */
+@media (max-width: 1000px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: clamp(190px, 30vw, 260px);
+  }
+}
+
+/* Mobile: keep cards side by side when there is room, then stack on narrow screens. */
+@media (max-width: 560px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    gap: 10px;
+    padding: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 180px;
+  }
+
+  .product-edit .product-edit__image-position {
+    min-height: 27px;
+    padding: 5px 7px;
+    font-size: 0.62rem;
+  }
+
+  .product-edit .product-edit__image-remove {
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 240px;
+  }
+}
+
+/* NUMBER INPUTS — match ProductForm's black fields and silver arrow steppers. */
+.product-edit {
+  .product-edit__number-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    overflow: hidden;
+    background: #080808;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    border-radius: 8px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.65);
+    }
+
+    &:focus-within {
+      border-color: rgba(235, 235, 242, 0.85);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.09);
+    }
+  }
+
+  input.product-edit__number-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 12px;
+    color: #f1f1f4;
+    background: #080808;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    appearance: textfield;
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+
+    &:focus {
+      border: 0;
+      outline: none;
+      box-shadow: none;
+      background: #080808;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+    }
+  }
+
+  .product-edit__number-buttons {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    min-width: 28px;
+    background: #080808;
+    border: 0;
+  }
+
+  .product-edit__number-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 20px;
+    padding: 2px 5px;
+    color: #dfe0e6;
+    background: #080808;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #080808;
+      border: 0;
+      box-shadow: none;
+      filter: none;
+    }
+
+    &:focus-visible {
+      position: relative;
+      z-index: 1;
+      outline: 2px solid #fff;
+      outline-offset: -3px;
+    }
+
+    svg {
+      display: block;
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: #dfe0e6;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__number-control {
+    min-height: 46px;
+  }
+}
+
+/* PRODUCT EDIT — match ProductForm's image file picker without changing upload logic. */
+.product-edit {
+  .product-edit__image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    margin-top: 4px;
+    padding: clamp(13px, 2.2vw, 19px);
+    color: #bdbdc5;
+    background:
+      linear-gradient(135deg, rgba(220, 220, 230, 0.035), transparent 62%),
+      #090909;
+    border: 1px dashed rgba(220, 220, 230, 0.34);
+    border-radius: 9px;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover,
+    &:focus-within {
+      border-color: rgba(220, 220, 230, 0.62);
+      background-color: #0d0d0e;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 0;
+      color: #bdbdc5;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.5;
+
+      &::file-selector-button {
+        min-height: 36px;
+        margin: 0 10px 0 0;
+        padding: 7px 12px;
+        color: #dedee4;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(220, 220, 230, 0.28);
+        border-radius: 7px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+        transition:
+          color 0.18s ease,
+          background 0.18s ease,
+          border-color 0.18s ease;
+      }
+
+      &::file-selector-button:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(220, 220, 230, 0.55);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+
+        &::file-selector-button {
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    > p {
+      margin: 0;
+      color: #92929b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__image-upload {
+    padding: 12px;
+
+    input[type="file"] {
+      font-size: 11px;
+
+      &::file-selector-button {
+        min-height: 38px;
+        margin-right: 8px;
+        padding: 7px 10px;
+      }
+    }
+  }
+}
+
+/* PRODUCT EDIT — Add buttons match ProductForm custom size/colour buttons.
+   Only styles the existing Add buttons; all fields and handlers stay intact. */
+.product-edit {
+  .product-edit__custom-value {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+
+    > input {
+      flex: 1 1 auto;
+      width: 1%;
+      min-width: 0;
+      min-height: 42px;
+    }
+
+    > button {
+      flex: 0 0 auto;
+      min-width: 62px;
+      min-height: 42px;
+      padding: 8px 14px;
+      color: #dedee4;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(220, 220, 230, 0.28);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      transition:
+        color 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+
+      &:hover:not(:disabled) {
+        color: #fff;
+        background: rgba(220, 220, 230, 0.09);
+        border-color: rgba(220, 220, 230, 0.62);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
+      }
+
+      &:active:not(:disabled) {
+        background: rgba(220, 220, 230, 0.14);
+      }
+
+      &:focus-visible {
+        outline: 2px solid rgba(220, 220, 230, 0.78);
+        outline-offset: 3px;
+      }
+
+      &:disabled {
+        opacity: 0.48;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit .product-edit__custom-value {
+    flex-direction: row;
+    gap: 8px;
+
+    > button {
+      min-width: 58px;
+      min-height: 42px;
+      padding-inline: 11px;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CHECKBOXES MATCH PRODUCTFORM
+   Same silver unchecked/checked appearance, hover and focus.
+   Styling only: existing checkbox values and handlers are untouched.
+===================================================== */
+
+.product-edit {
+  input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-grid !important;
+    place-content: center;
+    width: 19px !important;
+    height: 19px !important;
+    min-width: 19px !important;
+    min-height: 19px !important;
+    flex: 0 0 19px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color-scheme: dark;
+    background: linear-gradient(145deg, #101012, #202024) !important;
+    border: 1px solid rgba(220, 220, 230, 0.7) !important;
+    border-radius: 5px !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
+    accent-color: auto;
+    cursor: pointer;
+    vertical-align: middle;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+
+    &::before {
+      content: "";
+      width: 9px;
+      height: 5px;
+      border: solid #111113;
+      border-width: 0 0 2px 2px;
+      transform: rotate(-45deg) scale(0);
+      transform-origin: center;
+      transition: transform 130ms ease;
+    }
+
+    &:checked {
+      background: linear-gradient(
+        135deg,
+        #f3f3f6 0%,
+        #ceced5 48%,
+        #9999a2 100%
+      ) !important;
+      border-color: #f5f5f8 !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        0 0 0 2px rgba(220, 220, 230, 0.1),
+        0 2px 9px rgba(220, 220, 230, 0.15);
+
+      &::before {
+        transform: rotate(-45deg) scale(1);
+      }
+    }
+
+    &:hover {
+      border-color: #f5f5f8 !important;
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:active {
+      transform: scale(0.94);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  .product-edit__choice-list label,
+  .product-edit__toggle {
+    color: #d7d7dd;
+    transition: color 160ms ease;
+
+    &:has(> input[type="checkbox"]:checked) {
+      color: #f2f2f5;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .product-edit__choice-list label {
+    gap: 9px !important;
+    min-height: 38px;
+    cursor: pointer;
+  }
+
+  .product-edit__toggle {
+    gap: 11px !important;
+    min-height: 32px;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit {
+    .product-edit__choice-list label,
+    .product-edit__toggle {
+      min-height: 44px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-edit input[type="checkbox"] {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CATEGORY PATH CONTROLS
+   Match ProductForm's charcoal / silver styling.
+   Styles only: category values, remove handlers and add logic
+   remain unchanged.
+===================================================== */
+
+.product-edit {
+  .product-edit__category-level {
+    gap: 10px;
+    align-items: center;
+  }
+
+  .product-edit__category-level > span {
+    color: #a7a7b0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .product-edit__category-level input:not([type="checkbox"]) {
+    min-height: 44px;
+    padding: 10px 13px;
+    color: #f1f1f4;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.22);
+    border-radius: 8px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      border-color: rgba(220, 220, 230, 0.48);
+    }
+
+    &:focus {
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    }
+  }
+
+  /* Remove-category X buttons: muted silver, like ProductForm controls. */
+  .product-edit__category-level > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 7px 11px;
+    color: #f0f0f3;
+    background: linear-gradient(145deg, #343438, #242427);
+    border: 1px solid rgba(220, 220, 230, 0.32);
+    border-radius: 7px;
+    font-size: 1rem;
+    font-weight: 750;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover:not(:disabled) {
+      color: #080808;
+      background: linear-gradient(135deg, #f3f3f6, #bfc0c7 52%, #e8e8ec);
+      border-color: #f5f5f8;
+      box-shadow: 0 3px 12px rgba(220, 220, 230, 0.13);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* Add subcategory button — silver-grey fill like the ProductForm add controls. */
+  .product-edit__category-path > button,
+  .product-edit__category-path > .product-edit__add-category,
+  .product-edit__add-category {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    margin-top: 10px;
+    padding: 9px 14px;
+    color: #f5f5f7;
+    background: linear-gradient(135deg, #55555a 0%, #77777d 50%, #5d5d62 100%);
+    border: 1px solid rgba(235, 235, 242, 0.34);
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover:not(:disabled) {
+      color: #080808;
+      background: linear-gradient(
+        135deg,
+        #f3f3f6 0%,
+        #bfc0c7 52%,
+        #e8e8ec 100%
+      );
+      border-color: #f5f5f8;
+      box-shadow: 0 4px 14px rgba(220, 220, 230, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(238, 238, 244, 0.95);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+  }
+
+  .admin-product-card__breadcrumbs {
+    gap: 8px;
+  }
+
+  .admin-product-card__breadcrumb-item > span:first-child {
+    color: #d6d6dc;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(220, 220, 230, 0.16);
+    border-radius: 7px;
+  }
+
+  .admin-product-card__breadcrumb-item .current {
+    color: #f4f4f6;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid $silver-bright;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit {
+    .product-edit__category-level {
+      grid-template-columns: 22px minmax(0, 1fr) 36px;
+      gap: 7px;
+    }
+
+    .product-edit__category-level > button {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 6px;
+    }
+  }
+}
+
+/* =====================================================
+   PRODUCT EDIT — CATEGORY BUTTON HOVER REFINEMENT
+   Match the input surface on hover and the number-stepper
+   arrows' silver tone for the remove X.
+   Styling only; no category logic or markup is changed.
+===================================================== */
+
+.product-edit {
+  .product-edit__category-level > button {
+    color: #dfe0e6;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      color: #dfe0e6;
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #101014;
+      transform: scale(0.96);
+    }
+  }
+
+  .product-edit__category-path > button,
+  .product-edit__category-path > .product-edit__add-category,
+  .product-edit__add-category {
+    color: #dfe0e6;
+    background: #090909;
+    border: 1px solid rgba(220, 220, 230, 0.38);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      color: #f1f1f4;
+      background: #101014;
+      border-color: rgba(235, 235, 242, 0.78);
+      box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      color: #fff;
+      background: #101014;
+      transform: scale(0.99);
+    }
+  }
+}
+
+/* FIX: the Add subcategory button is inside .product-edit__category-levels.
+   Target the actual JSX structure so the intended styling is applied. */
+.product-edit .product-edit__category-levels > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  padding: 9px 14px;
+  color: #dfe0e6;
+  background: #090909;
+  border: 1px solid rgba(220, 220, 230, 0.38);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover:not(:disabled) {
+    color: #f1f1f4;
+    background: #101014;
+    border-color: rgba(235, 235, 242, 0.78);
+    box-shadow: 0 0 0 3px rgba(220, 220, 230, 0.09);
+    transform: none;
+  }
+
+  &:active:not(:disabled) {
+    color: #fff;
+    background: #101014;
+    transform: scale(0.99);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(238, 238, 244, 0.95);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE LAYOUT FIX — PRODUCT EDIT / ADMIN CARD
+   Appended overrides only. All existing styles, fields,
+   category controls, handlers and functionality are kept.
+===================================================== */
+
+.product-edit,
+.product-edit.admin-product-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.product-edit *,
+.product-edit *::before,
+.product-edit *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.product-edit > *,
+.product-edit .admin-product-card__header,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select,
+.product-edit button {
+  max-width: 100%;
+}
+
+.product-edit textarea {
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__categories {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+}
+
+.product-edit .product-edit__category-levels,
+.product-edit .product-edit__category-level,
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-edit .product-edit__category-level {
+  grid-template-columns: 24px minmax(0, 1fr) 40px;
+}
+
+.product-edit .product-edit__category-level input {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__category-levels > button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__custom-value {
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 15px;
+    padding: clamp(12px, 3vw, 18px);
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .admin-product-card__categories {
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 14px;
+  }
+
+  .product-edit .admin-product-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__status {
+    align-self: flex-start;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 22px minmax(0, 1fr) 36px;
+    gap: 7px;
+  }
+
+  .product-edit .product-edit__category-level > button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 40px;
+    padding: 6px;
+  }
+
+  .product-edit .admin-product-card__breadcrumbs {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .product-edit .admin-product-card__breadcrumb-item {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 12px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 220px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+
+  .product-edit .product-edit__category-level > button {
+    width: 34px;
+    min-width: 34px;
+    min-height: 38px;
+  }
+
+  .product-edit .product-edit__custom-value {
+    flex-wrap: nowrap;
+  }
+
+  .product-edit .product-edit__custom-value > button {
+    min-width: 54px;
+    padding-inline: 9px;
+  }
+}
+
+/* =====================================================
+   FIX: PRODUCT EDIT IMAGE GRID — SAME CARD LAYOUT AS PRODUCTFORM
+   Keep all existing upload, remove and drag-and-drop behavior.
+   This final override prevents older gallery rules from forcing
+   the sortable images into a single oversized column.
+===================================================== */
+
+.product-edit .product-edit__image-sort {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__sortable-image {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  gap: 12px;
+}
+
+.product-edit .product-edit__sortable-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(190px, 18vw, 270px) !important;
+  min-height: 0;
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.product-edit .product-edit__image-position {
+  align-self: flex-start;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.product-edit .product-edit__image-remove {
+  width: 100%;
+  min-width: 0;
+  margin-top: auto;
+}
+
+@media (max-width: 1000px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: clamp(190px, 28vw, 250px) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 9px;
+    gap: 9px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 180px !important;
+  }
+
+  .product-edit .product-edit__image-position {
+    padding: 5px 7px;
+    font-size: 0.62rem;
+  }
+
+  .product-edit .product-edit__image-remove {
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 230px !important;
+  }
+}
+
+/* =========================================================
+   FINAL RESPONSIVE FIX — PRODUCT EDIT
+   Keeps every existing field, image control and handler.
+   Prevents the edit card and its sections from forcing
+   horizontal overflow when the available window is narrow.
+========================================================= */
+
+.product-edit,
+.product-edit.admin-product-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start;
+  justify-self: stretch;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-inline: 0 !important;
+  padding: clamp(12px, 2.2vw, 28px);
+  overflow-x: hidden;
+}
+
+.product-edit > *,
+.product-edit > * > *,
+.product-edit .admin-product-card__header,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo,
+.product-edit .product-edit__heading {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > button {
+  flex: 0 0 auto;
+  max-width: 42%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__actions,
+.product-edit .admin-product-card__actions button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-edit .admin-product-card__actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__image-sort,
+.product-edit .product-edit__image-sort-list,
+.product-edit .product-edit__sortable-image,
+.product-edit .product-edit__sortable-image-preview {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  height: clamp(150px, 24vw, 250px) !important;
+  object-fit: contain;
+}
+
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item,
+.product-edit .admin-product-card__breadcrumb-item > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .admin-product-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-edit .admin-product-card__status {
+    align-self: flex-start;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 14px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 22px minmax(0, 1fr) 36px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 190px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 12px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: clamp(210px, 65vw, 280px) !important;
+  }
+
+  .product-edit .admin-product-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__custom-value {
+    gap: 7px;
+  }
+
+  .product-edit .product-edit__custom-value > button {
+    max-width: 38%;
+    min-width: 52px;
+    padding-inline: 9px;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-edit,
+  .product-edit.admin-product-card {
+    padding: 8px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 9px;
+  }
+}
+
+/* =====================================================
+   FINAL RESPONSIVE OVERRIDES — PRODUCT EDIT
+   Appended only. All existing fields, sections, gallery,
+   drag-and-drop, upload and save behavior are preserved.
+===================================================== */
+
+.product-edit,
+form.product-edit.admin-product-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: min-content;
+  align-content: start;
+  align-items: start;
+  justify-items: stretch;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.product-edit,
+.product-edit *,
+.product-edit *::before,
+.product-edit *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.product-edit > *,
+.product-edit .admin-product-card__header,
+.product-edit .product-edit__heading,
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__description,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__categories,
+.product-edit .admin-product-card__tags,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__gallery,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo,
+.product-edit .admin-product-card__actions {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+}
+
+.product-edit .admin-product-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  align-content: start;
+  gap: 16px;
+}
+
+.product-edit .product-edit__heading {
+  flex: 1 1 auto;
+}
+
+.product-edit .admin-product-card__status {
+  position: static;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select,
+.product-edit button {
+  max-width: 100%;
+}
+
+.product-edit input:not([type="checkbox"]),
+.product-edit textarea,
+.product-edit select {
+  width: 100%;
+}
+
+.product-edit textarea {
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__basic-info,
+.product-edit .admin-product-card__pricing,
+.product-edit .admin-product-card__variants,
+.product-edit .admin-product-card__stock,
+.product-edit .admin-product-card__shipping,
+.product-edit .admin-product-card__seo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-edit .admin-product-card__categories {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+}
+
+.product-edit .product-edit__category-levels,
+.product-edit .product-edit__category-level,
+.product-edit .admin-product-card__breadcrumbs,
+.product-edit .admin-product-card__breadcrumb-item {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__category-level {
+  grid-template-columns: 24px minmax(0, 1fr) 40px;
+}
+
+.product-edit .product-edit__image-sort,
+.product-edit .product-edit__image-sort-list,
+.product-edit .product-edit__sortable-image,
+.product-edit .product-edit__sortable-image-preview {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__image-sort-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.product-edit .product-edit__sortable-image img.product-gallery__image {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(150px, 18vw, 240px) !important;
+  object-fit: contain;
+}
+
+.product-edit .product-edit__custom-value {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > input {
+  flex: 1 1 0;
+  width: 1%;
+  min-width: 0;
+}
+
+.product-edit .product-edit__custom-value > button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .product-edit,
+  form.product-edit.admin-product-card {
+    gap: 14px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .product-edit .admin-product-card__header {
+    gap: 13px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 13px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 180px !important;
+  }
+
+  .product-edit .admin-product-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .product-edit,
+  form.product-edit.admin-product-card {
+    gap: 11px;
+    padding: 9px;
+  }
+
+  .product-edit .admin-product-card__basic-info,
+  .product-edit .admin-product-card__pricing,
+  .product-edit .admin-product-card__variants,
+  .product-edit .admin-product-card__stock,
+  .product-edit .admin-product-card__shipping,
+  .product-edit .admin-product-card__seo,
+  .product-edit .admin-product-card__categories,
+  .product-edit .admin-product-card__tags,
+  .product-edit .admin-product-card__gallery,
+  .product-edit .admin-product-card__description {
+    padding: 10px;
+  }
+
+  .product-edit .product-edit__image-sort-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-edit .product-edit__sortable-image img.product-gallery__image {
+    height: 220px !important;
+  }
+
+  .product-edit .product-edit__category-level {
+    grid-template-columns: 20px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+}
+
+/* CATEGORY BREADCRUMBS — keep each level beside the previous one,
+   wrapping naturally only when the available width is too small. */
+.product-edit .admin-product-card__breadcrumbs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 7px 9px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-edit .admin-product-card__breadcrumb-item {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  gap: 7px;
+  white-space: normal;
+}
+
+.product-edit .admin-product-card__breadcrumb-item > span:first-child {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-edit .admin-product-card__breadcrumb-item .separator {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .product-edit .admin-product-card__breadcrumbs {
+    align-items: center;
+    gap: 6px 8px;
+  }
+
+  .product-edit .admin-product-card__breadcrumb-item {
+    width: auto;
+    flex: 0 1 auto;
+  }
+}
+
+/* =====================================================
+   PRODUCT CARD — POLISHED, CENTERED STOCK STATUS
+   Visual-only override: preserves all existing fields,
+   status classes, responsive rules and functionality.
+===================================================== */
+
+.admin-product-card__stock {
+  align-items: center;
+}
+
+.admin-product-card__stock-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  align-self: center;
+  width: fit-content;
+  min-width: 104px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-product-card__stock-indicator.in-stock {
+  color: #8af0b1;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.17),
+    rgba(22, 163, 74, 0.09)
+  );
+  border-color: rgba(74, 222, 128, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 3px 12px rgba(22, 163, 74, 0.08);
+}
+
+.admin-product-card__stock-indicator.low-stock {
+  color: #ffdc83;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.17),
+    rgba(180, 110, 10, 0.08)
+  );
+  border-color: rgba(251, 191, 36, 0.36);
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.07);
+}
+
+.admin-product-card__stock-indicator.out-of-stock {
+  color: #ffaaaa;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.17),
+    rgba(185, 28, 28, 0.08)
+  );
+  border-color: rgba(248, 113, 113, 0.36);
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.07);
+}
+
+@media (max-width: 900px) {
+  .admin-product-card__stock-indicator {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-product-card__stock {
+    justify-items: stretch;
+  }
+
+  .admin-product-card__stock-indicator {
+    justify-self: start;
+    min-width: 104px;
+  }
+}
+
+/* =====================================================
+   FINAL STOCK STATUS POLISH
+   Visual-only refinement. Keeps the existing stock fields,
+   status text/classes, markup and responsive behaviour.
+===================================================== */
+
+.admin-product-card__stock {
+  align-items: center;
+}
+
+.admin-product-card__stock-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  align-self: center;
+  gap: 8px;
+  min-width: 116px;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0.015em;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 4px 14px rgba(0, 0, 0, 0.16);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-product-card__stock-indicator::before {
+  content: "";
+  display: block;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 9px currentColor;
+}
+
+.admin-product-card__stock-indicator.in-stock {
+  color: #83e9aa;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.19),
+    rgba(22, 163, 74, 0.085)
+  );
+  border-color: rgba(74, 222, 128, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 4px 16px rgba(22, 163, 74, 0.09);
+}
+
+.admin-product-card__stock-indicator.low-stock {
+  color: #ffda7c;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.19),
+    rgba(180, 110, 10, 0.085)
+  );
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 4px 16px rgba(245, 158, 11, 0.08);
+}
+
+.admin-product-card__stock-indicator.out-of-stock {
+  color: #ffaaaa;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.19),
+    rgba(185, 28, 28, 0.085)
+  );
+  border-color: rgba(248, 113, 113, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 4px 16px rgba(220, 38, 38, 0.08);
+}
+
+@media (max-width: 600px) {
+  .admin-product-card__stock {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .admin-product-card__stock-indicator {
+    justify-self: center;
+    min-width: 116px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-product-card__stock-indicator {
+    transition: none;
   }
 }

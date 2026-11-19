@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -69,6 +69,165 @@ function Field({ label, required, help, children }) {
     );
 
 }
+
+// Custom accessible dropdowns matching ProductForm's silver listbox controls.
+function ProductEditSelect({ value, onChange, options, ariaLabel, variant = "default" }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const dropdownRef = useRef(null);
+    const triggerRef = useRef(null);
+    const optionRefs = useRef([]);
+    const id = useId();
+
+    const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value));
+    const activeOptionId = `${id}-option-${activeIndex}`;
+    const listboxId = `${id}-listbox`;
+    const selectedOption = options[selectedIndex] || options[0];
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const handlePointerDown = (event) => {
+            if (!dropdownRef.current?.contains(event.target)) setIsOpen(false);
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setIsOpen(false);
+                triggerRef.current?.focus();
+            }
+        };
+        document.addEventListener("pointerdown", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen) optionRefs.current[activeIndex]?.scrollIntoView?.({ block: "nearest" });
+    }, [activeIndex, isOpen]);
+
+    const openMenu = () => {
+        setActiveIndex(selectedIndex);
+        setIsOpen(true);
+    };
+
+    const chooseOption = (option) => {
+        onChange(option.value);
+        setIsOpen(false);
+        triggerRef.current?.focus();
+    };
+
+    const handleTriggerKeyDown = (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!isOpen) {
+                openMenu();
+                return;
+            }
+            setActiveIndex((current) => event.key === "ArrowDown"
+                ? (current + 1) % options.length
+                : (current - 1 + options.length) % options.length);
+        } else if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            if (!isOpen) openMenu();
+            else chooseOption(options[activeIndex]);
+        } else if (event.key === "Home" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(0);
+        } else if (event.key === "End" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(options.length - 1);
+        } else if (event.key === "Tab" && isOpen) {
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <div
+            className={`product-edit__select product-edit__select--${variant}${isOpen ? " is-open" : ""}`}
+            ref={dropdownRef}
+        >
+            <button
+                ref={triggerRef}
+                className="product-edit__select-trigger"
+                type="button"
+                role="combobox"
+                aria-label={ariaLabel}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={listboxId}
+                aria-activedescendant={isOpen ? activeOptionId : undefined}
+                onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
+                onKeyDown={handleTriggerKeyDown}
+            >
+                <span className="product-edit__select-trigger-copy">
+                    <span className="product-edit__select-current">{selectedOption?.label}</span>
+                    {selectedOption?.description && (
+                        <span className="product-edit__select-caption">{selectedOption.description}</span>
+                    )}
+                </span>
+                <svg className="product-edit__select-chevron" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m5 7.5 5 5 5-5" />
+                </svg>
+            </button>
+
+            {isOpen && (
+                <div
+                    className="product-edit__select-menu"
+                    id={listboxId}
+                    role="listbox"
+                    aria-label={ariaLabel}
+                    aria-activedescendant={activeOptionId}
+                >
+                    {options.map((option, index) => (
+                        <button
+                            id={`${id}-option-${index}`}
+                            key={option.value}
+                            ref={(element) => { optionRefs.current[index] = element; }}
+                            className={[
+                                "product-edit__select-option",
+                                option.value === value ? "is-selected" : "",
+                                index === activeIndex ? "is-active" : "",
+                            ].filter(Boolean).join(" ")}
+                            type="button"
+                            role="option"
+                            aria-selected={option.value === value}
+                            tabIndex={-1}
+                            onMouseEnter={() => setActiveIndex(index)}
+                            onClick={() => chooseOption(option)}
+                        >
+                            {variant === "status" && (
+                                <span className="product-edit__select-indicator" aria-hidden="true">
+                                    {option.value === value ? "✓" : ""}
+                                </span>
+                            )}
+                            <span className="product-edit__select-option-copy">
+                                <span className="product-edit__select-option-label">{option.label}</span>
+                                {option.description && (
+                                    <span className="product-edit__select-option-description">{option.description}</span>
+                                )}
+                            </span>
+                            {variant !== "status" && option.value === value && (
+                                <span className="product-edit__select-check" aria-hidden="true">✓</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+const TARGET_GROUP_OPTIONS = ["Unisex", "Men", "Women", "Kids", "Baby"].map((value) => ({
+    value,
+    label: value,
+}));
+
+const PUBLICATION_STATUS_OPTIONS = [
+    { value: "draft", label: "Draft — not published yet", description: "Only visible to administrators" },
+    { value: "published", label: "Published — visible in the store", description: "Customers can view this product" },
+];
 
 // Number input with the same compact silver up/down arrows as ProductForm.
 function NumberField({ value, onChange, min = 0, step = 1, ...inputProps }) {
@@ -884,9 +1043,13 @@ function ProductEdit({ product, onSave, onCancel }) {
                 <Field label="Material"><input value={material} onChange={(e) => setMaterial(e.target.value)} placeholder="e.g. 80% cotton, 20% polyester" /></Field>
                 <Field label="Fit / Style"><input value={fit} onChange={(e) => setFit(e.target.value)} placeholder="Regular, slim, oversized..." /></Field>
                 <Field label="Target Group">
-                    <select value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)}>
-                        <option>Unisex</option><option>Men</option><option>Women</option><option>Kids</option><option>Baby</option>
-                    </select>
+                    <ProductEditSelect
+                        value={targetGroup}
+                        onChange={setTargetGroup}
+                        options={TARGET_GROUP_OPTIONS}
+                        ariaLabel="Target group"
+                        variant="audience"
+                    />
                 </Field>
             </div>
 
@@ -901,8 +1064,18 @@ function ProductEdit({ product, onSave, onCancel }) {
             {/* PRODUCT GALLERY */}
             <div className="admin-product-card__gallery">
                 <span className="admin-product-card__label">Product Images ({existingImages.length + images.length}/{MAX_IMAGES})</span>
-                <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} disabled={images.length + existingImages.length >= MAX_IMAGES} />
-                <p>Maximum 4 images, 10 MB per image. The first image is the main image.</p>
+                <div className="product-edit__image-upload">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={images.length + existingImages.length >= MAX_IMAGES}
+                    />
+                    <p>{existingImages.length + images.length} of {MAX_IMAGES} images selected · Max 10 MB per image</p>
+                    <p>Maximum 4 images, 10 MB per image. The first image is the main image.</p>
+                </div>
                 <div className="product-edit__image-sort">
                     <span className="admin-product-card__label">Dina produktbilder</span>
                     <p>Dra bilderna för att ändra ordningen. Bild 1 blir huvudbilden i butiken.</p>
@@ -960,10 +1133,13 @@ function ProductEdit({ product, onSave, onCancel }) {
                 </Field>
                 <label className="product-edit__toggle"><input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />Featured Product</label>
                 <Field label="Publication Status" required>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="draft">Draft — save without publishing</option>
-                        <option value="published">Published — visible in the store</option>
-                    </select>
+                    <ProductEditSelect
+                        value={status}
+                        onChange={setStatus}
+                        options={PUBLICATION_STATUS_OPTIONS}
+                        ariaLabel="Publication status"
+                        variant="status"
+                    />
                 </Field>
                 <span className={`admin-product-card__publication-status ${publicationStatus}`}>{publicationStatus === "published" ? "Published" : "Draft"}</span>
             </div>

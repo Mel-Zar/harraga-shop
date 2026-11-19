@@ -997,9 +997,11 @@
 
       strong {
         color: $silver-bright;
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: 0.015em;
+        font-family: $font-heading;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+        line-height: 1.6;
       }
 
       small {
@@ -2649,12 +2651,13 @@
   }
 
   .product-form__audience-chevron {
-    flex: 0 0 17px;
-    width: 17px;
-    height: 17px;
+    display: block;
+    flex: 0 0 19px;
+    width: 19px;
+    height: 19px;
     fill: none;
-    stroke: #bdbdc6;
-    stroke-width: 1.8;
+    stroke: #c6c6ce;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
     transition:
@@ -2873,12 +2876,12 @@
 
   .product-form__audience-chevron {
     display: block;
-    flex: 0 0 17px;
-    width: 17px;
-    height: 17px;
+    flex: 0 0 19px;
+    width: 19px;
+    height: 19px;
     fill: none;
     stroke: #c6c6ce;
-    stroke-width: 1.8;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
     transition:
