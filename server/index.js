@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -67,32 +68,21 @@ app.use(
 
 // =========================
 // CORS
-// BEHÅLLER BEFINTLIG CORS_ORIGIN
-// OCH TILLÅTER LOKAL UTVECKLING
+// ALLA TILLÅTNA ADRESSER HÄMTAS FRÅN .ENV
 // =========================
 const configuredOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN
         .split(",")
-        .map((o) => o.trim())
+        .map((origin) => origin.trim())
         .filter(Boolean)
     : [];
-
-const allowedOrigins = [
-    ...new Set([
-        ...configuredOrigins,
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://harraga.local:5173",
-        "http://192.168.0.2:5173",
-    ]),
-];
 
 app.use(
     cors({
         origin: (origin, callback) => {
             // Tillåt anrop utan Origin-header, exempelvis vissa
             // server-till-server-anrop och lokala verktyg.
-            if (!origin || allowedOrigins.includes(origin)) {
+            if (!origin || configuredOrigins.includes(origin)) {
                 return callback(null, true);
             }
 
@@ -313,7 +303,10 @@ app.listen(
         console.log(
             `🚀 Server running on port ${PORT}`
         );
-        console.log("✅ Allowed CORS origins:", allowedOrigins);
+        console.log(
+            "✅ Allowed CORS origins:",
+            configuredOrigins
+        );
     }
 );
 
